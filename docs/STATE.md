@@ -5,9 +5,23 @@
 ## Stato corrente
 
 - **Data ultimo aggiornamento:** 2026-06-10
-- **Milestone completate:** **M0** ✅, **M1** ✅ (+ decisioni CHECKPOINT 1), **M2 — Rendering nuvola** ✅
-- **Milestone corrente:** — (M2 chiusa, fermo al `[CHECKPOINT 2]`)
-- **Prossimo passo:** attendere ok umano al `[CHECKPOINT 2]`, poi **M3 — Picking, selezione, pannello dettagli**: GPU picking (render pass ID→RGBA su render target, skill `three-points-shader`), etichetta hover, click-select, pannello dettagli §6.6 (usa `starDetailsStore` + `names.index.json` classico + `catalog-ids.bin` per gli id Gaia/TYC della stella selezionata). AC M3: Polaris e TRAPPIST-1 corretti via click e ricerca (la ricerca completa è M4; per M3 serve il lookup minimo).
+- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3 — Picking, selezione, pannello dettagli** ✅ (AC verificati; M3 non ha checkpoint in SPEC §9)
+- **Milestone corrente:** **M4 — Ricerca & filtri** (in corso)
+- **Prossimo passo:** completare la ricerca §6.4 (id Gaia/TYC via bucket on-demand, substring match) e i filtri runtime §6.5 via maschera GPU (attributo visibilità, bounds da min/max reali). `[CHECKPOINT 3]` al termine di M4.
+
+## Cosa esiste (M3, in aggiunta a M0–M2)
+
+- **GPU picking** (`StarPicking.tsx` + `star-pick.vert/.frag` GLSL3): secondo `Points` che condivide la stessa geometry, ID stella = `gl_VertexID` codificato RGB 24-bit, render mirato 1×1 via `camera.setViewOffset`, max 1 pick/frame, depth test attivo (vince la stella più vicina), clear bianco = nessuna stella. Click vs drag discriminato (≤5 px). Nessun raycast CPU.
+- **Hover label** (`HoverLabel.tsx`): nome proprio o ID primario (SPEC §6.2); stelle non nell'indice classico → Gaia/TYC via Range request 16 B (`catalogIds.ts`, cache).
+- **Pannello dettagli** (`StarPanel.tsx`, §6.6): nome, ID catalogo (HD/HIP/Gl + TYC/Gaia), tipo spettrale, classe luminosità **n/d** (non nel contratto dati — mai stimata), distanza, mag app/ass, B–V, luminosità L☉, **Teff stimata da B–V (Ballesteros 2012**, `lib/teff.ts`, etichettata "stima approssimata"), **età sempre n/d in v1** (HYG/AT-HYG non la fornisce — mai fabbricata), variabile/multipla da flag, esopianeti con conteggio pianeti + bottone "Vedi sistema" disabilitato fino a M7. Pannello host **non agganciato** (es. TRAPPIST-1): badge dedicato, dati stella ospite da pscomppars, lista pianeti.
+- **Ricerca minima** (`SearchBox.tsx`, completata in M4): prefix su proper/HD/HIP/Gl (+alias Gl↔GJ) dall'indice classico (`namesIndex.ts`, lazy 16 MB in background) + host esopianeti (`exoplanets.ts`, lazy 2 MB al focus). Selezione → fly-to (M3: istantaneo, centrato; tween in M5) + pannello. Host `matched:false` → selezione host via ricerca (unico percorso, SPEC §5.3).
+- Store: `selection` union star|host, `hoveredStarIndex`, `pendingFlyTo` one-shot.
+- Test: **42 unit** (Teff, format Intl — nota: CLDR it raggruppa solo da 5 cifre —, ricerca nomi, parse catalog-ids con BigInt, host map) + **7 e2e** (AC: Polaris via ricerca con valori letti dalla fixture; Polaris via **click** dopo fly-to centrato; TRAPPIST-1 via ricerca con badge non agganciato e 7 pianeti; hover label).
+
+## Esiti verifica M3 (AC)
+
+- AC M3 ✅: Polaris via click e via ricerca mostra dati corretti (fixture e dati completi: HD 8890 · HIP 11767 · TYC 4628-237-1, classe F, 432,6 a.l., B–V 0,636, Teff ≈5830 K, **variabile Sì** — è una Cefeide, flag HYG corretto). TRAPPIST-1 via ricerca: 7 pianeti, non agganciato. **Nota AC**: TRAPPIST-1 non è cliccabile *by design* — non è nella nuvola (V≈18,8, oltre Tycho-2; `matched:false`, SPEC §5.3): il percorso di selezione è la ricerca host.
+- Vincolo ESLint (react-hooks nuove regole): niente setState sincrono negli effect → pattern "keyed async result" nei componenti; `react-hooks/immutability` disabilitato SOLO in `StarPicking.tsx` (mutazioni frame-scoped salva/ripristina del renderer, intrinseche al picking imperativo three.js).
 
 ## Cosa esiste (M2, in aggiunta a M0/M1)
 

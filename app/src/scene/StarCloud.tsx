@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import type { StarCoreData } from '../data/starData';
 import starFrag from '../shaders/star.frag?raw';
 import starVert from '../shaders/star.vert?raw';
 
@@ -16,15 +15,7 @@ export const STAR_MAX_PX = 14.0;
  * Never per-star meshes. Frustum culling is disabled: the cloud surrounds the
  * camera, and computing a bounding sphere over 2.5M points is wasted work.
  */
-export function StarCloud({ stars }: { stars: StarCoreData }) {
-  const geometry = useMemo(() => {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(stars.position, 3));
-    g.setAttribute('aColor', new THREE.BufferAttribute(stars.colorRGB, 3, true));
-    g.setAttribute('aSize', new THREE.BufferAttribute(stars.sizeAbsMag, 1));
-    return g;
-  }, [stars]);
-
+export function StarCloud({ geometry }: { geometry: THREE.BufferGeometry }) {
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({

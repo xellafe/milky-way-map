@@ -11,7 +11,8 @@ describe('galaxy map store', () => {
 
   it('matches SPEC §13 defaults: no selection, free-fly, galaxy view, toggles off', () => {
     const s = useGalaxyMapStore.getState();
-    expect(s.selectedStarIndex).toBeNull();
+    expect(s.selection).toBeNull();
+    expect(s.hoveredStarIndex).toBeNull();
     expect(s.cameraMode).toBe('free-fly');
     expect(s.view).toBe('galaxy');
     expect(s.showNames).toBe(false);
@@ -26,9 +27,24 @@ describe('galaxy map store', () => {
 
   it('selects and deselects a star', () => {
     useGalaxyMapStore.getState().selectStar(42);
-    expect(useGalaxyMapStore.getState().selectedStarIndex).toBe(42);
+    expect(useGalaxyMapStore.getState().selection).toEqual({ kind: 'star', index: 42 });
     useGalaxyMapStore.getState().selectStar(null);
-    expect(useGalaxyMapStore.getState().selectedStarIndex).toBeNull();
+    expect(useGalaxyMapStore.getState().selection).toBeNull();
+  });
+
+  it('selects an unmatched exoplanet host (e.g. TRAPPIST-1)', () => {
+    useGalaxyMapStore.getState().selectHost('TRAPPIST-1');
+    expect(useGalaxyMapStore.getState().selection).toEqual({
+      kind: 'host',
+      hostname: 'TRAPPIST-1',
+    });
+  });
+
+  it('fly-to request is one-shot', () => {
+    useGalaxyMapStore.getState().requestFlyTo([1, 2, 3]);
+    expect(useGalaxyMapStore.getState().pendingFlyTo).toEqual([1, 2, 3]);
+    useGalaxyMapStore.getState().clearFlyTo();
+    expect(useGalaxyMapStore.getState().pendingFlyTo).toBeNull();
   });
 
   it('accepts time scale 0 as paused', () => {

@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { loadNamesIndex } from './data/namesIndex';
 import { fetchManifest, loadStars, type StarCoreData } from './data/starData';
 import { setStarDetails } from './data/starDetailsStore';
 import { isWebGL2Available } from './lib/webgl';
 import { GalaxyScene } from './scene/GalaxyScene';
 import { useGalaxyMapStore } from './state/store';
+import { HoverLabel } from './ui/HoverLabel';
 import { LoadingOverlay } from './ui/LoadingOverlay';
+import { SearchBox } from './ui/SearchBox';
+import { StarPanel } from './ui/StarPanel';
 
 const webgl2Available = isWebGL2Available();
 const DATA_BASE_URL = '/data/';
@@ -32,6 +36,10 @@ export default function App() {
       handle.details.then((details) => {
         if (!cancelled) setStarDetails(details);
       });
+      // Classic names index (~16 MB): background load for hover labels/search.
+      loadNamesIndex(DATA_BASE_URL).catch((error: unknown) =>
+        console.warn('names index load failed', error),
+      );
     })().catch((error: unknown) => {
       console.error('star data load failed', error);
       if (!cancelled) setDataStatus('error');
@@ -52,6 +60,9 @@ export default function App() {
   return (
     <div className="relative h-full w-full bg-black">
       <GalaxyScene stars={stars} />
+      <SearchBox stars={stars} />
+      <StarPanel stars={stars} />
+      <HoverLabel />
       <LoadingOverlay />
     </div>
   );
