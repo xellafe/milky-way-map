@@ -66,11 +66,12 @@ def make_lookup() -> StarLookup:
             "proper": "Rigil Kentaurus",
             "hd": "128620",
             "hip": "71683",
-            "gaia": "5853498713190525696",
             "gl": "Gl 559A",
         },
-        "2": {"proper": "FarStar", "tyc": "1-2-3"},
+        "2": {"proper": "FarStar"},
     }
+    # Gaia ids now arrive via catalog-ids (CHECKPOINT 1 split), index-aligned.
+    gaia_ids = np.array([0, 5853498713190525696, 0], dtype="<u8")
     ra1, dec1 = np.radians(219.9), np.radians(-60.83)
     r1 = 1.3463 * PC_TO_LY
     pos1 = [
@@ -79,7 +80,7 @@ def make_lookup() -> StarLookup:
         r1 * np.sin(dec1),
     ]
     positions = np.array([[0.0, 0.0, 0.0], pos1, [100.0 * PC_TO_LY, 0.0, 0.0]])
-    return StarLookup(names_index, positions)
+    return StarLookup(names_index, positions, gaia_ids)
 
 
 class TestMatchPriority:

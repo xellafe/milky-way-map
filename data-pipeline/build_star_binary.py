@@ -18,6 +18,15 @@ Data/assumption notes (AGENTS.md: document every astronomical assumption):
   "unknown", so unknown renders as "not flagged" — documented limitation).
 - Luminosity is derived from absmag (see transforms.luminosity_from_absmag).
 - The hasExoplanets flag (bit2) is set later by crossmatch.py.
+- Extreme catalog distances (a few hundred stars beyond ~10 kpc, up to ~312 kpc,
+  from noisy Gaia parallaxes) are KEPT as catalog truth — human decision at
+  CHECKPOINT 1. Revertible via --max-distance-ly (see main()).
+
+Names-index contract (human-approved CHECKPOINT 1 deviation from SPEC §5.1):
+the single 209 MB JSON map was split into
+  names.index.json        classic index (proper/HD/HIP/Gl + constellation only)
+  catalog-ids.bin (+manifest)  index-aligned Gaia/TYC ids, fixed 16-byte stride
+  search/gaia-XX.json, search/tyc-XX.json  on-demand id→index buckets (mod 256)
 
 Binary layout: all float32 sections first (4-byte aligned), then uint8 sections.
 The manifest lists every attribute in SPEC §5.1 order with explicit byteOffset /
@@ -103,7 +112,7 @@ def load_hyg_flags(raw_dir: Path) -> pd.DataFrame:
     return pd.DataFrame({"hyg_id": hyg["id"], "variable": variable, "multiple": multiple})
 
 
-def select_renderable(athyg: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
+def select_renderable(athyg: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, object]]:
     """Apply SPEC §5.1 distance filters; keep Sol; return (subset, exclusion stats)."""
     dist = athyg["dist"].to_numpy(dtype=np.float64)
     valid = valid_distance_mask(dist)
@@ -206,42 +215,109 @@ def pack_soa(arrays: dict[str, np.ndarray]) -> tuple[bytes, list[dict[str, objec
 
 
 def build_names_index(stars: pd.DataFrame) -> dict[str, dict[str, str]]:
-    """names.index.json: index-aligned catalog ids/names (SPEC §5.1).
+    """names.index.json — the CLASSIC index (human-approved CHECKPOINT 1 split).
 
-    All values are strings (Gaia DR3 ids exceed JS safe-integer range).
-    Empty fields are omitted; stars with no usable id at all are skipped.
+    The original SPEC §5.1 single-map contract (gaia+tyc for all 2.5M stars)
+    produced a 209 MB JSON, unusable on the web. Approved deviation:
+    - this file only contains stars with a proper name or a classic catalog id
+      (HD / HIP / Gliese), with fields proper, hd, hip, gl, constellation;
+    - Gaia/TYC ids live in catalog-ids.bin (fixed-stride, index-aligned) and in
+      the on-demand search buckets (see build_catalog_ids / build_search_buckets).
+
+    All values are strings; empty fields are omitted.
     """
     index: dict[str, dict[str, str]] = {}
-    cols = {
-        "proper": stars["proper"],
-        "hd": stars["hd"],
-        "hip": stars["hip"],
-        "gaia": stars["gaia"],
-        "gl": stars["gl"],
-        "tyc": stars["tyc"],
-        "constellation": stars["con"],
-    }
-    frames = {k: v.tolist() for k, v in cols.items()}
+    entry_keys = {"proper": "proper", "hd": "hd", "hip": "hip", "gl": "gl"}
+    frames = {k: stars[k].tolist() for k in entry_keys}
+    cons = stars["con"].tolist()
     for i in range(len(stars)):
         entry: dict[str, str] = {}
-        for key, values in frames.items():
-            v = values[i]
+        for col, key in entry_keys.items():
+            v = frames[col][i]
             if v is None or (isinstance(v, float) and np.isnan(v)) or v is pd.NA:
                 continue
             s = str(v).strip()
             if s:
                 entry[key] = s
-        if entry:
-            index[str(i)] = entry
+        if not entry:
+            continue
+        c = cons[i]
+        if c is not None and c is not pd.NA and str(c).strip():
+            entry["constellation"] = str(c).strip()
+        index[str(i)] = entry
     return index
+
+
+# catalog-ids.bin: little-endian, fixed 16-byte stride per star, index-aligned:
+#   gaia  uint64  (0 = absent; Gaia DR3 source ids are never 0)
+#   tyc1  uint16, tyc2 uint16, tyc3 uint8  (0,0,0 = absent)
+#   pad   3 bytes (reserved, zero)
+# Fixed stride → a single HTTP Range request fetches one star's ids.
+CATALOG_IDS_DTYPE = np.dtype(
+    [
+        ("gaia", "<u8"),
+        ("tyc1", "<u2"),
+        ("tyc2", "<u2"),
+        ("tyc3", "u1"),
+        ("pad", "u1", (3,)),
+    ]
+)
+SEARCH_BUCKETS = 256
+
+
+def build_catalog_ids(stars: pd.DataFrame) -> np.ndarray:
+    """Index-aligned Gaia/TYC ids as a fixed-stride structured array."""
+    out = np.zeros(len(stars), dtype=CATALOG_IDS_DTYPE)
+    gaia = stars["gaia"].tolist()
+    tyc = stars["tyc"].tolist()
+    for i in range(len(stars)):
+        g = gaia[i]
+        if g is not None and g is not pd.NA and str(g).strip().isdigit():
+            out["gaia"][i] = int(str(g).strip())
+        t = tyc[i]
+        if t is not None and t is not pd.NA:
+            parts = str(t).strip().split("-")
+            if len(parts) == 3 and all(p.isdigit() for p in parts):
+                out["tyc1"][i] = int(parts[0])
+                out["tyc2"][i] = int(parts[1])
+                out["tyc3"][i] = int(parts[2])
+    return out
+
+
+def build_search_buckets(catalog_ids: np.ndarray, tyc_strings: list[str | None]) -> dict[str, dict[str, int]]:
+    """On-demand id→index search buckets (CHECKPOINT 1 decision).
+
+    gaia-<bb>.json: bucket = (gaia_id >> 35) % 256. Gaia DR3 source ids are
+    healpix_level12 * 2^35 + counter, so the LOW bits are highly structured
+    (a plain % 256 collapses to ~2 buckets); the healpix part is sky-uniform.
+    Client side: (BigInt(id) >> 35n) % 256n.
+    tyc-<bb>.json:  bucket = TYC1 % 256, key = original "a-b-c" string.
+    Only non-empty buckets are written.
+    """
+    buckets: dict[str, dict[str, int]] = {}
+    gaia = catalog_ids["gaia"]
+    for i in np.nonzero(gaia)[0]:
+        g = int(gaia[i])
+        buckets.setdefault(f"gaia-{(g >> 35) % SEARCH_BUCKETS:02x}", {})[str(g)] = int(i)
+    for i, t in enumerate(tyc_strings):
+        if t is None or t is pd.NA:
+            continue
+        s = str(t).strip()
+        if not s:
+            continue
+        tyc1 = int(s.split("-")[0]) if s.split("-")[0].isdigit() else 0
+        buckets.setdefault(f"tyc-{tyc1 % SEARCH_BUCKETS:02x}", {})[s] = int(i)
+    return buckets
 
 
 def write_artifacts(
     out_dir: Path,
     arrays: dict[str, np.ndarray],
     names_index: dict[str, dict[str, str]],
-    stats: dict[str, int],
+    stats: dict[str, object],
     sources: dict[str, object] | None,
+    catalog_ids: np.ndarray | None = None,
+    search_buckets: dict[str, dict[str, int]] | None = None,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     blob, manifest_attrs = pack_soa(arrays)
@@ -266,11 +342,38 @@ def write_artifacts(
         json.dumps(names_index, separators=(",", ":")) + "\n", encoding="utf-8"
     )
 
+    if catalog_ids is not None:
+        (out_dir / "catalog-ids.bin").write_bytes(catalog_ids.tobytes())
+        ids_manifest = {
+            "version": MANIFEST_VERSION,
+            "count": count,
+            "strideBytes": CATALOG_IDS_DTYPE.itemsize,
+            "fields": [
+                {"name": "gaia", "dtype": "uint64", "byteOffset": 0},
+                {"name": "tyc1", "dtype": "uint16", "byteOffset": 8},
+                {"name": "tyc2", "dtype": "uint16", "byteOffset": 10},
+                {"name": "tyc3", "dtype": "uint8", "byteOffset": 12},
+            ],
+            "searchBuckets": SEARCH_BUCKETS,
+        }
+        (out_dir / "catalog-ids.manifest.json").write_text(
+            json.dumps(ids_manifest, indent=2) + "\n", encoding="utf-8"
+        )
+
+    if search_buckets is not None:
+        search_dir = out_dir / "search"
+        search_dir.mkdir(exist_ok=True)
+        for name, bucket in search_buckets.items():
+            (search_dir / f"{name}.json").write_text(
+                json.dumps(bucket, separators=(",", ":")), encoding="utf-8"
+            )
+        print(f"[ok  ] search buckets: {len(search_buckets)} files")
+
     print(f"[ok  ] {out_dir / 'stars.bin'} ({len(blob) / 1e6:.1f} MB, {count} stars)")
     print(f"[ok  ] names.index.json ({(out_dir / 'names.index.json').stat().st_size / 1e6:.1f} MB)")
 
 
-def validate(arrays: dict[str, np.ndarray], stats: dict[str, int]) -> None:
+def validate(arrays: dict[str, np.ndarray], stats: dict[str, object]) -> None:
     """Post-build sanity checks (M1 AC: artifacts validated against the schema)."""
     pos = arrays["position"]
     assert np.isfinite(pos).all(), "NaN/inf in positions"
@@ -286,6 +389,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--raw", type=Path, default=DEFAULT_RAW_DIR)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument(
+        "--max-distance-ly",
+        type=float,
+        default=None,
+        help=(
+            "Optional quality cut on catalog distance. DEFAULT: None — per the "
+            "human decision at CHECKPOINT 1, noisy extreme Gaia distances (a few "
+            "hundred stars beyond ~10 kpc) are KEPT as catalog truth. Pass a value "
+            "(e.g. 100000) to revert that choice; the cut is logged and recorded "
+            "in the manifest."
+        ),
+    )
     args = parser.parse_args(argv)
 
     sources = None
@@ -297,6 +412,15 @@ def main(argv: list[str] | None = None) -> int:
     athyg = load_athyg(args.raw)
     print(f"[load] {len(athyg):,} catalog rows")
     stars, stats = select_renderable(athyg)
+
+    if args.max_distance_ly is not None:
+        dist_ly = stars["dist"].to_numpy(dtype=np.float64) * PC_TO_LY
+        cut = dist_ly <= args.max_distance_ly
+        stats["excluded_beyond_max_distance"] = int((~cut).sum())
+        stats["max_distance_ly_cut"] = args.max_distance_ly
+        stats["stars_rendered"] = int(cut.sum())
+        stars = stars.loc[cut].reset_index(drop=True)
+
     for key, value in stats.items():
         print(f"[stat] {key}: {value:,}")
 
@@ -304,7 +428,11 @@ def main(argv: list[str] | None = None) -> int:
     arrays = build_arrays(stars, hyg_flags)
     validate(arrays, stats)
     names_index = build_names_index(stars)
-    write_artifacts(args.out, arrays, names_index, stats, sources)
+    catalog_ids = build_catalog_ids(stars)
+    search_buckets = build_search_buckets(catalog_ids, stars["tyc"].tolist())
+    write_artifacts(
+        args.out, arrays, names_index, stats, sources, catalog_ids, search_buckets
+    )
     return 0
 
 

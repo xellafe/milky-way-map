@@ -92,18 +92,28 @@ def compute_in_hz(st_lum_log10: object, pl_orbsmax: object) -> bool | None:
 
 
 class StarLookup:
-    """Index-aligned lookup tables built from names.index.json + positions."""
+    """Index-aligned lookups from names.index.json (classic ids) + catalog-ids
+    (Gaia, post-CHECKPOINT 1 split) + positions."""
 
-    def __init__(self, names_index: dict[str, dict[str, str]], positions: np.ndarray):
+    def __init__(
+        self,
+        names_index: dict[str, dict[str, str]],
+        positions: np.ndarray,
+        gaia_ids: np.ndarray | None = None,
+    ):
         self.positions = positions
         self.by_gaia: dict[str, int] = {}
         self.by_hd: dict[str, int] = {}
         self.by_hip: dict[str, int] = {}
         self.by_name: dict[str, int] = {}
 
+        if gaia_ids is not None:
+            for i in np.nonzero(gaia_ids)[0]:
+                self.by_gaia.setdefault(str(int(gaia_ids[i])), int(i))
+
         for key, entry in names_index.items():
             i = int(key)
-            if "gaia" in entry:
+            if "gaia" in entry:  # fixture/legacy indexes may still carry gaia
                 self.by_gaia.setdefault(entry["gaia"], i)
             if "hd" in entry:
                 self.by_hd.setdefault(entry["hd"], i)
@@ -192,7 +202,9 @@ def group_hosts(rows: list[dict[str, object]]) -> dict[str, dict[str, object]]:
     return hosts
 
 
-def load_star_artifacts(data_dir: Path) -> tuple[dict, dict[str, dict[str, str]], np.ndarray]:
+def load_star_artifacts(
+    data_dir: Path,
+) -> tuple[dict, dict[str, dict[str, str]], np.ndarray, np.ndarray | None]:
     manifest = json.loads((data_dir / "stars.manifest.json").read_text(encoding="utf-8"))
     names_index = json.loads((data_dir / "names.index.json").read_text(encoding="utf-8"))
     attrs = {a["name"]: a for a in manifest["attributes"]}
@@ -201,7 +213,16 @@ def load_star_artifacts(data_dir: Path) -> tuple[dict, dict[str, dict[str, str]]
     positions = np.frombuffer(
         blob, dtype="<f4", count=manifest["count"] * 3, offset=pos_meta["byteOffset"]
     ).reshape(manifest["count"], 3)
-    return manifest, names_index, positions.astype(np.float64)
+
+    gaia_ids = None
+    ids_path = data_dir / "catalog-ids.bin"
+    ids_manifest_path = data_dir / "catalog-ids.manifest.json"
+    if ids_path.exists() and ids_manifest_path.exists():
+        ids_manifest = json.loads(ids_manifest_path.read_text(encoding="utf-8"))
+        stride = ids_manifest["strideBytes"]
+        raw = np.frombuffer(ids_path.read_bytes(), dtype="u1").reshape(-1, stride)
+        gaia_ids = raw[:, 0:8].copy().view("<u8").reshape(-1)
+    return manifest, names_index, positions.astype(np.float64), gaia_ids
 
 
 def set_exoplanet_flags(data_dir: Path, manifest: dict, indices: list[int]) -> None:
@@ -224,8 +245,8 @@ def main(argv: list[str] | None = None) -> int:
 
     payload = json.loads((args.raw / "exoplanets_raw.json").read_text(encoding="utf-8"))
     rows: list[dict[str, object]] = payload["rows"]
-    manifest, names_index, positions = load_star_artifacts(args.data)
-    lookup = StarLookup(names_index, positions)
+    manifest, names_index, positions, gaia_ids = load_star_artifacts(args.data)
+    lookup = StarLookup(names_index, positions, gaia_ids)
 
     hosts_raw = group_hosts(rows)
     hosts_out: dict[str, dict[str, object]] = {}

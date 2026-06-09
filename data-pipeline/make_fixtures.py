@@ -23,6 +23,7 @@ import pandas as pd
 import crossmatch
 from build_star_binary import (
     build_arrays,
+    build_catalog_ids,
     build_names_index,
     load_athyg,
     load_hyg_flags,
@@ -86,7 +87,11 @@ def main(argv: list[str] | None = None) -> int:
     sources_path = args.raw / "sources.json"
     if sources_path.exists():
         sources = json.loads(sources_path.read_text(encoding="utf-8"))
-    write_artifacts(args.out, arrays, names_index, stats, sources)
+    # Search buckets are deliberately NOT generated for fixtures (256 tiny files
+    # of repo noise; id-search is covered by pipeline unit tests on tmp dirs).
+    write_artifacts(
+        args.out, arrays, names_index, stats, sources, catalog_ids=build_catalog_ids(subset)
+    )
 
     # Exoplanet fixture: TRAPPIST-1 + Alpha Centauri (Proxima Cen), SPEC §5.4.
     payload = json.loads((args.raw / "exoplanets_raw.json").read_text(encoding="utf-8"))

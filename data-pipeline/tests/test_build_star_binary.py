@@ -8,8 +8,11 @@ import pytest
 
 from build_star_binary import (
     ATTRIBUTE_SPECS,
+    CATALOG_IDS_DTYPE,
     build_arrays,
+    build_catalog_ids,
     build_names_index,
+    build_search_buckets,
     pack_soa,
     select_renderable,
     write_artifacts,
@@ -121,7 +124,8 @@ class TestPackSoa:
 
 
 class TestNamesIndex:
-    def test_index_aligned_and_sparse(self):
+    def test_classic_index_has_no_gaia_tyc(self):
+        # CHECKPOINT 1 split: gaia/tyc live in catalog-ids.bin, not here.
         stars, _ = select_renderable(make_athyg_frame())
         index = build_names_index(stars)
         assert index["0"]["proper"] == "Sol"
@@ -129,16 +133,56 @@ class TestNamesIndex:
             "proper": "Toliman",
             "hd": "128621",
             "hip": "71681",
-            "gaia": "5853498713160606720",
             "gl": "Gl 559B",
-            "tyc": "9007-5849-2",
             "constellation": "Cen",
         }
+
+    def test_stars_without_classic_ids_are_skipped(self):
+        frame = make_athyg_frame()
+        frame.loc[2, "dist"] = 10.0  # make the tyc-only star renderable
+        stars, _ = select_renderable(frame)
+        index = build_names_index(stars)
+        assert "2" not in index  # tyc-only → not in the classic index
 
     def test_all_values_are_strings(self):
         stars, _ = select_renderable(make_athyg_frame())
         for entry in build_names_index(stars).values():
             assert all(isinstance(v, str) for v in entry.values())
+
+
+class TestCatalogIds:
+    def test_fixed_stride_and_values(self):
+        stars, _ = select_renderable(make_athyg_frame())
+        ids = build_catalog_ids(stars)
+        assert CATALOG_IDS_DTYPE.itemsize == 16
+        assert ids["gaia"][0] == 0  # Sol: no Gaia id → 0 sentinel
+        assert ids["gaia"][1] == 5853498713160606720
+        assert (ids["tyc1"][1], ids["tyc2"][1], ids["tyc3"][1]) == (9007, 5849, 2)
+
+    def test_search_buckets_route_gaia_by_healpix_bits(self):
+        stars, _ = select_renderable(make_athyg_frame())
+        ids = build_catalog_ids(stars)
+        buckets = build_search_buckets(ids, stars["tyc"].tolist())
+        g = 5853498713160606720
+        # Gaia bucket uses (id >> 35) % 256 — low bits are structured, not uniform.
+        gaia_bucket = buckets[f"gaia-{(g >> 35) % 256:02x}"]
+        assert gaia_bucket[str(g)] == 1
+        tyc_bucket = buckets[f"tyc-{9007 % 256:02x}"]
+        assert tyc_bucket["9007-5849-2"] == 1
+
+    def test_roundtrip_through_write_artifacts(self, tmp_path):
+        stars, stats = select_renderable(make_athyg_frame())
+        arrays = build_arrays(stars, make_hyg_flags())
+        ids = build_catalog_ids(stars)
+        buckets = build_search_buckets(ids, stars["tyc"].tolist())
+        write_artifacts(
+            tmp_path, arrays, build_names_index(stars), stats, None, ids, buckets
+        )
+        raw = np.frombuffer((tmp_path / "catalog-ids.bin").read_bytes(), dtype=CATALOG_IDS_DTYPE)
+        np.testing.assert_array_equal(raw["gaia"], ids["gaia"])
+        manifest = json.loads((tmp_path / "catalog-ids.manifest.json").read_text())
+        assert manifest["strideBytes"] == 16
+        assert (tmp_path / "search").is_dir()
 
 
 class TestWriteArtifacts:

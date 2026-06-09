@@ -5,9 +5,9 @@
 ## Stato corrente
 
 - **Data ultimo aggiornamento:** 2026-06-10
-- **Milestone completate:** **M0** ✅, **M1 — Data pipeline** ✅ (AC verificati, vedi tabella checkpoint)
-- **Milestone corrente:** — (M1 chiusa, fermo al `[CHECKPOINT 1]`)
-- **Prossimo passo:** attendere ok umano al `[CHECKPOINT 1]` (con decisione sui 2 punti aperti sotto), poi **M2 — Rendering nuvola**: loader binario TS, `THREE.Points` singolo con shader GLSL custom, colore+dimensione+bloom, camera free-fly; smoke Playwright su fixture; misura FPS. Skill: `three-points-shader`.
+- **Milestone completate:** **M0** ✅, **M1 — Data pipeline** ✅ (+ decisioni CHECKPOINT 1 implementate)
+- **Milestone corrente:** **M2 — Rendering nuvola** (in corso)
+- **Prossimo passo:** loader binario TS, `THREE.Points` singolo con shader GLSL custom, colore+dimensione+bloom, camera free-fly; smoke Playwright su fixture; misura FPS. Skill: `three-points-shader`. `[CHECKPOINT 2]` al termine.
 
 ## Cosa esiste (M1, in aggiunta a M0)
 
@@ -23,10 +23,10 @@
 - Cross-match: 1612/4716 host agganciati (1591 gaia, 14 hd, 4 hip, 3 coords); 3104 non agganciati (host deboli oltre il limite Tycho-2, es. Kepler) → `matched:false`, ricercabili per nome (SPEC §5.3/§10). "alf Cen A/b" non è più in pscomppars: il sistema Alpha Centauri delle fixture è **Proxima Cen**.
 - TRAPPIST-1e risulta `in_hz=true` col modello conservativo √L (bordi 1.1/0.53 S⊕) — f e g restano fuori: coerente con bordi conservativi, documentato.
 
-## ⚠️ Punti da discutere al CHECKPOINT 1
+## ✅ Decisioni umane al CHECKPOINT 1 (2026-06-10) — implementate
 
-1. **`names.index.json` pesa 209 MB** (contratto SPEC §5.1: un'unica mappa `{indice: ids}` per 2,5M stelle, gaia+tyc inclusi). Inutilizzabile così sul web anche gzippato (~50 MB). Proposte (richiedono ok umano perché toccano il contratto §5.1): (a) split in `names.core.json` (proper/bayer/hd/hip/gl/con, ~317k stelle "classiche", pochi MB) caricato lazy + indice gaia/tyc binario o chunked caricato solo on-demand per la ricerca esplicita di ID; (b) formato binario/columnar unico. La parte frontend (M3/M4) dipende da questa scelta.
-2. **Distanze estreme** (~600 stelle oltre 10 kpc, max 312 kpc): tenerle (verità di catalogo, SPEC esclude solo dist mancante/sentinella) o aggiungere un cut di qualità documentato? Default attuale: **tenute**.
+1. **Split di `names.index.json`** (deviazione approvata dal contratto SPEC §5.1): ora è l'indice **classico** (proper/HD/HIP/Gl + costellazione, **16,3 MB**, ~318k stelle); gli id Gaia/TYC stanno in `catalog-ids.bin` (stride fisso 16 B, allineato all'indice → una Range request per stella) + `catalog-ids.manifest.json`, e la ricerca per id usa i bucket on-demand `search/gaia-XX.json` (bucket = `(id >> 35) % 256`: i bit bassi dei Gaia source id sono strutturati, il `% 256` puro collassava in 2 bucket — fix testato) e `search/tyc-XX.json` (`TYC1 % 256`). 512 file, ~120 MB totali ma scaricati solo a ricerche esplicite di id.
+2. **Distanze estreme tenute** come verità di catalogo (~600 stelle oltre 10 kpc, max ~312 kpc, parallassi Gaia rumorose). **Revertibile**: `build_star_binary.py --max-distance-ly <valore>` applica un cut di qualità loggato e registrato nel manifest; il default resta nessun cut. Documentato anche nel docstring del modulo.
 
 ## Decisioni prese in M1 (oltre a quelle M0)
 

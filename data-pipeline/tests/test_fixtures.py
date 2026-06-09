@@ -59,6 +59,20 @@ class TestStarFixture:
         propers = {e.get("proper") for e in names_index.values()}
         assert {"Sol", "Polaris", "Rigil Kentaurus", "Toliman", "Proxima Centauri"} <= propers
 
+    def test_classic_index_has_no_gaia_tyc(self, names_index):
+        # CHECKPOINT 1 split: gaia/tyc moved to catalog-ids.bin
+        for entry in names_index.values():
+            assert "gaia" not in entry
+            assert "tyc" not in entry
+
+    def test_catalog_ids_fixture_present_and_aligned(self, manifest):
+        ids_manifest = json.loads(
+            (FIXTURES / "catalog-ids.manifest.json").read_text(encoding="utf-8")
+        )
+        assert ids_manifest["count"] == manifest["count"]
+        size = (FIXTURES / "catalog-ids.bin").stat().st_size
+        assert size == manifest["count"] * ids_manifest["strideBytes"]
+
     def test_proxima_distance_about_4_25_ly(self, manifest, blob, names_index):
         idx = next(
             int(i) for i, e in names_index.items() if e.get("proper") == "Proxima Centauri"

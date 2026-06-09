@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "count": 1000,
+  "strideBytes": 16,
+  "fields": [
+    {
+      "name": "gaia",
+      "dtype": "uint64",
+      "byteOffset": 0
+    },
+    {
+      "name": "tyc1",
+      "dtype": "uint16",
+      "byteOffset": 8
+    },
+    {
+      "name": "tyc2",
+      "dtype": "uint16",
+      "byteOffset": 10
+    },
+    {
+      "name": "tyc3",
+      "dtype": "uint8",
+      "byteOffset": 12
+    }
+  ],
+  "searchBuckets": 256
+}
