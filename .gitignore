@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+# Build output
+dist/
+*.tsbuildinfo
+# Test artifacts
+app/playwright-report/
+app/test-results/
+app/coverage/
+# Generated data artifacts (large) — keep fixtures, ignore full datasets
+data/*
+!data/.gitkeep
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+# Env / editor
+.env
+.env.local
+.DS_Store

@@ -1,0 +1,9 @@
+{
+  "ui": {
+    "appName": "Galaxy Map",
+    "loading": "Loading…"
+  },
+  "errors": {
+    "webgl2Required": "Galaxy Map requires WebGL2, which is not available in this browser. Please use a recent desktop browser with hardware acceleration enabled."
+  }
+}

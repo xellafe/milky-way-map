@@ -1,0 +1,20 @@
+# Periodic data refresh (SPEC §8). Skeleton in M0; ETL wired in M1, finalized in M9.
+# On TAP/network failure the previously committed data must remain untouched and
+# the workflow must fail visibly (SPEC §10).
+name: Data refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1' # weekly, Monday 03:00 UTC
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Refresh data (placeholder until M1/M9)
+        run: echo "ETL refresh is implemented in M1 and wired here in M9."

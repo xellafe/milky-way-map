@@ -1,0 +1,44 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { DEFAULT_TIME_SCALE_DAYS_PER_SECOND, useGalaxyMapStore } from '../../src/state/store';
+
+const initialState = useGalaxyMapStore.getState();
+
+describe('galaxy map store', () => {
+  beforeEach(() => {
+    useGalaxyMapStore.setState(initialState, true);
+  });
+
+  it('matches SPEC §13 defaults: no selection, free-fly, galaxy view, toggles off', () => {
+    const s = useGalaxyMapStore.getState();
+    expect(s.selectedStarIndex).toBeNull();
+    expect(s.cameraMode).toBe('free-fly');
+    expect(s.view).toBe('galaxy');
+    expect(s.showNames).toBe(false);
+    expect(s.showConstellations).toBe(false);
+    expect(s.showHabitableZone).toBe(false);
+  });
+
+  it('defaults time scale to 1 real second = 2 days (SPEC §13)', () => {
+    expect(DEFAULT_TIME_SCALE_DAYS_PER_SECOND).toBe(2);
+    expect(useGalaxyMapStore.getState().timeScaleDaysPerSecond).toBe(2);
+  });
+
+  it('selects and deselects a star', () => {
+    useGalaxyMapStore.getState().selectStar(42);
+    expect(useGalaxyMapStore.getState().selectedStarIndex).toBe(42);
+    useGalaxyMapStore.getState().selectStar(null);
+    expect(useGalaxyMapStore.getState().selectedStarIndex).toBeNull();
+  });
+
+  it('accepts time scale 0 as paused', () => {
+    useGalaxyMapStore.getState().setTimeScale(0);
+    expect(useGalaxyMapStore.getState().timeScaleDaysPerSecond).toBe(0);
+  });
+
+  it('toggles flags independently', () => {
+    useGalaxyMapStore.getState().toggleNames();
+    expect(useGalaxyMapStore.getState().showNames).toBe(true);
+    expect(useGalaxyMapStore.getState().showConstellations).toBe(false);
+  });
+});
