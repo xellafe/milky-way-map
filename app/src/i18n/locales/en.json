@@ -1,9 +1,11 @@
 {
   "ui": {
     "appName": "Galaxy Map",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "loadingStars": "Loading star catalog… {{percent}}"
   },
   "errors": {
-    "webgl2Required": "Galaxy Map requires WebGL2, which is not available in this browser. Please use a recent desktop browser with hardware acceleration enabled."
+    "webgl2Required": "Galaxy Map requires WebGL2, which is not available in this browser. Please use a recent desktop browser with hardware acceleration enabled.",
+    "dataLoadFailed": "Could not load the star catalog. Please check your connection and reload the page."
   }
 }

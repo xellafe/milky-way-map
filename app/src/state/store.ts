@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
+export type DataStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /** Default System View time scale: 1 real second = 2 simulated days (SPEC §13). */
 export const DEFAULT_TIME_SCALE_DAYS_PER_SECOND = 2;
@@ -18,9 +19,14 @@ export interface GalaxyMapState {
   showHabitableZone: boolean;
   /** Simulated days per real second; 0 = paused. */
   timeScaleDaysPerSecond: number;
+  /** Star catalog loading lifecycle (big typed arrays live OUTSIDE the store). */
+  dataStatus: DataStatus;
+  dataProgress: number;
   // Runtime filters (SPEC §6.5) are added in M4.
 
   selectStar: (index: number | null) => void;
+  setDataStatus: (status: DataStatus) => void;
+  setDataProgress: (fraction: number) => void;
   setCameraMode: (mode: CameraMode) => void;
   setView: (view: ViewMode) => void;
   toggleNames: () => void;
@@ -37,8 +43,12 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   showConstellations: false,
   showHabitableZone: false,
   timeScaleDaysPerSecond: DEFAULT_TIME_SCALE_DAYS_PER_SECOND,
+  dataStatus: 'idle',
+  dataProgress: 0,
 
   selectStar: (index) => set({ selectedStarIndex: index }),
+  setDataStatus: (status) => set({ dataStatus: status }),
+  setDataProgress: (fraction) => set({ dataProgress: fraction }),
   setCameraMode: (mode) => set({ cameraMode: mode }),
   setView: (view) => set({ view }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),

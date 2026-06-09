@@ -1,9 +1,11 @@
 {
   "ui": {
     "appName": "Galaxy Map",
-    "loading": "Chargement…"
+    "loading": "Chargement…",
+    "loadingStars": "Chargement du catalogue stellaire… {{percent}}"
   },
   "errors": {
-    "webgl2Required": "Galaxy Map nécessite WebGL2, qui n'est pas disponible dans ce navigateur. Veuillez utiliser un navigateur de bureau récent avec l'accélération matérielle activée."
+    "webgl2Required": "Galaxy Map nécessite WebGL2, qui n'est pas disponible dans ce navigateur. Veuillez utiliser un navigateur de bureau récent avec l'accélération matérielle activée.",
+    "dataLoadFailed": "Impossible de charger le catalogue stellaire. Vérifiez votre connexion et rechargez la page."
   }
 }

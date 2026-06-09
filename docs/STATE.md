@@ -5,9 +5,28 @@
 ## Stato corrente
 
 - **Data ultimo aggiornamento:** 2026-06-10
-- **Milestone completate:** **M0** ✅, **M1 — Data pipeline** ✅ (+ decisioni CHECKPOINT 1 implementate)
-- **Milestone corrente:** **M2 — Rendering nuvola** (in corso)
-- **Prossimo passo:** loader binario TS, `THREE.Points` singolo con shader GLSL custom, colore+dimensione+bloom, camera free-fly; smoke Playwright su fixture; misura FPS. Skill: `three-points-shader`. `[CHECKPOINT 2]` al termine.
+- **Milestone completate:** **M0** ✅, **M1** ✅ (+ decisioni CHECKPOINT 1), **M2 — Rendering nuvola** ✅
+- **Milestone corrente:** — (M2 chiusa, fermo al `[CHECKPOINT 2]`)
+- **Prossimo passo:** attendere ok umano al `[CHECKPOINT 2]`, poi **M3 — Picking, selezione, pannello dettagli**: GPU picking (render pass ID→RGBA su render target, skill `three-points-shader`), etichetta hover, click-select, pannello dettagli §6.6 (usa `starDetailsStore` + `names.index.json` classico + `catalog-ids.bin` per gli id Gaia/TYC della stella selezionata). AC M3: Polaris e TRAPPIST-1 corretti via click e ricerca (la ricerca completa è M4; per M3 serve il lookup minimo).
+
+## Cosa esiste (M2, in aggiunta a M0/M1)
+
+- `app/src/data/starData.ts` — loader binario: manifest + fetch **per sezione via HTTP Range** (fallback a 200 full-body gestito); sezioni CORE (position, colorRGB, sizeAbsMag, spectralClass, flags ≈ 45% del file) attese per il primo paint, sezioni DETAIL (distanze, magnitudini, B–V, luminosità) in background → `starDetailsStore.ts` (fuori dallo store reattivo). Frame assi documentato: equatoriale eliocentrico, +x→RA 0h, +y→RA 6h, +z→polo nord celeste.
+- `app/src/shaders/star.vert/.frag` — un solo `THREE.Points`/draw call: size da mag. assoluta con attenuazione prospettica 1/d, clamp [1,14] px, fade energetico ∝ px² sotto 1 px (flux-faithful), punto morbido gaussiano, additive blending, depthWrite off; bloom mipmap in post (`@react-three/postprocessing`).
+- `GalaxyScene` — sfondo nero pieno, camera far 2e6 ly, `FlyControls` drei (free-fly, 25 ly/s, dragToLook); `?stats=1` FPS meter; `?pdb=1` preserveDrawingBuffer per i test pixel.
+- `vite.config.ts` — plugin `serve-data-dir`: serve `/data/*` da `../data` in dev e preview **con supporto Range**.
+- `LoadingOverlay` con progresso percentuale Intl + stato errore (i18n nei 5 locale).
+- Test: 24 unit Vitest (loader validato contro la golden fixture, varianti 206/200) + 3 e2e Playwright (smoke; **nuvola su fixture con readPixels >100 pixel accesi**; messaggio di errore dati irraggiungibili).
+
+## Esiti misure M2 (AC)
+
+- **FPS su dati completi (2.491.335 stelle)**: 58.3 / 60.1 / 60.1 (3 run da 3 s, cap vsync 60) — 1920×1080, Chromium headless con GPU reale (ANGLE D3D11, NVIDIA RTX 3080), bloom attivo. **Budget 60 FPS rispettato** sull'hardware di sviluppo; `app/scripts/measure-fps.mjs` riusabile per M9.
+- Bundle: 311→~315 KB gzip JS (entro budget 600 KB).
+- Resa visiva: flux-faithful (stelle lontane sub-pixel quasi invisibili, come in cielo reale); tuning estetico (uPixelScale=60, bloom 1.1) rivedibile in M9 senza impatti architetturali.
+
+### Gotcha operativi
+
+- Su Windows, `Stop-Process` sul wrapper npm **non** uccide il figlio vite: server preview stantii restano sulla porta 4173 e servono codice vecchio (SPA fallback al posto di /data). Se i dati non caricano in preview: `Get-NetTCPConnection -LocalPort 4173` e killare il PID.
 
 ## Cosa esiste (M1, in aggiunta a M0)
 
@@ -50,6 +69,7 @@
 |---|---|---|---|
 | `[CHECKPOINT 0]` | M0 | ✅ tutti passati | build ok; scena nera renderizzata (Playwright + screenshot); lint/typecheck ok; 14 unit test verdi |
 | `[CHECKPOINT 1]` | M1 | ✅ tutti passati | artefatti generati e validati contro schema (roundtrip test); fixtures committate; 82 pytest verdi (pc→ly, sentinelle, mappa colore, pack SoA, cross-match, golden); esclusioni loggate (60.830) in stdout e nel manifest |
+| `[CHECKPOINT 2]` | M2 | ✅ tutti passati | rendering corretto su fixture (e2e readPixels) e su dati completi (screenshot ispezionato, 2.49M stelle); smoke visivo Playwright verde (3 test); FPS misurato 58–60 @1080p RTX 3080 vs budget 60 |
 
 ## Come riprendere
 
