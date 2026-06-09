@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "generated": "2026-06-09T22:06:11.337580+00:00",
+  "count": 1000,
+  "units": "ly",
+  "frame": "heliocentric",
+  "byteLength": 41000,
+  "attributes": [
+    {
+      "name": "position",
+      "dtype": "float32",
+      "components": 3,
+      "byteOffset": 0,
+      "byteLength": 12000
+    },
+    {
+      "name": "colorRGB",
+      "dtype": "uint8",
+      "components": 3,
+      "byteOffset": 36000,
+      "byteLength": 3000
+    },
+    {
+      "name": "sizeAbsMag",
+      "dtype": "float32",
+      "components": 1,
+      "byteOffset": 12000,
+      "byteLength": 4000
+    },
+    {
+      "name": "spectralClass",
+      "dtype": "uint8",
+      "components": 1,
+      "byteOffset": 39000,
+      "byteLength": 1000
+    },
+    {
+      "name": "distanceLy",
+      "dtype": "float32",
+      "components": 1,
+      "byteOffset": 16000,
+      "byteLength": 4000
+    },
+    {
+      "name": "appMag",
+      "dtype": "float32",
+      "components": 1,
+      "byteOffset": 20000,
+      "byteLength": 4000
+    },
+    {
+      "name": "absMag",
+      "dtype": "float32",
+      "components": 1,
+      "byteOffset": 24000,
+      "byteLength": 4000
+    },
+    {
+      "name": "colorIndex",
+      "dtype": "float32",
+      "components": 1,
+      "byteOffset": 28000,
+      "byteLength": 4000
+    },
+    {
+      "name": "luminosity",
+      "dtype": "float32",
+      "components": 1,
+      "byteOffset": 32000,
+      "byteLength": 4000
+    },
+    {
+      "name": "flags",
+      "dtype": "uint8",
+      "components": 1,
+      "byteOffset": 40000,
+      "byteLength": 1000
+    }
+  ],
+  "exclusions": {
+    "total_catalog_rows": 2552165,
+    "excluded_total": 0,
+    "stars_rendered": 1000,
+    "note": "golden fixture subset (SPEC \u00a75.4), not a full catalog build"
+  },
+  "sources": {
+    "athyg_v33-1.csv.gz": {
+      "url": "https://codeberg.org/astronexus/athyg/media/branch/main/data/athyg_v33-1.csv.gz",
+      "license": "CC BY-SA 4.0 (astronexus / David Nash)",
+      "sha256": "fd5747cc019d00632bba9bae55004702981bf43777bfd69aaf59ae48397d8c64",
+      "bytes": 98907182,
+      "downloaded_at": "2026-06-09T21:55:12.166360+00:00"
+    },
+    "athyg_v33-2.csv.gz": {
+      "url": "https://codeberg.org/astronexus/athyg/media/branch/main/data/athyg_v33-2.csv.gz",
+      "license": "CC BY-SA 4.0 (astronexus / David Nash)",
+      "sha256": "f90cb09eda1e433f2ee635c0bc2477116bfd83ceebe816c6771ab0f617ea9bb2",
+      "bytes": 100114994,
+      "downloaded_at": "2026-06-09T21:55:14.124511+00:00"
+    },
+    "hyg_v42.csv.gz": {
+      "url": "https://codeberg.org/astronexus/hyg/media/branch/main/data/hyg/CURRENT/hyg_v42.csv.gz",
+      "license": "CC BY-SA 4.0 (astronexus / David Nash)",
+      "sha256": "5ca9431ff364c8002a4a3efa91b2b9296746aea1543374db4cb6b4fab049d601",
+      "bytes": 13636976,
+      "downloaded_at": "2026-06-09T21:55:15.143967+00:00"
+    }
+  }
+}

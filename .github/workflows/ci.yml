@@ -38,5 +38,4 @@ jobs:
           cache: pip
           cache-dependency-path: data-pipeline/requirements.txt
       - run: pip install -r requirements.txt
-      # pytest suite arrives with the ETL code in M1.
-      - run: python -c "import pandas, numpy, astropy, pyvo; print('pinned deps import OK')"
+      - run: python -m pytest -q

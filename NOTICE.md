@@ -27,9 +27,10 @@ Acknowledgment standard da includere:
 > Aeronautics and Space Administration under the Exoplanet Exploration Program.
 
 - **Tabella usata:** `pscomppars` (Planetary Systems Composite Parameters)
-- **DOI:** [Inferenza/Non verificato] l'agente deve recuperare e riportare qui il
-  DOI esatto della tabella così come pubblicato sul sito ufficiale al momento del
-  fetch dei dati. Non inventare il DOI.
+- **DOI:** [10.26133/NEA13](https://doi.org/10.26133/NEA13) — verificato sulla
+  pagina ufficiale https://exoplanetarchive.ipac.caltech.edu/docs/doi.html
+  ("Planetary Systems Composite Parameters Table") in data 2026-06-09, al
+  momento del primo fetch dei dati (M1).
 
 ## 3. Dati linee costellazioni
 
