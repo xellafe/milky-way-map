@@ -8,13 +8,22 @@ uniform float uPixelScale; // px·ly, already multiplied by devicePixelRatio
 uniform float uMinPx;
 uniform float uMaxPx;
 
-attribute vec3 aColor;  // normalized uint8 -> [0,1]
-attribute float aSize;  // from absolute magnitude, ~[0.5, 16], Sun ≈ 1
+attribute vec3 aColor;   // normalized uint8 -> [0,1]
+attribute float aSize;   // from absolute magnitude, ~[0.5, 16], Sun ≈ 1
+attribute float aVisible; // runtime filter mask (SPEC §6.5): 0 = hidden
 
 varying vec3 vColor;
 varying float vAlpha;
 
 void main() {
+  if (aVisible < 0.5) {
+    // Filtered out: degenerate position outside the clip volume, zero size.
+    gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+    gl_PointSize = 0.0;
+    vColor = vec3(0.0);
+    vAlpha = 0.0;
+    return;
+  }
   vColor = aColor;
 
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);

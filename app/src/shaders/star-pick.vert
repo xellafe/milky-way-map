@@ -8,10 +8,17 @@ uniform float uMaxPx;
 uniform float uPickMinPx; // larger than the visual minimum: comfortable hover targets
 
 in float aSize;
+in float aVisible; // picking honors the runtime filters: hidden stars are unpickable
 
 out vec3 vIdColor;
 
 void main() {
+  if (aVisible < 0.5) {
+    gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+    gl_PointSize = 0.0;
+    vIdColor = vec3(1.0);
+    return;
+  }
   int id = gl_VertexID;
   vIdColor = vec3(float(id & 255), float((id >> 8) & 255), float((id >> 16) & 255)) / 255.0;
 

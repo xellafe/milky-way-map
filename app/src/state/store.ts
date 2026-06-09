@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { DEFAULT_FILTERS, type DataBounds, type Filters } from '../lib/filterMask';
 
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
@@ -32,7 +33,12 @@ export interface GalaxyMapState {
   /** Star catalog loading lifecycle (big typed arrays live OUTSIDE the store). */
   dataStatus: DataStatus;
   dataProgress: number;
-  // Runtime filters (SPEC §6.5) are added in M4.
+  /** Runtime filters (SPEC §6.5) — GPU visibility mask, no data reload. */
+  filters: Filters;
+  /** Real data min/max for the filter sliders (SPEC §13); null until details load. */
+  dataBounds: DataBounds | null;
+  /** Stars passing the current filters; null until the first mask is applied. */
+  visibleCount: number | null;
 
   selectStar: (index: number | null) => void;
   selectHost: (hostname: string) => void;
@@ -41,6 +47,10 @@ export interface GalaxyMapState {
   clearFlyTo: () => void;
   setDataStatus: (status: DataStatus) => void;
   setDataProgress: (fraction: number) => void;
+  setFilters: (update: Partial<Filters>) => void;
+  resetFilters: () => void;
+  setDataBounds: (bounds: DataBounds) => void;
+  setVisibleCount: (count: number) => void;
   setCameraMode: (mode: CameraMode) => void;
   setView: (view: ViewMode) => void;
   toggleNames: () => void;
@@ -61,6 +71,9 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   timeScaleDaysPerSecond: DEFAULT_TIME_SCALE_DAYS_PER_SECOND,
   dataStatus: 'idle',
   dataProgress: 0,
+  filters: DEFAULT_FILTERS,
+  dataBounds: null,
+  visibleCount: null,
 
   selectStar: (index) => set({ selection: index === null ? null : { kind: 'star', index } }),
   selectHost: (hostname) => set({ selection: { kind: 'host', hostname } }),
@@ -69,6 +82,10 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   clearFlyTo: () => set({ pendingFlyTo: null }),
   setDataStatus: (status) => set({ dataStatus: status }),
   setDataProgress: (fraction) => set({ dataProgress: fraction }),
+  setFilters: (update) => set((s) => ({ filters: { ...s.filters, ...update } })),
+  resetFilters: () => set({ filters: DEFAULT_FILTERS }),
+  setDataBounds: (bounds) => set({ dataBounds: bounds }),
+  setVisibleCount: (count) => set({ visibleCount: count }),
   setCameraMode: (mode) => set({ cameraMode: mode }),
   setView: (view) => set({ view }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),

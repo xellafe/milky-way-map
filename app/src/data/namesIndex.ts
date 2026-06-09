@@ -87,20 +87,29 @@ export interface StarSearchResult {
   label: string;
 }
 
-/** Prefix search over normalized names/ids; deduped by star, max `limit`. */
+/**
+ * Search over normalized names/ids (SPEC §6.4 prefix/fuzzy): prefix matches
+ * rank first, substring matches after; deduped by star, max `limit`.
+ */
 export function searchStars(query: string, limit = 8): StarSearchResult[] {
   if (!searchEntries) return [];
   const q = normalizeQuery(query);
   if (q.length < 2) return [];
   const seen = new Set<number>();
-  const results: StarSearchResult[] = [];
+  const prefix: StarSearchResult[] = [];
+  const substring: StarSearchResult[] = [];
   for (const entry of searchEntries) {
-    if (!entry.key.startsWith(q) || seen.has(entry.index)) continue;
-    seen.add(entry.index);
-    results.push({ index: entry.index, label: entry.label });
-    if (results.length >= limit) break;
+    if (seen.has(entry.index)) continue;
+    if (entry.key.startsWith(q)) {
+      seen.add(entry.index);
+      prefix.push({ index: entry.index, label: entry.label });
+      if (prefix.length >= limit) break;
+    } else if (substring.length < limit && entry.key.includes(q)) {
+      seen.add(entry.index);
+      substring.push({ index: entry.index, label: entry.label });
+    }
   }
-  return results;
+  return [...prefix, ...substring].slice(0, limit);
 }
 
 /** Test seam: inject a small synthetic index without fetching. */

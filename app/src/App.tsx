@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { loadNamesIndex } from './data/namesIndex';
 import { fetchManifest, loadStars, type StarCoreData } from './data/starData';
 import { setStarDetails } from './data/starDetailsStore';
+import { computeDataBounds } from './lib/filterMask';
 import { isWebGL2Available } from './lib/webgl';
 import { GalaxyScene } from './scene/GalaxyScene';
 import { useGalaxyMapStore } from './state/store';
+import { FiltersPanel } from './ui/FiltersPanel';
 import { HoverLabel } from './ui/HoverLabel';
 import { LoadingOverlay } from './ui/LoadingOverlay';
 import { SearchBox } from './ui/SearchBox';
@@ -34,7 +36,10 @@ export default function App() {
       setStars(core);
       setDataStatus('ready');
       handle.details.then((details) => {
-        if (!cancelled) setStarDetails(details);
+        if (cancelled) return;
+        setStarDetails(details);
+        // Filter slider bounds come from the real data min/max (SPEC §13).
+        useGalaxyMapStore.getState().setDataBounds(computeDataBounds(details));
       });
       // Classic names index (~16 MB): background load for hover labels/search.
       loadNamesIndex(DATA_BASE_URL).catch((error: unknown) =>
@@ -61,6 +66,7 @@ export default function App() {
     <div className="relative h-full w-full bg-black">
       <GalaxyScene stars={stars} />
       <SearchBox stars={stars} />
+      <FiltersPanel />
       <StarPanel stars={stars} />
       <HoverLabel />
       <LoadingOverlay />

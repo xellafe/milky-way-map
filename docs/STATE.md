@@ -5,9 +5,22 @@
 ## Stato corrente
 
 - **Data ultimo aggiornamento:** 2026-06-10
-- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3 — Picking, selezione, pannello dettagli** ✅ (AC verificati; M3 non ha checkpoint in SPEC §9)
-- **Milestone corrente:** **M4 — Ricerca & filtri** (in corso)
-- **Prossimo passo:** completare la ricerca §6.4 (id Gaia/TYC via bucket on-demand, substring match) e i filtri runtime §6.5 via maschera GPU (attributo visibilità, bounds da min/max reali). `[CHECKPOINT 3]` al termine di M4.
+- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4 — Ricerca & filtri** ✅
+- **Milestone corrente:** — (M4 chiusa, fermo al `[CHECKPOINT 3]`)
+- **Prossimo passo:** attendere ok umano al `[CHECKPOINT 3]`, poi **M5 — Modalità camera & transizioni**: free-fly + orbit on lock (selezione → orbita attorno al bersaglio, SPEC §6.3), fly-to animato con tween, rispetto di `prefers-reduced-motion`. Il `FlyToHandler` attuale (salto istantaneo) va sostituito con transizioni interpolate; lo store ha già `cameraMode`.
+
+## Cosa esiste (M4, in aggiunta a M0–M3)
+
+- **Filtri runtime §6.5 via maschera GPU**: attributo `aVisible` (Uint8) aggiornato in place da `applyFilterMask` (`starGeometry.ts`) — mai ricaricati i dati; sia `star.vert` sia `star-pick.vert` scartano i punti filtrati (**le stelle nascoste non sono né visibili né pickabili**). `computeFilterMask` puro in `lib/filterMask.ts`: multi-select spettrale O–M+sconosciuto, range distanza/mag.app/mag.ass (NaN nascosto sotto range attivo — documentato), toggle esopianeti/multiple/variabili. Bounds slider da min/max reali (`computeDataBounds`, NaN-safe) calcolati al load dei details. Default: tutto visibile (SPEC §13).
+- **FiltersPanel**: collassabile, checkbox + 2 input numerici per range + 3 toggle + reset; **contatore stelle visibili** (dal conteggio reale della maschera, `store.visibleCount`).
+- **Ricerca §6.4 completata**: id **Gaia** via bucket on-demand (`idSearch.ts`, bucket `(id>>35)%256`), id **TYC** (`TYC1%256`), tollera prefissi "Gaia DR3"/"TYC"; substring match con ranking (prefix prima) per i nomi; risultati id asincroni keyed-by-query nella SearchBox.
+- Test: **62 unit** (maschera con casi NaN/flag/bounds, routing bucket, ranking) + **15 e2e** (conteggi attesi **calcolati dalla fixture** per ogni filtro: classi spettrali esatte, exo=1, range distanza/magnitudini, variabili/multiple; pixel readback prima/dopo; ricerca per HD id → fly-to; stelle filtrate non pickabili).
+
+## Esiti verifica M4 (AC) e note di debug
+
+- AC ✅: ogni filtro produce esattamente l'insieme atteso (conteggi verificati contro la fixture, non solo "di meno"); ricerca → fly-to verificata (HD 8890 → Polaris centrata, hover sul centro la conferma).
+- Bug reale trovato dai test: i toggle di classe spettrale costruivano l'array dalla **closure** del componente → click rapidi consecutivi ripartivano da stato stantio e annullavano il toggle precedente. Fix: leggere `getState()` dello store nel handler.
+- Flakiness e2e: troppe pagine WebGL parallele in headless affamano main thread/GPU → check di azionabilità Playwright a vuoto. Mitigato: `workers` cappati (4 locali / 2 CI), timeout test 60 s, `expect.poll` sul contatore, poll sul pixel readback. Suite passata 2× consecutive.
 
 ## Cosa esiste (M3, in aggiunta a M0–M2)
 
@@ -84,6 +97,8 @@
 | `[CHECKPOINT 0]` | M0 | ✅ tutti passati | build ok; scena nera renderizzata (Playwright + screenshot); lint/typecheck ok; 14 unit test verdi |
 | `[CHECKPOINT 1]` | M1 | ✅ tutti passati | artefatti generati e validati contro schema (roundtrip test); fixtures committate; 82 pytest verdi (pc→ly, sentinelle, mappa colore, pack SoA, cross-match, golden); esclusioni loggate (60.830) in stdout e nel manifest |
 | `[CHECKPOINT 2]` | M2 | ✅ tutti passati | rendering corretto su fixture (e2e readPixels) e su dati completi (screenshot ispezionato, 2.49M stelle); smoke visivo Playwright verde (3 test); FPS misurato 58–60 @1080p RTX 3080 vs budget 60 |
+| — (M3, no checkpoint) | M3 | ✅ tutti passati | Polaris corretta via ricerca E via click (valori dalla fixture + spot check dati completi); TRAPPIST-1 via ricerca (non agganciata by design, badge + 7 pianeti) |
+| `[CHECKPOINT 3]` | M4 | ✅ tutti passati | ogni filtro produce l'insieme visibile esatto (conteggi attesi calcolati dalla fixture); ricerca→fly-to ok (HD id incluso); stelle filtrate non pickabili; 62 unit + 15 e2e verdi ×2 run |
 
 ## Come riprendere
 

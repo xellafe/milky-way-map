@@ -39,6 +39,20 @@
     "yes": "Ja",
     "no": "Nein"
   },
+  "filters": {
+    "title": "Filter",
+    "spectralClass": "Spektraltyp",
+    "unknown": "unbekannt",
+    "distance": "Entfernung",
+    "appMag": "Scheinbare Helligkeit",
+    "absMag": "Absolute Helligkeit",
+    "min": "Minimum",
+    "max": "Maximum",
+    "onlyExoplanets": "Nur Sterne mit Exoplaneten",
+    "onlyMultiple": "Nur Mehrfachsysteme",
+    "onlyVariable": "Nur veränderliche Sterne",
+    "reset": "Filter zurücksetzen"
+  },
   "units": {
     "ly": "Lj",
     "kelvin": "K",

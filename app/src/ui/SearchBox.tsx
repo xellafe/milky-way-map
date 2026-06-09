@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadExoplanets, searchHosts } from '../data/exoplanets';
-import { isNamesIndexReady, searchStars } from '../data/namesIndex';
+import { looksLikeCatalogId, searchByCatalogId } from '../data/idSearch';
+import { isNamesIndexReady, searchStars, type StarSearchResult } from '../data/namesIndex';
 import type { StarCoreData } from '../data/starData';
 import { useGalaxyMapStore } from '../state/store';
 
@@ -27,6 +28,24 @@ export function SearchBox({ stars }: { stars: StarCoreData | null }) {
   // Bumped when async catalogs (names index / exoplanets) finish loading,
   // so an already-typed query re-runs against the fresh data.
   const [dataVersion, setDataVersion] = useState(0);
+  // Exact Gaia/TYC id lookups resolve asynchronously (on-demand bucket fetch);
+  // results are keyed by query so stale answers are ignored.
+  const [idResults, setIdResults] = useState<{ query: string; items: StarSearchResult[] } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!looksLikeCatalogId(query)) return;
+    let cancelled = false;
+    searchByCatalogId(query)
+      .then((items) => {
+        if (!cancelled) setIdResults({ query, items });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [query]);
   const inputRef = useRef<HTMLInputElement>(null);
   const selectStar = useGalaxyMapStore((s) => s.selectStar);
   const selectHost = useGalaxyMapStore((s) => s.selectHost);
@@ -52,8 +71,19 @@ export function SearchBox({ stars }: { stars: StarCoreData | null }) {
         hostname: h.hostname,
         unanchored: !h.matched,
       }));
-    return [...starResults, ...hostResults];
-  }, [query, dataVersion]);
+    const catalogIdResults: ResultItem[] =
+      idResults?.query === query
+        ? idResults.items
+            .filter((r) => !seen.has(r.index))
+            .map((r) => ({
+              key: `id-${r.index}`,
+              label: r.label,
+              kind: 'star' as const,
+              starIndex: r.index,
+            }))
+        : [];
+    return [...starResults, ...catalogIdResults, ...hostResults];
+  }, [query, dataVersion, idResults]);
   const activeIndex = Math.min(active, Math.max(results.length - 1, 0));
 
   const choose = (item: ResultItem) => {

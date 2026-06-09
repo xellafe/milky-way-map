@@ -39,6 +39,20 @@
     "yes": "Sì",
     "no": "No"
   },
+  "filters": {
+    "title": "Filtri",
+    "spectralClass": "Tipo spettrale",
+    "unknown": "sconosciuto",
+    "distance": "Distanza",
+    "appMag": "Magnitudine apparente",
+    "absMag": "Magnitudine assoluta",
+    "min": "Minimo",
+    "max": "Massimo",
+    "onlyExoplanets": "Solo stelle con esopianeti",
+    "onlyMultiple": "Solo sistemi multipli",
+    "onlyVariable": "Solo stelle variabili",
+    "reset": "Azzera filtri"
+  },
   "units": {
     "ly": "a.l.",
     "kelvin": "K",

@@ -1,11 +1,13 @@
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { FlyControls, Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { StarCoreData } from '../data/starData';
+import { getStarDetails } from '../data/starDetailsStore';
+import { useGalaxyMapStore } from '../state/store';
 import { FlyToHandler } from './FlyToHandler';
 import { StarCloud } from './StarCloud';
-import { buildStarGeometry } from './starGeometry';
+import { applyFilterMask, buildStarGeometry } from './starGeometry';
 import { StarPicking } from './StarPicking';
 
 // Free-fly speed in ly/s — the solar neighborhood is a few tens of ly across.
@@ -26,6 +28,16 @@ const showStats = urlParams.get('stats') === '1';
  */
 export function GalaxyScene({ stars }: { stars: StarCoreData | null }) {
   const geometry = useMemo(() => (stars ? buildStarGeometry(stars) : null), [stars]);
+  const filters = useGalaxyMapStore((s) => s.filters);
+  // dataBounds flips when the detail sections land → re-apply range filters.
+  const dataBounds = useGalaxyMapStore((s) => s.dataBounds);
+
+  useEffect(() => {
+    if (!geometry || !stars) return;
+    void dataBounds;
+    const visible = applyFilterMask(geometry, stars, getStarDetails(), filters);
+    useGalaxyMapStore.getState().setVisibleCount(visible);
+  }, [geometry, stars, filters, dataBounds]);
 
   return (
     <Canvas
