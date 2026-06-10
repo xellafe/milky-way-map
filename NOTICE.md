@@ -32,7 +32,20 @@ Acknowledgment standard da includere:
   ("Planetary Systems Composite Parameters Table") in data 2026-06-09, al
   momento del primo fetch dei dati (M1).
 
-## 3. Dati linee costellazioni
+## 3. Dati linee costellazioni — Stellarium "modern" sky culture
 
-Da definire in fase di implementazione (M6): riportare qui fonte e licenza
-dell'eventuale set di asterismi utilizzato.
+- **Autori:** Stellarium's team
+- **Licenza:** Creative Commons Attribution-ShareAlike 4.0 International (**CC BY-SA 4.0**)
+  — dichiarata per "testo e dati" della sky culture nel relativo `description.md`.
+  L'autore originale delle linee western ha inoltre concesso esplicitamente il
+  riuso sotto MIT in https://github.com/Stellarium/stellarium/discussions/790.
+- **Fonte (pinnata, M6 2026-06-10):** Stellarium release **v26.1**,
+  `skycultures/modern/index.json`
+  (https://raw.githubusercontent.com/Stellarium/stellarium/v26.1/skycultures/modern/index.json;
+  sha256 in `data/raw/sources.json`).
+- **Uso:** solo le definizioni delle linee (sequenze di id Hipparcos) e i nomi
+  delle 88 costellazioni IAU, convertite in indici stella da
+  `data-pipeline/build_constellations.py` → `data/constellations.json`.
+  Le illustrazioni (Free Art License) **non** sono usate.
+- **Obblighi:** attribuzione + share-alike: `constellations.json` è un derivato
+  e resta sotto CC BY-SA 4.0 (come gli altri artefatti dati, vedi §1).

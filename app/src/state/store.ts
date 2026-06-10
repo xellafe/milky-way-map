@@ -39,6 +39,11 @@ export interface GalaxyMapState {
   dataBounds: DataBounds | null;
   /** Stars passing the current filters; null until the first mask is applied. */
   visibleCount: number | null;
+  /**
+   * Bumped when the always-on label layout changes (the labels themselves
+   * live in labelStore — module holder, never in reactive state).
+   */
+  labelsVersion: number;
 
   selectStar: (index: number | null) => void;
   selectHost: (hostname: string) => void;
@@ -51,6 +56,7 @@ export interface GalaxyMapState {
   resetFilters: () => void;
   setDataBounds: (bounds: DataBounds) => void;
   setVisibleCount: (count: number) => void;
+  bumpLabelsVersion: () => void;
   setCameraMode: (mode: CameraMode) => void;
   setView: (view: ViewMode) => void;
   toggleNames: () => void;
@@ -74,6 +80,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   filters: DEFAULT_FILTERS,
   dataBounds: null,
   visibleCount: null,
+  labelsVersion: 0,
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
   // deselecting releases the lock. Hosts (matched:false, e.g. TRAPPIST-1)
@@ -94,6 +101,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   resetFilters: () => set({ filters: DEFAULT_FILTERS }),
   setDataBounds: (bounds) => set({ dataBounds: bounds }),
   setVisibleCount: (count) => set({ visibleCount: count }),
+  bumpLabelsVersion: () => set((s) => ({ labelsVersion: s.labelsVersion + 1 })),
   setCameraMode: (mode) => set({ cameraMode: mode }),
   setView: (view) => set({ view }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),

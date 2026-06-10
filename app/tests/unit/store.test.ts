@@ -77,4 +77,11 @@ describe('galaxy map store', () => {
     expect(useGalaxyMapStore.getState().showNames).toBe(true);
     expect(useGalaxyMapStore.getState().showConstellations).toBe(false);
   });
+
+  it('bumps the labels version monotonically', () => {
+    const before = useGalaxyMapStore.getState().labelsVersion;
+    useGalaxyMapStore.getState().bumpLabelsVersion();
+    useGalaxyMapStore.getState().bumpLabelsVersion();
+    expect(useGalaxyMapStore.getState().labelsVersion).toBe(before + 2);
+  });
 });

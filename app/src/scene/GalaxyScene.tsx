@@ -6,7 +6,9 @@ import { getStarCore, setStarGeometry } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import { useGalaxyMapStore } from '../state/store';
 import { CameraControls } from './CameraControls';
+import { ConstellationLines } from './ConstellationLines';
 import { StarCloud } from './StarCloud';
+import { StarLabels } from './StarLabels';
 import { applyFilterMask, buildStarGeometry } from './starGeometry';
 import { StarPicking } from './StarPicking';
 
@@ -76,6 +78,8 @@ export function GalaxyScene() {
       <color attach="background" args={[0x000000]} />
       {geometry && <StarCloud />}
       {geometry && <StarPicking />}
+      {geometry && <ConstellationLines />}
+      {geometry && <StarLabels />}
       <CameraControls />
       <EffectComposer>
         <Bloom intensity={1.1} luminanceThreshold={0.05} luminanceSmoothing={0.2} mipmapBlur />

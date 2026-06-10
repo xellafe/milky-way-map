@@ -27,6 +27,7 @@ export interface SearchEntry {
 let namesIndex: NamesIndex | null = null;
 let searchEntries: SearchEntry[] | null = null;
 let loadPromise: Promise<NamesIndex> | null = null;
+let properNamedStars: { index: number; name: string }[] | null = null;
 
 export function normalizeQuery(value: string): string {
   return value
@@ -82,6 +83,21 @@ export function isNamesIndexReady(): boolean {
   return namesIndex !== null;
 }
 
+/**
+ * Stars with a PROPER name (≈450 in HYG) — the candidate set for the
+ * always-on labels (SPEC §6.2). Labeling arbitrary catalog ids would be
+ * clutter by definition; the curated proper names cover the famous bright
+ * stars. Computed once, after the index loads; empty until then.
+ */
+export function getProperNamedStars(): { index: number; name: string }[] {
+  if (properNamedStars) return properNamedStars;
+  if (!namesIndex) return [];
+  properNamedStars = Object.entries(namesIndex)
+    .filter(([, entry]) => entry.proper)
+    .map(([key, entry]) => ({ index: Number(key), name: entry.proper! }));
+  return properNamedStars;
+}
+
 export interface StarSearchResult {
   index: number;
   label: string;
@@ -117,4 +133,5 @@ export function _setNamesIndexForTests(index: NamesIndex | null): void {
   namesIndex = index;
   searchEntries = index ? buildSearchEntries(index) : null;
   loadPromise = index ? Promise.resolve(index) : null;
+  properNamedStars = null;
 }

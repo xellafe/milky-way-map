@@ -39,6 +39,11 @@
     "yes": "Sí",
     "no": "No"
   },
+  "view": {
+    "title": "Opciones de vista",
+    "showNames": "Mostrar siempre los nombres de las estrellas",
+    "showConstellations": "Líneas de las constelaciones"
+  },
   "filters": {
     "title": "Filtros",
     "spectralClass": "Tipo espectral",

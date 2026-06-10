@@ -4,9 +4,22 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-06-10 (M5 completata + estensioni camera richieste dall'utente + decisione costellazioni M6 verificata)
-- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5 — Modalità camera & transizioni** ✅
-- **Milestone corrente:** — (M5 chiusa; prossima M6 — Etichette & costellazioni; il prossimo `[CHECKPOINT 4]` è a fine M7)
+- **Data ultimo aggiornamento:** 2026-06-10 (M6 completata)
+- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5** ✅, **M6 — Etichette & costellazioni** ✅
+- **Milestone corrente:** — (M6 chiusa; prossima M7 — System View & esopianeti, che termina col `[CHECKPOINT 4]`)
+
+## Cosa esiste (M6, in aggiunta a M0–M5)
+
+- **Pipeline costellazioni**: `fetch_constellations.py` (Stellarium **v26.1** pinnato, `skycultures/modern/index.json`, sha256 in `data/raw/sources.json`) + `build_constellations.py` → `data/constellations.json` (~10 KB): 88 costellazioni IAU, linee come **polilinee di indici stella** (HIP → indice via `names.index.json`, allineato a stars.bin per costruzione). Polilinee spezzate attorno a stelle mancanti, segmenti droppati contati (reali: **689/695 tenuti, 6 droppati, 0 vuote**; fixture: 549/695, 8 vuote). Licenza **CC BY-SA 4.0** (Stellarium's team) documentata in `NOTICE.md` §3. Fixture committata (`fixtures/constellations.json`, UMi ancorata a Polaris). 97 pytest verdi.
+- **Linee costellazioni nell'app** (`ConstellationLines.tsx` + `constellationGeometry.ts`): default **off** (SPEC §6.2); `constellations.json` caricato lazy al primo toggle-on; un solo `LineSegments` (1 draw call) con posizioni lette dalla SoA (guardia anti-drift: indice fuori range → throw); steel blue translucido (0x4a6a96, opacity 0.35, depthWrite off). Nota documentata: le figure sono "classiche" viste da Sol e si deformano volando via — natura 3D, non bug.
+- **Etichette "mostra sempre i nomi"** (`StarLabels.tsx` in-Canvas + `ui/StarLabelsLayer.tsx` DOM + `lib/labelCulling.ts` puro): candidate = sole stelle con **nome proprio** (~450, `getProperNamedStars()` — decisione di scope documentata: etichettare id arbitrari è clutter per definizione); culling per **magnitudine apparente dalla camera** (modulo di distanza m=M+5·log₁₀(d/10pc) → luminosità+zoom), soglia 6.5, cap **20 label**, separazione min 64 px (greedy, vince la più brillante); refresh ogni 150 ms. Le label vivono in `labelStore` (module holder, regola OOM) — React vede solo `labelsVersion`. Layer DOM pointer-events-none.
+- **`ViewTogglesPanel`** (bottom-right): 2 checkbox (nomi / costellazioni), stringhe i18n nei 5 locale (`view.*`).
+- Test: **92 unit** (culling, geometria linee, validazione artefatto fixture, mapping pipeline) + **28 e2e** (default senza clutter; toggle nomi 1..20 label e off; label "Polaris" dopo fly-to; toggle linee → pixel accesi su/giù). `scripts/check-m6.mjs` per lo spot-check su dati reali.
+
+## Esiti verifica M6 (AC)
+
+- AC ✅: i toggle funzionano (e2e su fixture ×2 run); **default = zero clutter** (entrambi off, 0 label, 0 linee — e2e). Spot-check dati completi (2,49M stelle, preview + `check-m6.mjs`): PASS — 20 label (cap), nomi celebri corretti (Sirius, Fomalhaut, Altair…), linee 75k→129k pixel accesi, nessun pageerror; screenshot ispezionato.
+- `test.slow()` aggiunto al test e2e M4 delle classi spettrali (8 click sequenziali con ricalcolo maschera: a 28 test paralleli superava i 60 s di default — era già a 58 s prima di M6).
 
 ## Cosa esiste (M5, in aggiunta a M0–M4)
 
@@ -41,7 +54,7 @@
 - **Fix**: `FreeFlyControls.tsx` custom sostituisce drei/three FlyControls — il look segue il **delta del mouse 1:1** (fermi il mouse → si ferma), pointer capture, WASD + R/F (su/giù) + Q/E (roll), tasti ignorati quando il focus è in un input. Hover-picking soppresso durante il drag (evita pick render inutili). Costanti: LOOK_SENSITIVITY 0.0025 rad/px, 25 ly/s, roll 1 rad/s.
 - **Test**: `tests/e2e/camera.spec.ts` (4 test: rotazione da delta, stop col mouse fermo — anti hold-at-offset —, WASD/R/F/Q/E, click pulito seleziona ancora) usando il bridge camera, che è permanente per gli e2e di M5. Suite completa: 63 unit + 19 e2e verdi.
 - Nota M5: orbit-on-lock e fly-to animato sono stati costruiti sopra questo fix (ora tutto in `CameraControls.tsx`).
-- **Prossimo passo:** **M6 — Etichette & costellazioni** (SPEC §6.2, §9): toggle "mostra sempre i nomi" con culling per luminosità/zoom; linee costellazioni con toggle (default off). ✅ **Decisione fonte linee VERIFICATA** (2026-06-10): **skyculture "modern" di Stellarium** (`skycultures/modern/index.json`) — linee come **sequenze di id HIP** (join diretto col nostro indice classico → linee ancorate alle stelle reali della nuvola); licenza dichiarata in `description.md`: **testo e dati CC BY-SA 4.0**, autori "Stellarium's team" (compatibile col nostro modello dati CC BY-SA; in più l'autore originale delle linee western ha concesso il riuso MIT in stellarium/discussions/790). In M6: pinnare release/commit Stellarium, aggiungere attribuzione a `NOTICE.md`. Regola permanente: le posizioni schermo/label per-stella vanno in module holder, mai nello store reattivo.
+- **Prossimo passo:** **M7 — System View & esopianeti** (SPEC §6.7, §9): ingresso nel sistema (bottone "Vedi sistema" oggi disabilitato in `StarPanel`), orbite in scala reale (AU; ellisse 3D se `pl_orbincl` presente, schematica 2D altrimenti), animazione tempo reale con slider scala temporale (default 1 s = 2 giorni, già nello store) + modalità log, toggle zona abitabile (√L, modello già usato per `in_hz` in M1), dettagli pianeta. Lo store ha già `view: 'galaxy'|'system'`, `showHabitableZone`, `timeScaleDaysPerSecond`. **AC**: TRAPPIST-1 (7 pianeti) e Alpha Centauri (= Proxima Cen, vedi M1) con periodi/animazione corretti; HZ attivabile; orbite schematiche senza inclinazione. Termina col **`[CHECKPOINT 4]`**. Regola permanente: dati per-pianeta/per-stella nuovi in module holder, mai nello store reattivo.
 
 ## Cosa esiste (M4, in aggiunta a M0–M3)
 
@@ -134,10 +147,11 @@
 | — (M3, no checkpoint) | M3 | ✅ tutti passati | Polaris corretta via ricerca E via click (valori dalla fixture + spot check dati completi); TRAPPIST-1 via ricerca (non agganciata by design, badge + 7 pianeti) |
 | `[CHECKPOINT 3]` | M4 | ✅ tutti passati | ogni filtro produce l'insieme visibile esatto (conteggi attesi calcolati dalla fixture); ricerca→fly-to ok (HD id incluso); stelle filtrate non pickabili; 62 unit + 15 e2e verdi ×2 run |
 | — (M5, no checkpoint) | M5 | ✅ tutti passati | lock → orbita attorno al bersaglio (raggio costante, bersaglio centrato); fly-to interpolato (campione mid-flight); reduced-motion = salto istantaneo; 80 unit + 22 e2e verdi ×2 run |
+| — (M6, no checkpoint) | M6 | ✅ tutti passati | toggle funzionanti (e2e ×2 run); default zero clutter; spot-check dati completi PASS (20 label cap, linee visibili, no errori); 92 unit + 28 e2e + 97 pytest verdi |
 
 ## Come riprendere
 
 1. Leggi `docs/SPEC.md` e `AGENTS.md`.
-2. Guarda "Milestone corrente / Prossimo passo" qui sopra — la fonte delle linee costellazioni per M6 è decisa e verificata (Stellarium modern, CC BY-SA 4.0).
+2. Guarda "Milestone corrente / Prossimo passo" qui sopra — prossima è M7 (System View), che termina col `[CHECKPOINT 4]`.
 3. Pipeline: `cd data-pipeline && .venv/Scripts/python -m pytest` (82 test); rigenerare artefatti: `fetch_athyg.py` → `fetch_exoplanets.py` → `build_star_binary.py` → `crossmatch.py`.
 4. M2 parte da `app/src/data/` (loader) e `app/src/scene/` + `app/src/shaders/`: leggere `.claude/skills/three-points-shader/SKILL.md`; le fixtures in `data-pipeline/fixtures/` sono una data-dir drop-in per i test.

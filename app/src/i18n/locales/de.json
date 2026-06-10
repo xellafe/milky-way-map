@@ -39,6 +39,11 @@
     "yes": "Ja",
     "no": "Nein"
   },
+  "view": {
+    "title": "Ansichtsoptionen",
+    "showNames": "Sternnamen immer anzeigen",
+    "showConstellations": "Sternbildlinien"
+  },
   "filters": {
     "title": "Filter",
     "spectralClass": "Spektraltyp",

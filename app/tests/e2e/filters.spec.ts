@@ -63,6 +63,9 @@ function pollCount(page: Page) {
 }
 
 test('spectral class filter shows exactly the selected classes', async ({ page }) => {
+  // 8 sequential clicks, each recomputing the full GPU mask: under parallel
+  // WebGL page contention this regularly needs more than the 60 s default.
+  test.slow();
   await openApp(page);
   await pollCount(page).toBe(fx.count);
 

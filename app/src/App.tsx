@@ -12,7 +12,9 @@ import { FiltersPanel } from './ui/FiltersPanel';
 import { HoverLabel } from './ui/HoverLabel';
 import { LoadingOverlay } from './ui/LoadingOverlay';
 import { SearchBox } from './ui/SearchBox';
+import { StarLabelsLayer } from './ui/StarLabelsLayer';
 import { StarPanel } from './ui/StarPanel';
+import { ViewTogglesPanel } from './ui/ViewTogglesPanel';
 
 const webgl2Available = isWebGL2Available();
 const DATA_BASE_URL = '/data/';
@@ -68,8 +70,10 @@ export default function App() {
   return (
     <div className="relative h-full w-full bg-black">
       <GalaxyScene />
+      <StarLabelsLayer />
       <SearchBox />
       <FiltersPanel />
+      <ViewTogglesPanel />
       <StarPanel />
       <HoverLabel />
       <LoadingOverlay />
