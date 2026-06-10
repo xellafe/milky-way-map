@@ -30,7 +30,6 @@
     "planetsCount_one": "{{count}} known planet",
     "planetsCount_other": "{{count}} known planets",
     "viewSystem": "View system",
-    "viewSystemSoon": "The System View arrives in a later milestone",
     "notAnchored": "Not anchored to a catalog star — reachable via search only",
     "hostStar": "Host star data (NASA Exoplanet Archive)",
     "stTeff": "Star temperature",
@@ -62,10 +61,37 @@
     "ly": "ly",
     "kelvin": "K",
     "lsun": "L☉",
-    "rsun": "R☉"
+    "rsun": "R☉",
+    "au": "AU",
+    "days": "days",
+    "rearth": "R⊕",
+    "mearth": "M⊕"
   },
   "errors": {
     "webgl2Required": "Galaxy Map requires WebGL2, which is not available in this browser. Please use a recent desktop browser with hardware acceleration enabled.",
     "dataLoadFailed": "Could not load the star catalog. Please check your connection and reload the page."
+  },
+  "system": {
+    "back": "Back to galaxy",
+    "planets": "Planets",
+    "timeScale": "Time scale",
+    "daysPerSecond": "{{value}} days/s",
+    "logScale": "Log scale",
+    "pause": "Pause",
+    "resume": "Resume",
+    "habitableZone": "Habitable zone",
+    "hzApprox": "(approximate √L model)",
+    "scaleNote": "Orbits are real-scale (AU); star and planet sizes are not to scale.",
+    "period": "Orbital period",
+    "semiMajorAxis": "Semi-major axis",
+    "radius": "Radius",
+    "mass": "Mass",
+    "eccentricity": "Eccentricity",
+    "inclination": "Inclination",
+    "method": "Discovery method",
+    "discYear": "Discovery year",
+    "eqTemp": "Equilibrium temperature",
+    "inHz": "In habitable zone",
+    "schematicOrbit": "Schematic orbit (inclination n/a)"
   }
 }

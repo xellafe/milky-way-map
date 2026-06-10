@@ -78,6 +78,22 @@ describe('galaxy map store', () => {
     expect(useGalaxyMapStore.getState().showConstellations).toBe(false);
   });
 
+  it('enters and exits the System View keeping the galaxy selection', () => {
+    useGalaxyMapStore.getState().selectStar(584);
+    useGalaxyMapStore.getState().enterSystemView('Proxima Cen');
+    let s = useGalaxyMapStore.getState();
+    expect(s.view).toBe('system');
+    expect(s.systemHostname).toBe('Proxima Cen');
+    expect(s.selectedPlanet).toBeNull();
+    useGalaxyMapStore.getState().selectPlanet('Proxima Cen b');
+    useGalaxyMapStore.getState().exitSystemView();
+    s = useGalaxyMapStore.getState();
+    expect(s.view).toBe('galaxy');
+    expect(s.systemHostname).toBeNull();
+    expect(s.selectedPlanet).toBeNull();
+    expect(s.selection).toEqual({ kind: 'star', index: 584 });
+  });
+
   it('bumps the labels version monotonically', () => {
     const before = useGalaxyMapStore.getState().labelsVersion;
     useGalaxyMapStore.getState().bumpLabelsVersion();

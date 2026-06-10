@@ -106,8 +106,8 @@ test('TRAPPIST-1 via search: unanchored host with 7 planets', async ({ page }) =
   await expect(panel).toContainText('TRAPPIST-1 h');
   // Host star temperature from pscomppars (fixture: 2566 K).
   await expect(panel).toContainText('2,566 K');
-  // The System View button exists but is disabled until M7.
-  await expect(page.getByTestId('view-system-button')).toBeDisabled();
+  // Since M7 the System View button is live (system.spec.ts covers the view).
+  await expect(page.getByTestId('view-system-button')).toBeEnabled();
 });
 
 test('hovering a star shows its name label', async ({ page }) => {

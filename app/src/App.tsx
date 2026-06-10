@@ -7,6 +7,7 @@ import { setStarDetails } from './data/starDetailsStore';
 import { computeDataBounds } from './lib/filterMask';
 import { isWebGL2Available } from './lib/webgl';
 import { GalaxyScene } from './scene/GalaxyScene';
+import { SystemScene } from './scene/SystemScene';
 import { useGalaxyMapStore } from './state/store';
 import { FiltersPanel } from './ui/FiltersPanel';
 import { HoverLabel } from './ui/HoverLabel';
@@ -14,6 +15,7 @@ import { LoadingOverlay } from './ui/LoadingOverlay';
 import { SearchBox } from './ui/SearchBox';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
 import { StarPanel } from './ui/StarPanel';
+import { SystemOverlay } from './ui/SystemOverlay';
 import { ViewTogglesPanel } from './ui/ViewTogglesPanel';
 
 const webgl2Available = isWebGL2Available();
@@ -21,6 +23,7 @@ const DATA_BASE_URL = '/data/';
 
 export default function App() {
   const { t } = useTranslation();
+  const view = useGalaxyMapStore((s) => s.view);
   const setDataStatus = useGalaxyMapStore((s) => s.setDataStatus);
   const setDataProgress = useGalaxyMapStore((s) => s.setDataProgress);
 
@@ -69,13 +72,29 @@ export default function App() {
 
   return (
     <div className="relative h-full w-full bg-black">
-      <GalaxyScene />
-      <StarLabelsLayer />
-      <SearchBox />
-      <FiltersPanel />
-      <ViewTogglesPanel />
-      <StarPanel />
-      <HoverLabel />
+      {view === 'galaxy' ? (
+        <>
+          <GalaxyScene />
+          <StarLabelsLayer />
+          <SearchBox />
+          <FiltersPanel />
+          <ViewTogglesPanel />
+          <StarPanel />
+          <HoverLabel />
+        </>
+      ) : (
+        <>
+          <SystemScene />
+          <SystemOverlay />
+        </>
+      )}
+      {/* SPEC §6.3: animated transition into/out of the System View — a CSS
+          fade keyed by view (motion-safe only: reduced motion = hard cut). */}
+      <div
+        key={view}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-30 bg-black opacity-0 motion-safe:animate-[view-fade_450ms_ease-out]"
+      />
       <LoadingOverlay />
     </div>
   );

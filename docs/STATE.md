@@ -4,9 +4,30 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-06-10 (M6 completata)
-- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5** ✅, **M6 — Etichette & costellazioni** ✅
-- **Milestone corrente:** — (M6 chiusa; prossima M7 — System View & esopianeti, che termina col `[CHECKPOINT 4]`)
+- **Data ultimo aggiornamento:** 2026-06-11 (M7 completata)
+- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5** ✅, **M6** ✅, **M7 — System View & esopianeti** ✅
+- **Milestone corrente:** — (M7 chiusa, **fermo al `[CHECKPOINT 4]`** in attesa di ok umano)
+
+## Cosa esiste (M7, in aggiunta a M0–M6)
+
+- **Ingresso/uscita System View**: bottone "Vedi sistema" abilitato in `StarPanel` (sia host non agganciati sia stelle con esopianeti, una volta risolto l'hostname); store: `enterSystemView(hostname)` / `exitSystemView()` (+`systemHostname`, `selectedPlanet`). La selezione galassia sopravvive al rientro; la **posa camera galassia è salvata/ripristinata** via `cameraPoseStore` (il Canvas galassia viene smontato durante la System View). Transizione: **fade CSS 450 ms** keyed sulla vista (`view-fade` in index.css, `motion-safe:` → con reduced-motion taglio netto).
+- **`SystemScene`** (Canvas dedicato, 1 unità = 1 UA): stella ospite all'origine (colore da `teffToColor(st_teff)`, raggio presentazionale = max(st_rad reale, 4,5% di maxA)); **orbite in scala reale** (semiasse AU, fuoco nella stella): `lib/orbit.ts` puro con **soluzione di Keplero** (Newton su E−e·sinE=M), ellissi campionate, posizione nel tempo; **inclinazione presente → piano orbitale ruotato attorno all'asse X** (convenzione documentata: pscomppars non ha Ω/ω, l'orientazione 3D completa non è determinabile — mai inventata); **inclinazione assente → orbita schematica piatta e tratteggiata** (e mancante → cerchio). Pianeti = sfere cliccabili (raggio presentazionale ∝ ∛R⊕ clampato; disclaimer "non in scala" in UI). Drei `OrbitControls` attorno alla stella.
+- **Animazione tempo reale**: `tDays += delta × timeScaleDaysPerSecond` (scala **globale condivisa** nello store, default 1 s = 2 giorni); pianeti senza periodo restano al periastro (mai fabbricato). Controlli: **pausa/riprendi**, **slider** [0.1, 365] giorni/s con **modalità log** (mapping esponenziale), valore formattato Intl.
+- **Zona abitabile**: `lib/habitableZone.ts` = stesso modello √L della pipeline (flussi 1.1/0.53 S⊕, `st_lum` log₁₀); anello verde traslucido nel piano XZ; toggle disabilitato se `st_lum` mancante (mai stimato); etichetta "(modello approssimato √L)" in UI.
+- **Dettagli pianeta** (SPEC §6.7 completi): pannello con periodo, semiasse, R⊕, M⊕, eccentricità, inclinazione, metodo+anno di scoperta, T eq, flag HZ; selezione via **click sulla sfera** o via **chip tastiera-raggiungibili** (a11y §6.9); badge "orbita schematica" quando manca l'inclinazione.
+- Bridge e2e `?pdb=1`: `window.__system` {tDays, timeScale, hz, planets[name, angleDeg, schematic, periodDays, semiMajorAxisAU]}.
+- i18n: blocco `system.*` + unità (UA/giorni/R⊕/M⊕) nei 5 locale; rimosso `panel.viewSystemSoon`.
+- Test: **106 unit** (+14: Keplero, periodi, peri/apoastro, path chiuso, HZ vs flag fixture, colori, store) + **33 e2e** (+5 in `system.spec.ts`).
+
+## Esiti verifica M7 (AC) — da confermare al CHECKPOINT 4
+
+- **TRAPPIST-1** ✅: 7 pianeti, orbite reali (inclinazione presente), **periodi corretti verificati computazionalmente** (angolo dal bridge ≈ fase attesa da tDays/periodo di catalogo per tutti e 7, tolleranza 8° per e≈0).
+- **Alpha Centauri (= Proxima Cen**, unico host del sistema in pscomppars, vedi M1) ✅: 2 pianeti, **orbite schematiche** (inclinazione assente nel catalogo — AC), pannello dettagli con periodo 11.18 giorni / 0.04848 UA / Radial Velocity.
+- **HZ attivabile** ✅: anello √L con bordi identici al modello pipeline (verificati al 10⁻⁶), che **contiene TRAPPIST-1 e (in_hz=true) ed esclude b (in_hz=false)** — coerenza dati↔resa.
+- Pausa congela `tDays`; slider al massimo → 365 giorni/s e avanzamento conseguente; ritorno alla galassia con selezione e posa camera intatte.
+- Suite: 106 unit + 33 e2e verdi ×2 run; spot-check dati completi (`scripts/check-m7.mjs`): PASS, screenshot ispezionato (sistema TRAPPIST-1 con HZ e pannello "In zona abitabile: Sì").
+- Aggiornato il test M3 che asseriva il bottone "Vedi sistema" disabilitato ("until M7") → ora abilitato.
+- **Nota per M8**: l'animazione orbitale continua sotto `prefers-reduced-motion` (è contenuto, non decorazione — il fade di transizione invece lo rispetta); valutare in M8 se partire in pausa con reduced-motion attivo.
 
 ## Cosa esiste (M6, in aggiunta a M0–M5)
 
@@ -54,7 +75,7 @@
 - **Fix**: `FreeFlyControls.tsx` custom sostituisce drei/three FlyControls — il look segue il **delta del mouse 1:1** (fermi il mouse → si ferma), pointer capture, WASD + R/F (su/giù) + Q/E (roll), tasti ignorati quando il focus è in un input. Hover-picking soppresso durante il drag (evita pick render inutili). Costanti: LOOK_SENSITIVITY 0.0025 rad/px, 25 ly/s, roll 1 rad/s.
 - **Test**: `tests/e2e/camera.spec.ts` (4 test: rotazione da delta, stop col mouse fermo — anti hold-at-offset —, WASD/R/F/Q/E, click pulito seleziona ancora) usando il bridge camera, che è permanente per gli e2e di M5. Suite completa: 63 unit + 19 e2e verdi.
 - Nota M5: orbit-on-lock e fly-to animato sono stati costruiti sopra questo fix (ora tutto in `CameraControls.tsx`).
-- **Prossimo passo:** **M7 — System View & esopianeti** (SPEC §6.7, §9): ingresso nel sistema (bottone "Vedi sistema" oggi disabilitato in `StarPanel`), orbite in scala reale (AU; ellisse 3D se `pl_orbincl` presente, schematica 2D altrimenti), animazione tempo reale con slider scala temporale (default 1 s = 2 giorni, già nello store) + modalità log, toggle zona abitabile (√L, modello già usato per `in_hz` in M1), dettagli pianeta. Lo store ha già `view: 'galaxy'|'system'`, `showHabitableZone`, `timeScaleDaysPerSecond`. **AC**: TRAPPIST-1 (7 pianeti) e Alpha Centauri (= Proxima Cen, vedi M1) con periodi/animazione corretti; HZ attivabile; orbite schematiche senza inclinazione. Termina col **`[CHECKPOINT 4]`**. Regola permanente: dati per-pianeta/per-stella nuovi in module holder, mai nello store reattivo.
+- **Prossimo passo:** attendere **ok umano al `[CHECKPOINT 4]`** (per la revisione visiva: `cd app && npm run build && npm run preview` + browser, oppure `node scripts/check-m7.mjs` con preview attivo), poi **M8 — i18n & accessibilità** (SPEC §6.8/§6.9, §9): selettore lingua persistente in sessione (i18next già configurato con sessionStorage, manca la UI), pass a11y sulla UI 2D (tastiera, ARIA, focus), check `axe` senza violazioni bloccanti, reduced-motion (valutare partenza in pausa della System View). AC M8: cambio lingua su tutta la UI; navigazione tastiera dei pannelli; axe pulito sull'overlay.
 
 ## Cosa esiste (M4, in aggiunta a M0–M3)
 
@@ -148,10 +169,11 @@
 | `[CHECKPOINT 3]` | M4 | ✅ tutti passati | ogni filtro produce l'insieme visibile esatto (conteggi attesi calcolati dalla fixture); ricerca→fly-to ok (HD id incluso); stelle filtrate non pickabili; 62 unit + 15 e2e verdi ×2 run |
 | — (M5, no checkpoint) | M5 | ✅ tutti passati | lock → orbita attorno al bersaglio (raggio costante, bersaglio centrato); fly-to interpolato (campione mid-flight); reduced-motion = salto istantaneo; 80 unit + 22 e2e verdi ×2 run |
 | — (M6, no checkpoint) | M6 | ✅ tutti passati | toggle funzionanti (e2e ×2 run); default zero clutter; spot-check dati completi PASS (20 label cap, linee visibili, no errori); 92 unit + 28 e2e + 97 pytest verdi |
+| `[CHECKPOINT 4]` | M7 | ✅ auto-verifica passata — **in attesa di ok umano** | TRAPPIST-1: 7 pianeti, periodi verificati dal bridge; Proxima Cen: orbite schematiche (incl. assente); HZ √L coerente coi flag in_hz; 106 unit + 33 e2e verdi ×2; spot-check reale PASS |
 
 ## Come riprendere
 
 1. Leggi `docs/SPEC.md` e `AGENTS.md`.
-2. Guarda "Milestone corrente / Prossimo passo" qui sopra — prossima è M7 (System View), che termina col `[CHECKPOINT 4]`.
+2. Guarda "Milestone corrente / Prossimo passo" qui sopra — **fermo al `[CHECKPOINT 4]`** (fine M7): serve l'ok umano prima di M8.
 3. Pipeline: `cd data-pipeline && .venv/Scripts/python -m pytest` (82 test); rigenerare artefatti: `fetch_athyg.py` → `fetch_exoplanets.py` → `build_star_binary.py` → `crossmatch.py`.
 4. M2 parte da `app/src/data/` (loader) e `app/src/scene/` + `app/src/shaders/`: leggere `.claude/skills/three-points-shader/SKILL.md`; le fixtures in `data-pipeline/fixtures/` sono una data-dir drop-in per i test.

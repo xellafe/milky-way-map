@@ -30,7 +30,6 @@
     "planetsCount_one": "{{count}} bekannter Planet",
     "planetsCount_other": "{{count}} bekannte Planeten",
     "viewSystem": "System ansehen",
-    "viewSystemSoon": "Die Systemansicht folgt in einem späteren Meilenstein",
     "notAnchored": "Keinem Katalogstern zugeordnet — nur über die Suche erreichbar",
     "hostStar": "Daten des Zentralsterns (NASA Exoplanet Archive)",
     "stTeff": "Sterntemperatur",
@@ -62,10 +61,37 @@
     "ly": "Lj",
     "kelvin": "K",
     "lsun": "L☉",
-    "rsun": "R☉"
+    "rsun": "R☉",
+    "au": "AE",
+    "days": "Tage",
+    "rearth": "R⊕",
+    "mearth": "M⊕"
   },
   "errors": {
     "webgl2Required": "Galaxy Map benötigt WebGL2, das in diesem Browser nicht verfügbar ist. Bitte verwenden Sie einen aktuellen Desktop-Browser mit aktivierter Hardwarebeschleunigung.",
     "dataLoadFailed": "Der Sternkatalog konnte nicht geladen werden. Bitte überprüfen Sie Ihre Verbindung und laden Sie die Seite neu."
+  },
+  "system": {
+    "back": "Zurück zur Galaxie",
+    "planets": "Planeten",
+    "timeScale": "Zeitskala",
+    "daysPerSecond": "{{value}} Tage/s",
+    "logScale": "Log-Skala",
+    "pause": "Pause",
+    "resume": "Fortsetzen",
+    "habitableZone": "Habitable Zone",
+    "hzApprox": "(vereinfachtes √L-Modell)",
+    "scaleNote": "Bahnen in realem Maßstab (AE); Stern- und Planetengrößen nicht maßstabsgetreu.",
+    "period": "Umlaufzeit",
+    "semiMajorAxis": "Große Halbachse",
+    "radius": "Radius",
+    "mass": "Masse",
+    "eccentricity": "Exzentrizität",
+    "inclination": "Bahnneigung",
+    "method": "Entdeckungsmethode",
+    "discYear": "Entdeckungsjahr",
+    "eqTemp": "Gleichgewichtstemperatur",
+    "inHz": "In habitabler Zone",
+    "schematicOrbit": "Schematische Bahn (Neigung n. v.)"
   }
 }

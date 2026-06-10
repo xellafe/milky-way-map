@@ -1,5 +1,15 @@
 @import 'tailwindcss';
 
+/* View transition (SPEC §6.3): black overlay fading out on view change. */
+@keyframes view-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 html,
 body,
 #root {

@@ -183,9 +183,12 @@ function StarDetails({ index }: { index: number }) {
       {hasExo && (
         <button
           type="button"
-          disabled
-          title={t('panel.viewSystemSoon')}
-          className="mt-3 w-full cursor-not-allowed rounded bg-white/10 px-3 py-1.5 text-sm text-white/50"
+          // Enabled once the exoplanets data resolved this star to its host.
+          disabled={!hostname}
+          onClick={() => {
+            if (hostname) useGalaxyMapStore.getState().enterSystemView(hostname);
+          }}
+          className="mt-3 w-full rounded bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:text-white/50"
           data-testid="view-system-button"
         >
           {t('panel.viewSystem')}
@@ -260,9 +263,8 @@ function HostDetails({ hostname }: { hostname: string }) {
       </ul>
       <button
         type="button"
-        disabled
-        title={t('panel.viewSystemSoon')}
-        className="mt-3 w-full cursor-not-allowed rounded bg-white/10 px-3 py-1.5 text-sm text-white/50"
+        onClick={() => useGalaxyMapStore.getState().enterSystemView(hostname)}
+        className="mt-3 w-full rounded bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
         data-testid="view-system-button"
       >
         {t('panel.viewSystem')}

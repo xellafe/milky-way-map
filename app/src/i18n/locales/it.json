@@ -30,7 +30,6 @@
     "planetsCount_one": "{{count}} pianeta noto",
     "planetsCount_other": "{{count}} pianeti noti",
     "viewSystem": "Vedi sistema",
-    "viewSystemSoon": "La vista di sistema arriverà in una milestone successiva",
     "notAnchored": "Non agganciato a una stella di catalogo — raggiungibile solo via ricerca",
     "hostStar": "Dati della stella ospite (NASA Exoplanet Archive)",
     "stTeff": "Temperatura della stella",
@@ -62,10 +61,37 @@
     "ly": "a.l.",
     "kelvin": "K",
     "lsun": "L☉",
-    "rsun": "R☉"
+    "rsun": "R☉",
+    "au": "UA",
+    "days": "giorni",
+    "rearth": "R⊕",
+    "mearth": "M⊕"
   },
   "errors": {
     "webgl2Required": "Galaxy Map richiede WebGL2, che non è disponibile in questo browser. Usa un browser desktop recente con l'accelerazione hardware attiva.",
     "dataLoadFailed": "Impossibile caricare il catalogo stellare. Controlla la connessione e ricarica la pagina."
+  },
+  "system": {
+    "back": "Torna alla galassia",
+    "planets": "Pianeti",
+    "timeScale": "Scala temporale",
+    "daysPerSecond": "{{value}} giorni/s",
+    "logScale": "Scala log",
+    "pause": "Pausa",
+    "resume": "Riprendi",
+    "habitableZone": "Zona abitabile",
+    "hzApprox": "(modello approssimato √L)",
+    "scaleNote": "Orbite in scala reale (UA); dimensioni di stella e pianeti non in scala.",
+    "period": "Periodo orbitale",
+    "semiMajorAxis": "Semiasse maggiore",
+    "radius": "Raggio",
+    "mass": "Massa",
+    "eccentricity": "Eccentricità",
+    "inclination": "Inclinazione",
+    "method": "Metodo di scoperta",
+    "discYear": "Anno di scoperta",
+    "eqTemp": "Temperatura di equilibrio",
+    "inHz": "In zona abitabile",
+    "schematicOrbit": "Orbita schematica (inclinazione n/d)"
   }
 }

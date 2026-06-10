@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { getStarCore } from '../data/starCoreStore';
 import { prefersReducedMotion } from '../lib/motion';
 import { useGalaxyMapStore } from '../state/store';
+import { getSavedCameraPose, saveCameraPose } from './cameraPoseStore';
 import {
   type CameraTween,
   createFlyToTween,
@@ -67,6 +68,15 @@ export function CameraControls() {
   const lastLockedStar = useRef<number | null>(null);
   // True from lock acquisition until the user orbits manually.
   const autoOrbit = useRef(false);
+
+  // Restore the pose saved before the System View unmounted this Canvas.
+  useEffect(() => {
+    const saved = getSavedCameraPose();
+    if (saved) {
+      camera.position.fromArray(saved.position);
+      camera.quaternion.fromArray(saved.quaternion);
+    }
+  }, [camera]);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -139,6 +149,10 @@ export function CameraControls() {
 
   useFrame((_, delta) => {
     const store = useGalaxyMapStore.getState();
+    saveCameraPose({
+      position: camera.position.toArray() as [number, number, number],
+      quaternion: camera.quaternion.toArray() as [number, number, number, number],
+    });
 
     // New fly-to request (one-shot from the store) → start a tween.
     if (store.pendingFlyTo) {
