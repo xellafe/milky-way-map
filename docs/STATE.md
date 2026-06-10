@@ -4,7 +4,7 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-06-10 (M5 completata)
+- **Data ultimo aggiornamento:** 2026-06-10 (M5 completata + estensioni camera richieste dall'utente + decisione costellazioni M6 verificata)
 - **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5 — Modalità camera & transizioni** ✅
 - **Milestone corrente:** — (M5 chiusa; prossima M6 — Etichette & costellazioni; il prossimo `[CHECKPOINT 4]` è a fine M7)
 
@@ -12,11 +12,12 @@
 
 - **`CameraControls.tsx`** (sostituisce `FreeFlyControls.tsx` + `FlyToHandler.tsx`): un solo controller per free-fly, orbit-on-lock e transizioni animate. Free-fly invariato (delta mouse 1:1, WASD+R/F+Q/E, tasti ignorati con focus negli input).
 - **Fly-to animato** (SPEC §6.3): tween posizione+orientamento con `easeInOutCubic`, durata ∝ log della distanza clampata **0,8–2,5 s** (`flyToDurationS`); arrivo a `ARRIVE_DISTANCE_LY=4` davanti al bersaglio, centrato (invariante usata dagli e2e). Input ignorato durante il tween (max 2,5 s, niente edge case di cancel). L'up vector corrente è preservato (niente scatto di roll su camera rollata).
-- **Orbit on lock**: `selectStar(i)` → `cameraMode:'orbit'` **nello store** (deselezione/host → `'free-fly'`; host non orbitabile, non è nella nuvola). Drag = rotazione **rigida** attorno al bersaglio via quaternioni sugli assi locali camera (`orbitAroundTarget`: distanza e roll preservati, niente gimbal lock, il bersaglio mantiene la posizione a schermo); wheel = dolly clampato `[0.1, 1e6]` ly; **tasti di traslazione rilasciano il lock** (la selezione resta); Q/E roll resta attivo in orbita. Lock via click fuori centro → tween di solo orientamento che centra il bersaglio (`createAimTween`, saltato se già centrato < 0,01 rad).
-- **`prefers-reduced-motion`** (`lib/motion.ts`, letto live a ogni transizione): durata 0 → salto istantaneo, stessa posa finale.
+- **Orbit on lock**: `selectStar(i)` → `cameraMode:'orbit'` **nello store** (deselezione/host → `'free-fly'`; host non orbitabile, non è nella nuvola). Drag = rotazione **rigida** attorno al bersaglio via quaternioni sugli assi locali camera (`orbitAroundTarget`: distanza e roll preservati, niente gimbal lock, il bersaglio mantiene la posizione a schermo); wheel = dolly clampato `[0.1, 1e6]` ly; **tasti di traslazione rilasciano il lock** (la selezione resta); Q/E roll resta attivo in orbita.
+- **Estensioni richieste dall'utente (post-M5, commit `5593b77`)**: (1) **anche il click** su una stella vola alla distanza fissa `ARRIVE_DISTANCE_LY=4` (stesso percorso della ricerca; il tween di solo orientamento è stato rimosso perché superato); (2) **auto-orbita ambientale**: a ogni nuovo lock la camera rivoluziona da sola attorno alla stella (0,1 rad/s, ~63 s/giro) finché l'utente non orbita col mouse o rilascia il lock coi tasti di movimento; disattivata con reduced-motion (niente moto perpetuo).
+- **`prefers-reduced-motion`** (`lib/motion.ts`, MediaQueryList cachata con `matches` live): transizioni → salto istantaneo, auto-orbita spenta.
 - Matematica pura in **`scene/cameraTween.ts`** (nessuna dipendenza React/store): easing, durate, pose d'arrivo, orbit, dolly — tutto unit-testato.
 - Bridge e2e `?pdb=1` esteso con `mode` (cameraMode dallo store).
-- Test: **80 unit** (+17: cameraTween completo, store lock/release) + **22 e2e** (+3 in `orbit.spec.ts`: volo interpolato con campione mid-flight + arrivo centrato + orbit attivo; reduced-motion = salto entro 1 s vs 2,5 s di volo; drag in orbita = posizione cambiata + raggio costante ±0,05 + bersaglio centrato, wheel zoom, W rilascia il lock col pannello ancora aperto).
+- Test: **78 unit** + **24 e2e** (5 in `orbit.spec.ts`: volo interpolato, reduced-motion, auto-orbita con stop al drag, click→distanza fissa, drag/wheel/release). **Pattern anti-flake per asserzioni di volo**: campionamento `__camera` **in-page** ogni 50 ms con stop all'arrivo (`startCameraSampling`) — il runner Node viene affamato dalle pagine WebGL parallele e può perdersi un intero volo da 2,5 s; reduced-motion asserito strutturalmente (nessuna posa intermedia), non a wall-clock.
 
 ## Esiti verifica M5 (AC) e note
 
@@ -40,7 +41,7 @@
 - **Fix**: `FreeFlyControls.tsx` custom sostituisce drei/three FlyControls — il look segue il **delta del mouse 1:1** (fermi il mouse → si ferma), pointer capture, WASD + R/F (su/giù) + Q/E (roll), tasti ignorati quando il focus è in un input. Hover-picking soppresso durante il drag (evita pick render inutili). Costanti: LOOK_SENSITIVITY 0.0025 rad/px, 25 ly/s, roll 1 rad/s.
 - **Test**: `tests/e2e/camera.spec.ts` (4 test: rotazione da delta, stop col mouse fermo — anti hold-at-offset —, WASD/R/F/Q/E, click pulito seleziona ancora) usando il bridge camera, che è permanente per gli e2e di M5. Suite completa: 63 unit + 19 e2e verdi.
 - Nota M5: orbit-on-lock e fly-to animato sono stati costruiti sopra questo fix (ora tutto in `CameraControls.tsx`).
-- **Prossimo passo:** **M6 — Etichette & costellazioni** (SPEC §6.2, §9): toggle "mostra sempre i nomi" con culling per luminosità/zoom; linee costellazioni con toggle (default off). ⚠️ **Decisione aperta da M1**: fonte e licenza del set di linee delle costellazioni (asterismi standard o da ID costellazione HYG) — da scegliere e documentare prima di implementare. Regola permanente: le posizioni schermo/label per-stella vanno in module holder, mai nello store reattivo.
+- **Prossimo passo:** **M6 — Etichette & costellazioni** (SPEC §6.2, §9): toggle "mostra sempre i nomi" con culling per luminosità/zoom; linee costellazioni con toggle (default off). ✅ **Decisione fonte linee VERIFICATA** (2026-06-10): **skyculture "modern" di Stellarium** (`skycultures/modern/index.json`) — linee come **sequenze di id HIP** (join diretto col nostro indice classico → linee ancorate alle stelle reali della nuvola); licenza dichiarata in `description.md`: **testo e dati CC BY-SA 4.0**, autori "Stellarium's team" (compatibile col nostro modello dati CC BY-SA; in più l'autore originale delle linee western ha concesso il riuso MIT in stellarium/discussions/790). In M6: pinnare release/commit Stellarium, aggiungere attribuzione a `NOTICE.md`. Regola permanente: le posizioni schermo/label per-stella vanno in module holder, mai nello store reattivo.
 
 ## Cosa esiste (M4, in aggiunta a M0–M3)
 
@@ -119,7 +120,7 @@
 
 ## Assunzioni aperte / da verificare in implementazione
 
-- Fonte e licenza del set di linee delle costellazioni (decidere in M6).
+- ~~Fonte e licenza del set di linee delle costellazioni~~ → risolta: Stellarium modern skyculture, dati CC BY-SA 4.0 (vedi "Prossimo passo").
 - Numeri di performance (FPS) sono **target**, da misurare in M2/M9.
 - `data-refresh.yml` ancora placeholder: cablare la pipeline reale in M9.
 
@@ -137,6 +138,6 @@
 ## Come riprendere
 
 1. Leggi `docs/SPEC.md` e `AGENTS.md`.
-2. Guarda "Milestone corrente / Prossimo passo" qui sopra — **M6 ha una decisione aperta** (fonte+licenza delle linee delle costellazioni) da prendere prima di implementare.
+2. Guarda "Milestone corrente / Prossimo passo" qui sopra — la fonte delle linee costellazioni per M6 è decisa e verificata (Stellarium modern, CC BY-SA 4.0).
 3. Pipeline: `cd data-pipeline && .venv/Scripts/python -m pytest` (82 test); rigenerare artefatti: `fetch_athyg.py` → `fetch_exoplanets.py` → `build_star_binary.py` → `crossmatch.py`.
 4. M2 parte da `app/src/data/` (loader) e `app/src/scene/` + `app/src/shaders/`: leggere `.claude/skills/three-points-shader/SKILL.md`; le fixtures in `data-pipeline/fixtures/` sono una data-dir drop-in per i test.
