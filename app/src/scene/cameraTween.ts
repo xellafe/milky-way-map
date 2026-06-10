@@ -4,8 +4,6 @@ import * as THREE from 'three';
 export const ARRIVE_DISTANCE_LY = 4;
 export const FLY_MIN_DURATION_S = 0.8;
 export const FLY_MAX_DURATION_S = 2.5;
-/** Aim tweens shorter than this angle (rad) are skipped — already on target. */
-export const AIM_MIN_ANGLE_RAD = 0.01;
 /** Closest the orbit dolly may get to the target (ly). */
 export const ORBIT_MIN_DISTANCE_LY = 0.1;
 export const ORBIT_MAX_DISTANCE_LY = 1_000_000;
@@ -72,29 +70,6 @@ export function createFlyToTween(
     toPos,
     toQuat: lookQuaternion(toPos, target, cameraQuat),
     durationS: reducedMotion ? 0 : flyToDurationS(cameraPos.distanceTo(toPos)),
-    elapsedS: 0,
-  };
-}
-
-/**
- * Orientation-only tween that centers the target on screen (lock via click,
- * SPEC §6.3: selection → orbit). Returns null when already aimed close enough.
- */
-export function createAimTween(
-  cameraPos: THREE.Vector3,
-  cameraQuat: THREE.Quaternion,
-  target: THREE.Vector3,
-  reducedMotion: boolean,
-): CameraTween | null {
-  const toQuat = lookQuaternion(cameraPos, target, cameraQuat);
-  const angle = cameraQuat.angleTo(toQuat);
-  if (angle < AIM_MIN_ANGLE_RAD) return null;
-  return {
-    fromPos: cameraPos.clone(),
-    fromQuat: cameraQuat.clone(),
-    toPos: cameraPos.clone(),
-    toQuat,
-    durationS: reducedMotion ? 0 : Math.min(Math.max(0.4 * angle, 0.3), 1.2),
     elapsedS: 0,
   };
 }

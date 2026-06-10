@@ -2,9 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 
 import {
-  AIM_MIN_ANGLE_RAD,
   ARRIVE_DISTANCE_LY,
-  createAimTween,
   createFlyToTween,
   dollyTowardTarget,
   easeInOutCubic,
@@ -94,26 +92,6 @@ describe('tweenPose', () => {
     tween.elapsedS = tween.durationS + 0.1;
     expect(tweenPose(tween, pos, quat)).toBe(true);
     expect(pos.distanceTo(tween.toPos)).toBeCloseTo(0, 6);
-  });
-});
-
-describe('createAimTween', () => {
-  const camPos = new THREE.Vector3(0, 0, 40);
-
-  it('rotates in place to center the target', () => {
-    const target = new THREE.Vector3(100, 0, 40); // 90° to the right
-    const tween = createAimTween(camPos, new THREE.Quaternion(), target, false);
-    expect(tween).not.toBeNull();
-    expect(tween!.toPos.distanceTo(camPos)).toBe(0);
-    const lookDir = target.clone().sub(camPos).normalize();
-    expect(forward(tween!.toQuat).dot(lookDir)).toBeCloseTo(1, 5);
-    expect(tween!.durationS).toBeGreaterThan(0);
-  });
-
-  it('returns null when already aimed at the target', () => {
-    const target = new THREE.Vector3(0, 0, -100); // straight ahead
-    expect(createAimTween(camPos, new THREE.Quaternion(), target, false)).toBeNull();
-    void AIM_MIN_ANGLE_RAD;
   });
 });
 

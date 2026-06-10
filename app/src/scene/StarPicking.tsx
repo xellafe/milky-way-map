@@ -5,7 +5,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { getStarGeometry } from '../data/starCoreStore';
+import { getStarCore, getStarGeometry } from '../data/starCoreStore';
 import starPickFrag from '../shaders/star-pick.frag?raw';
 import starPickVert from '../shaders/star-pick.vert?raw';
 import { useGalaxyMapStore } from '../state/store';
@@ -142,7 +142,18 @@ export function StarPicking() {
     const p = pointer.current;
     if (!p.moved && !p.click) return;
     if (p.click) {
-      selectStar(readStarAt(p.click.x, p.click.y));
+      const picked = readStarAt(p.click.x, p.click.y);
+      selectStar(picked);
+      // Click-lock also flies to the fixed arrival distance (same as search
+      // select, SPEC §6.3 + user decision post-M5): the camera always ends
+      // ARRIVE_DISTANCE_LY in front of a locked star.
+      const core = getStarCore();
+      if (picked !== null && core) {
+        const i = picked * 3;
+        useGalaxyMapStore
+          .getState()
+          .requestFlyTo([core.position[i]!, core.position[i + 1]!, core.position[i + 2]!]);
+      }
       p.click = null;
     }
     if (p.moved) {

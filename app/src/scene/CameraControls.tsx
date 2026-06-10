@@ -6,7 +6,6 @@ import { prefersReducedMotion } from '../lib/motion';
 import { useGalaxyMapStore } from '../state/store';
 import {
   type CameraTween,
-  createAimTween,
   createFlyToTween,
   dollyTowardTarget,
   orbitAroundTarget,
@@ -20,6 +19,10 @@ const MOVE_SPEED_LY_PER_S = 25;
 const ROLL_SPEED_RAD_PER_S = 1.0;
 // Wheel zoom in orbit: distance factor e^(deltaY·k) — ~×1.1 per 100 px notch.
 const ZOOM_PER_WHEEL_DELTA = 0.001;
+// Ambient auto-orbit: the camera keeps revolving slowly around a freshly
+// locked star until the user orbits manually (drag) or releases the lock.
+// ~63 s per full revolution; disabled under prefers-reduced-motion.
+const AUTO_ORBIT_RAD_PER_S = 0.1;
 // Translation keys release the orbit lock (they break the fixed-radius orbit);
 // Q/E roll stays available in orbit (it keeps the target centered).
 const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyR', 'KeyF'];
@@ -48,11 +51,13 @@ function lockedTarget(): THREE.Vector3 | null {
  *   hold-at-offset model). WASD move, R/F up/down, Q/E roll.
  * - Orbit (entered automatically on star selection, store-side): drag orbits
  *   rigidly around the target, wheel dollies in/out, translation keys release
- *   the lock back to free-fly (selection stays). Lock via click centers the
- *   target with an orientation-only tween.
- * - Fly-to (search select): position+orientation tween, duration ∝ log of
- *   distance. prefers-reduced-motion → instant jump. Input is ignored while
- *   a tween runs (max 2.5 s, no cancel edge cases).
+ *   the lock back to free-fly (selection stays). A fresh lock starts an
+ *   ambient AUTO-orbit that revolves around the star until the user takes
+ *   over (drag) or releases the lock.
+ * - Fly-to (search select AND click select — both land at the fixed
+ *   ARRIVE_DISTANCE_LY): position+orientation tween, duration ∝ log of
+ *   distance. prefers-reduced-motion → instant jump + no auto-orbit. Input
+ *   is ignored while a tween runs (max 2.5 s, no cancel edge cases).
  */
 export function CameraControls() {
   const { gl, camera } = useThree();
@@ -60,6 +65,8 @@ export function CameraControls() {
   const last = useRef<{ x: number; y: number } | null>(null);
   const tween = useRef<CameraTween | null>(null);
   const lastLockedStar = useRef<number | null>(null);
+  // True from lock acquisition until the user orbits manually.
+  const autoOrbit = useRef(false);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -77,6 +84,7 @@ export function CameraControls() {
       if (tween.current) return;
       const target = lockedTarget();
       if (target) {
+        autoOrbit.current = false; // manual orbit takes over the ambient one
         orbitAroundTarget(
           camera.position,
           camera.quaternion,
@@ -144,21 +152,10 @@ export function CameraControls() {
       keys.current.clear(); // held keys must not act the instant we arrive
     }
 
-    // Lock acquired WITHOUT a fly-to (click select): center the target with
-    // an orientation-only tween so the orbit pivot sits mid-screen.
+    // A fresh lock (re)arms the ambient auto-orbit.
     const lockedStar = store.selection?.kind === 'star' ? store.selection.index : null;
     if (lockedStar !== lastLockedStar.current) {
-      if (lockedStar !== null && !tween.current) {
-        const target = starPosition(lockedStar);
-        if (target) {
-          tween.current = createAimTween(
-            camera.position,
-            camera.quaternion,
-            target,
-            prefersReducedMotion(),
-          );
-        }
-      }
+      autoOrbit.current = lockedStar !== null;
       lastLockedStar.current = lockedStar;
     }
 
@@ -166,6 +163,22 @@ export function CameraControls() {
       tween.current.elapsedS += delta;
       if (tweenPose(tween.current, camera.position, camera.quaternion)) tween.current = null;
       return;
+    }
+
+    // Ambient auto-orbit: slow revolution around the locked star until the
+    // user drags or releases the lock. Perpetual motion → off under
+    // prefers-reduced-motion.
+    if (autoOrbit.current && lockedStar !== null && store.cameraMode === 'orbit') {
+      const target = starPosition(lockedStar);
+      if (target && !prefersReducedMotion()) {
+        orbitAroundTarget(
+          camera.position,
+          camera.quaternion,
+          target,
+          AUTO_ORBIT_RAD_PER_S * delta,
+          0,
+        );
+      }
     }
 
     const k = keys.current;
