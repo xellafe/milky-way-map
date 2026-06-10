@@ -2,7 +2,7 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { FlyControls, Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
-import type { StarCoreData } from '../data/starData';
+import { getStarCore, setStarGeometry } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import { useGalaxyMapStore } from '../state/store';
 import { FlyToHandler } from './FlyToHandler';
@@ -25,19 +25,39 @@ const showStats = urlParams.get('stats') === '1';
  * far=2e6 ly covers the farthest (noisy-parallax) catalog stars; depth
  * precision is a non-issue since star points use additive blending without
  * depth writes.
+ *
+ * The star SoA/geometry deliberately do NOT travel through props — components
+ * read them from starCoreStore, keyed by the `dataStatus` flip (see the
+ * starCoreStore docs for the React dev-mode OOM this avoids).
  */
-export function GalaxyScene({ stars }: { stars: StarCoreData | null }) {
-  const geometry = useMemo(() => (stars ? buildStarGeometry(stars) : null), [stars]);
+export function GalaxyScene() {
+  const dataReady = useGalaxyMapStore((s) => s.dataStatus === 'ready');
   const filters = useGalaxyMapStore((s) => s.filters);
   // dataBounds flips when the detail sections land → re-apply range filters.
   const dataBounds = useGalaxyMapStore((s) => s.dataBounds);
 
+  const geometry = useMemo(() => {
+    const core = dataReady ? getStarCore() : null;
+    const g = core ? buildStarGeometry(core) : null;
+    // Registered during render on purpose: StarCloud/StarPicking children read
+    // it in this same render pass (module holder, not reactive state).
+    setStarGeometry(g);
+    return g;
+  }, [dataReady]);
+
   useEffect(() => {
-    if (!geometry || !stars) return;
+    const core = getStarCore();
+    if (!geometry || !core) return;
     void dataBounds;
-    const visible = applyFilterMask(geometry, stars, getStarDetails(), filters);
+    const visible = applyFilterMask(geometry, core, getStarDetails(), filters);
     useGalaxyMapStore.getState().setVisibleCount(visible);
-  }, [geometry, stars, filters, dataBounds]);
+  }, [geometry, filters, dataBounds]);
+
+  useEffect(() => {
+    return () => {
+      geometry?.dispose();
+    };
+  }, [geometry]);
 
   return (
     <Canvas
@@ -45,8 +65,8 @@ export function GalaxyScene({ stars }: { stars: StarCoreData | null }) {
       gl={{ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer }}
     >
       <color attach="background" args={[0x000000]} />
-      {geometry && <StarCloud geometry={geometry} />}
-      {geometry && <StarPicking geometry={geometry} />}
+      {geometry && <StarCloud />}
+      {geometry && <StarPicking />}
       <FlyToHandler />
       <FlyControls movementSpeed={FLY_SPEED_LY_PER_S} rollSpeed={0.4} dragToLook />
       <EffectComposer>

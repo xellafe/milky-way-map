@@ -4,9 +4,17 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-06-10
+- **Data ultimo aggiornamento:** 2026-06-10 (+ hotfix OOM dev-mode post-M4)
 - **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4 — Ricerca & filtri** ✅
 - **Milestone corrente:** — (M4 chiusa, fermo al `[CHECKPOINT 3]`)
+
+## 🔥 Hotfix post-M4: OOM del browser in `npm run dev` (RISOLTO)
+
+- **Sintomo**: con i dati completi (2,49M stelle) il dev server congelava la pagina e Chrome andava in "Out of Memory" (~4 GB di heap V8, task sincrono eterno). In produzione/preview tutto sano (90 MB). Latente già da M2 (allora si fermava a ~2,4 GB e sopravviveva); M3/M4 hanno aggiunto consumi e sfondato il limite.
+- **Causa radice** (diagnosi: heap monitor CDP + bisect a route bloccate + worktree M2 + loader isolato + `Debugger.pause` campionato): i **Performance Tracks della build dev di React 19** (`logComponentRender` → `addObjectDiffToProperties` → `addValueToProperties`) serializzano i **diff delle props/state dei componenti elemento per elemento**. `stars` (SoA con Float32Array da 7,5M elementi) passava per `useState`/props → React dev enumerava milioni di elementi a ogni commit → minuti di task sincrono e GB di micro-oggetti.
+- **Fix architetturale**: i typed array NON passano mai per state/props React. Nuovo `src/data/starCoreStore.ts` (modulo holder per core SoA + BufferGeometry condivisa, stessa regola di `starDetailsStore`); React veicola solo il flip di `dataStatus`. `GalaxyScene`/`StarCloud`/`StarPicking`/`SearchBox`/`StarPanel` leggono dal modulo store, zero props pesanti.
+- **Verifica**: dev + dati completi ora **62–69 MB stabili**, load istantaneo; 63 unit + 15 e2e verdi; regression guard `tests/unit/storeHygiene.test.ts` (lo store reattivo non deve contenere TypedArray/array enormi). Strumenti diagnostici riusabili: `app/scripts/measure-memory.mjs` (+ `measure-fps.mjs`).
+- **Regola permanente per M5+**: qualsiasi dato per-stella nuovo (label, maschere, posizioni schermo…) va in module holder, MAI nello store zustand né in props/state React.
 - **Prossimo passo:** attendere ok umano al `[CHECKPOINT 3]`, poi **M5 — Modalità camera & transizioni**: free-fly + orbit on lock (selezione → orbita attorno al bersaglio, SPEC §6.3), fly-to animato con tween, rispetto di `prefers-reduced-motion`. Il `FlyToHandler` attuale (salto istantaneo) va sostituito con transizioni interpolate; lo store ha già `cameraMode`.
 
 ## Cosa esiste (M4, in aggiunta a M0–M3)

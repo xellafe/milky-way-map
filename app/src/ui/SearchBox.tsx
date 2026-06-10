@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { loadExoplanets, searchHosts } from '../data/exoplanets';
 import { looksLikeCatalogId, searchByCatalogId } from '../data/idSearch';
 import { isNamesIndexReady, searchStars, type StarSearchResult } from '../data/namesIndex';
-import type { StarCoreData } from '../data/starData';
+import { getStarCore } from '../data/starCoreStore';
 import { useGalaxyMapStore } from '../state/store';
 
 interface ResultItem {
@@ -19,8 +19,9 @@ interface ResultItem {
  * Minimal search (M3, expanded in M4): proper names + HD/HIP/Gl ids from the
  * classic index, plus exoplanet host names — the accessible route to systems
  * not anchored to a catalog star, e.g. TRAPPIST-1 (SPEC §5.3, §6.9).
+ * Star positions come from starCoreStore, not props (see store docs).
  */
-export function SearchBox({ stars }: { stars: StarCoreData | null }) {
+export function SearchBox() {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -91,9 +92,10 @@ export function SearchBox({ stars }: { stars: StarCoreData | null }) {
       selectHost(item.hostname);
     } else if (item.starIndex !== null) {
       selectStar(item.starIndex);
-      if (stars) {
+      const core = getStarCore();
+      if (core) {
         const i = item.starIndex * 3;
-        requestFlyTo([stars.position[i]!, stars.position[i + 1]!, stars.position[i + 2]!]);
+        requestFlyTo([core.position[i]!, core.position[i + 1]!, core.position[i + 2]!]);
       }
     }
     setOpen(false);

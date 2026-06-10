@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadNamesIndex } from './data/namesIndex';
-import { fetchManifest, loadStars, type StarCoreData } from './data/starData';
+import { setStarCore } from './data/starCoreStore';
+import { fetchManifest, loadStars } from './data/starData';
 import { setStarDetails } from './data/starDetailsStore';
 import { computeDataBounds } from './lib/filterMask';
 import { isWebGL2Available } from './lib/webgl';
@@ -18,7 +19,6 @@ const DATA_BASE_URL = '/data/';
 
 export default function App() {
   const { t } = useTranslation();
-  const [stars, setStars] = useState<StarCoreData | null>(null);
   const setDataStatus = useGalaxyMapStore((s) => s.setDataStatus);
   const setDataProgress = useGalaxyMapStore((s) => s.setDataProgress);
 
@@ -33,7 +33,10 @@ export default function App() {
       });
       const core = await handle.core;
       if (cancelled) return;
-      setStars(core);
+      // The SoA arrays live OUTSIDE React (see starCoreStore docs): React only
+      // sees the status flip. Passing them through state/props melts the dev
+      // build (React 19 perf-track prop diffing walks every array element).
+      setStarCore(core);
       setDataStatus('ready');
       handle.details.then((details) => {
         if (cancelled) return;
@@ -64,10 +67,10 @@ export default function App() {
 
   return (
     <div className="relative h-full w-full bg-black">
-      <GalaxyScene stars={stars} />
-      <SearchBox stars={stars} />
+      <GalaxyScene />
+      <SearchBox />
       <FiltersPanel />
-      <StarPanel stars={stars} />
+      <StarPanel />
       <HoverLabel />
       <LoadingOverlay />
     </div>

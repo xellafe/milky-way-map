@@ -9,7 +9,7 @@ import {
   type ExoHost,
 } from '../data/exoplanets';
 import { entryLabel, getNamesEntry } from '../data/namesIndex';
-import type { StarCoreData } from '../data/starData';
+import { getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import {
   FLAG_HAS_EXOPLANETS,
@@ -35,8 +35,9 @@ function Row({ label, value, note }: { label: string; value: string | null; note
   );
 }
 
-/** Star details (SPEC §6.6) for a star of the cloud, by SoA index. */
-function StarDetails({ stars, index }: { stars: StarCoreData; index: number }) {
+/** Star details (SPEC §6.6) for a star of the cloud, by SoA index.
+ * Core data comes from starCoreStore, not props (see store docs). */
+function StarDetails({ index }: { index: number }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   // Async lookups are keyed by star index: stale results for a previously
@@ -48,7 +49,8 @@ function StarDetails({ stars, index }: { stars: StarCoreData; index: number }) {
     host: ExoHost | null;
   } | null>(null);
 
-  const flags = stars.flags[index] ?? 0;
+  const core = getStarCore();
+  const flags = core?.flags[index] ?? 0;
   const hasExo = hasFlag(flags, FLAG_HAS_EXOPLANETS);
   const details = getStarDetails();
   const entry = getNamesEntry(index);
@@ -117,7 +119,7 @@ function StarDetails({ stars, index }: { stars: StarCoreData; index: number }) {
         <Row label={t('panel.catalogIds')} value={ids.length > 0 ? ids.join(' · ') : null} />
         <Row
           label={t('panel.spectralClass')}
-          value={spectralClassLetter(stars.spectralClass[index] ?? 7)}
+          value={spectralClassLetter(core?.spectralClass[index] ?? 7)}
         />
         {/* Luminosity class is not in the data contract (SPEC §5.1) → n/d, never guessed. */}
         <Row label={t('panel.msClass')} value={null} />
@@ -270,7 +272,7 @@ function HostDetails({ hostname }: { hostname: string }) {
 }
 
 /** Details panel (SPEC §6.6) — DOM overlay, keyboard reachable, ARIA region. */
-export function StarPanel({ stars }: { stars: StarCoreData | null }) {
+export function StarPanel() {
   const { t } = useTranslation();
   const selection = useGalaxyMapStore((s) => s.selection);
   const selectStar = useGalaxyMapStore((s) => s.selectStar);
@@ -293,8 +295,8 @@ export function StarPanel({ stars }: { stars: StarCoreData | null }) {
       >
         ✕
       </button>
-      {selection.kind === 'star' && stars ? (
-        <StarDetails stars={stars} index={selection.index} />
+      {selection.kind === 'star' ? (
+        <StarDetails index={selection.index} />
       ) : selection.kind === 'host' ? (
         <HostDetails hostname={selection.hostname} />
       ) : null}

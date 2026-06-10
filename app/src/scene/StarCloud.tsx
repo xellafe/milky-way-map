@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { getStarGeometry } from '../data/starCoreStore';
 import starFrag from '../shaders/star.frag?raw';
 import starVert from '../shaders/star.vert?raw';
 
@@ -14,8 +15,11 @@ export const STAR_MAX_PX = 14.0;
  * The whole star catalog as ONE THREE.Points / one draw call (SPEC §4.2).
  * Never per-star meshes. Frustum culling is disabled: the cloud surrounds the
  * camera, and computing a bounding sphere over 2.5M points is wasted work.
+ * The geometry is read from starCoreStore, NOT received as a prop (React dev
+ * prop diffing would walk the multi-million-element buffers — see store docs).
  */
-export function StarCloud({ geometry }: { geometry: THREE.BufferGeometry }) {
+export function StarCloud() {
+  const geometry = getStarGeometry();
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -35,5 +39,6 @@ export function StarCloud({ geometry }: { geometry: THREE.BufferGeometry }) {
     [],
   );
 
+  if (!geometry) return null;
   return <points geometry={geometry} material={material} frustumCulled={false} />;
 }

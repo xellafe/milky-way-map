@@ -5,6 +5,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { getStarGeometry } from '../data/starCoreStore';
 import starPickFrag from '../shaders/star-pick.frag?raw';
 import starPickVert from '../shaders/star-pick.vert?raw';
 import { useGalaxyMapStore } from '../state/store';
@@ -20,8 +21,10 @@ const NO_STAR = 0xffffff; // clear color: ids >= count mean "nothing"
  * target via camera.setViewOffset, reading back the pixel under the cursor.
  * Runs at most once per frame, only when the pointer moved or clicked.
  * Depth testing is enabled so the nearest star wins in dense regions.
+ * Geometry comes from starCoreStore, not props (see store docs).
  */
-export function StarPicking({ geometry }: { geometry: THREE.BufferGeometry }) {
+export function StarPicking() {
+  const geometry = getStarGeometry();
   const { gl, camera, size } = useThree();
   const setHoveredStar = useGalaxyMapStore((s) => s.setHoveredStar);
   const selectStar = useGalaxyMapStore((s) => s.selectStar);
@@ -47,6 +50,7 @@ export function StarPicking({ geometry }: { geometry: THREE.BufferGeometry }) {
   );
 
   const pickScene = useMemo(() => {
+    if (!geometry) return null;
     const material = new THREE.ShaderMaterial({
       glslVersion: THREE.GLSL3,
       vertexShader: starPickVert,
@@ -99,12 +103,13 @@ export function StarPicking({ geometry }: { geometry: THREE.BufferGeometry }) {
   }, [gl]);
 
   useEffect(() => () => pickTarget.dispose(), [pickTarget]);
-  useEffect(() => () => pickScene.material.dispose(), [pickScene]);
+  useEffect(() => () => pickScene?.material.dispose(), [pickScene]);
 
   const pixel = useMemo(() => new Uint8Array(4), []);
   const prevClearColor = useMemo(() => new THREE.Color(), []);
 
   const readStarAt = (x: number, y: number): number | null => {
+    if (!geometry || !pickScene) return null;
     const dpr = gl.getPixelRatio();
     const cam = camera as THREE.PerspectiveCamera;
     cam.setViewOffset(size.width * dpr, size.height * dpr, x * dpr, y * dpr, 1, 1);
