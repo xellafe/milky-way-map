@@ -1,23 +1,32 @@
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
-import { FlyControls, Stats } from '@react-three/drei';
-import { Canvas } from '@react-three/fiber';
+import { Stats } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
 import { getStarCore, setStarGeometry } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import { useGalaxyMapStore } from '../state/store';
 import { FlyToHandler } from './FlyToHandler';
+import { FreeFlyControls } from './FreeFlyControls';
 import { StarCloud } from './StarCloud';
 import { applyFilterMask, buildStarGeometry } from './starGeometry';
 import { StarPicking } from './StarPicking';
-
-// Free-fly speed in ly/s — the solar neighborhood is a few tens of ly across.
-const FLY_SPEED_LY_PER_S = 25;
 
 const urlParams = new URLSearchParams(globalThis.location?.search ?? '');
 // ?pdb=1 → preserveDrawingBuffer, used by e2e tests to read real pixels back.
 const preserveDrawingBuffer = urlParams.get('pdb') === '1';
 // ?stats=1 → FPS meter overlay for performance measurements (SPEC §7 budget).
 const showStats = urlParams.get('stats') === '1';
+
+/** Test-mode bridge (?pdb=1): exposes camera pose for e2e camera assertions. */
+function CameraDebugBridge() {
+  useFrame(({ camera }) => {
+    (globalThis as Record<string, unknown>).__camera = {
+      position: camera.position.toArray(),
+      quaternion: camera.quaternion.toArray(),
+    };
+  });
+  return null;
+}
 
 /**
  * Root 3D scene: solid black background (SPEC §6.1, no skybox), the star cloud
@@ -68,11 +77,12 @@ export function GalaxyScene() {
       {geometry && <StarCloud />}
       {geometry && <StarPicking />}
       <FlyToHandler />
-      <FlyControls movementSpeed={FLY_SPEED_LY_PER_S} rollSpeed={0.4} dragToLook />
+      <FreeFlyControls />
       <EffectComposer>
         <Bloom intensity={1.1} luminanceThreshold={0.05} luminanceSmoothing={0.2} mipmapBlur />
       </EffectComposer>
       {showStats && <Stats />}
+      {preserveDrawingBuffer && <CameraDebugBridge />}
     </Canvas>
   );
 }

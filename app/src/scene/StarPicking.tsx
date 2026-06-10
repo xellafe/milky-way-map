@@ -75,6 +75,9 @@ export function StarPicking() {
   useEffect(() => {
     const el = gl.domElement;
     const onMove = (e: PointerEvent) => {
+      // While look-dragging (primary button held) hover picking is pointless
+      // and would re-render the pick scene every frame — skip it.
+      if ((e.buttons & 1) !== 0) return;
       const rect = el.getBoundingClientRect();
       pointer.current.x = e.clientX - rect.left;
       pointer.current.y = e.clientY - rect.top;

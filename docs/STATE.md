@@ -15,6 +15,13 @@
 - **Fix architetturale**: i typed array NON passano mai per state/props React. Nuovo `src/data/starCoreStore.ts` (modulo holder per core SoA + BufferGeometry condivisa, stessa regola di `starDetailsStore`); React veicola solo il flip di `dataStatus`. `GalaxyScene`/`StarCloud`/`StarPicking`/`SearchBox`/`StarPanel` leggono dal modulo store, zero props pesanti.
 - **Verifica**: dev + dati completi ora **62–69 MB stabili**, load istantaneo; 63 unit + 15 e2e verdi; regression guard `tests/unit/storeHygiene.test.ts` (lo store reattivo non deve contenere TypedArray/array enormi). Strumenti diagnostici riusabili: `app/scripts/measure-memory.mjs` (+ `measure-fps.mjs`).
 - **Regola permanente per M5+**: qualsiasi dato per-stella nuovo (label, maschere, posizioni schermo…) va in module holder, MAI nello store zustand né in props/state React.
+
+## 🔧 Hotfix post-M4 (2): mouse-look inerte in free-fly (RISOLTO)
+
+- **Sintomo** (segnalato dall'utente): la camera non ruota col mouse, solo WASD. Diagnosi strumentata (bridge `window.__camera` con `?pdb=1` + drag Playwright): il meccanismo di three **funzionava** (112° tenendo premuto al bordo) — il problema era la **UX del `dragToLook` di FlyControls**: rotazione ∝ distanza del cursore dal centro **mentre si tiene premuto**; un drag normale vicino al centro produce rotazione quasi nulla. Non era una regressione del fix OOM.
+- **Fix**: `FreeFlyControls.tsx` custom sostituisce drei/three FlyControls — il look segue il **delta del mouse 1:1** (fermi il mouse → si ferma), pointer capture, WASD + R/F (su/giù) + Q/E (roll), tasti ignorati quando il focus è in un input. Hover-picking soppresso durante il drag (evita pick render inutili). Costanti: LOOK_SENSITIVITY 0.0025 rad/px, 25 ly/s, roll 1 rad/s.
+- **Test**: `tests/e2e/camera.spec.ts` (4 test: rotazione da delta, stop col mouse fermo — anti hold-at-offset —, WASD/R/F/Q/E, click pulito seleziona ancora) usando il bridge camera, che è permanente per gli e2e di M5. Suite completa: 63 unit + 19 e2e verdi.
+- Nota M5: orbit-on-lock e fly-to animato si costruiranno sopra `FreeFlyControls`.
 - **Prossimo passo:** attendere ok umano al `[CHECKPOINT 3]`, poi **M5 — Modalità camera & transizioni**: free-fly + orbit on lock (selezione → orbita attorno al bersaglio, SPEC §6.3), fly-to animato con tween, rispetto di `prefers-reduced-motion`. Il `FlyToHandler` attuale (salto istantaneo) va sostituito con transizioni interpolate; lo store ha già `cameraMode`.
 
 ## Cosa esiste (M4, in aggiunta a M0–M3)
