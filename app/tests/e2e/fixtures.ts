@@ -6,6 +6,15 @@ import type { Page } from '@playwright/test';
 const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import.meta.url));
 
 /**
+ * Since M5 a search-select fly-to is ANIMATED (up to FLY_MAX_DURATION_S =
+ * 2.5 s): tests that interact with the screen-centered target must wait for
+ * the flight to land first.
+ */
+export async function waitForFlyToArrival(page: Page): Promise<void> {
+  await page.waitForTimeout(2800);
+}
+
+/**
  * Serve /data/* from the committed golden fixtures (deterministic, no real
  * artifacts needed in CI), honoring Range requests like a CDN would.
  */

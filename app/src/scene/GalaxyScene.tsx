@@ -5,8 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { getStarCore, setStarGeometry } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import { useGalaxyMapStore } from '../state/store';
-import { FlyToHandler } from './FlyToHandler';
-import { FreeFlyControls } from './FreeFlyControls';
+import { CameraControls } from './CameraControls';
 import { StarCloud } from './StarCloud';
 import { applyFilterMask, buildStarGeometry } from './starGeometry';
 import { StarPicking } from './StarPicking';
@@ -17,12 +16,13 @@ const preserveDrawingBuffer = urlParams.get('pdb') === '1';
 // ?stats=1 → FPS meter overlay for performance measurements (SPEC §7 budget).
 const showStats = urlParams.get('stats') === '1';
 
-/** Test-mode bridge (?pdb=1): exposes camera pose for e2e camera assertions. */
+/** Test-mode bridge (?pdb=1): exposes camera pose + mode for e2e assertions. */
 function CameraDebugBridge() {
   useFrame(({ camera }) => {
     (globalThis as Record<string, unknown>).__camera = {
       position: camera.position.toArray(),
       quaternion: camera.quaternion.toArray(),
+      mode: useGalaxyMapStore.getState().cameraMode,
     };
   });
   return null;
@@ -76,8 +76,7 @@ export function GalaxyScene() {
       <color attach="background" args={[0x000000]} />
       {geometry && <StarCloud />}
       {geometry && <StarPicking />}
-      <FlyToHandler />
-      <FreeFlyControls />
+      <CameraControls />
       <EffectComposer>
         <Bloom intensity={1.1} luminanceThreshold={0.05} luminanceSmoothing={0.2} mipmapBlur />
       </EffectComposer>

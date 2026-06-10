@@ -4,9 +4,27 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-06-10 (+ hotfix OOM dev-mode post-M4)
-- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4 — Ricerca & filtri** ✅
-- **Milestone corrente:** — (M4 chiusa, fermo al `[CHECKPOINT 3]`)
+- **Data ultimo aggiornamento:** 2026-06-10 (M5 completata)
+- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5 — Modalità camera & transizioni** ✅
+- **Milestone corrente:** — (M5 chiusa; prossima M6 — Etichette & costellazioni; il prossimo `[CHECKPOINT 4]` è a fine M7)
+
+## Cosa esiste (M5, in aggiunta a M0–M4)
+
+- **`CameraControls.tsx`** (sostituisce `FreeFlyControls.tsx` + `FlyToHandler.tsx`): un solo controller per free-fly, orbit-on-lock e transizioni animate. Free-fly invariato (delta mouse 1:1, WASD+R/F+Q/E, tasti ignorati con focus negli input).
+- **Fly-to animato** (SPEC §6.3): tween posizione+orientamento con `easeInOutCubic`, durata ∝ log della distanza clampata **0,8–2,5 s** (`flyToDurationS`); arrivo a `ARRIVE_DISTANCE_LY=4` davanti al bersaglio, centrato (invariante usata dagli e2e). Input ignorato durante il tween (max 2,5 s, niente edge case di cancel). L'up vector corrente è preservato (niente scatto di roll su camera rollata).
+- **Orbit on lock**: `selectStar(i)` → `cameraMode:'orbit'` **nello store** (deselezione/host → `'free-fly'`; host non orbitabile, non è nella nuvola). Drag = rotazione **rigida** attorno al bersaglio via quaternioni sugli assi locali camera (`orbitAroundTarget`: distanza e roll preservati, niente gimbal lock, il bersaglio mantiene la posizione a schermo); wheel = dolly clampato `[0.1, 1e6]` ly; **tasti di traslazione rilasciano il lock** (la selezione resta); Q/E roll resta attivo in orbita. Lock via click fuori centro → tween di solo orientamento che centra il bersaglio (`createAimTween`, saltato se già centrato < 0,01 rad).
+- **`prefers-reduced-motion`** (`lib/motion.ts`, letto live a ogni transizione): durata 0 → salto istantaneo, stessa posa finale.
+- Matematica pura in **`scene/cameraTween.ts`** (nessuna dipendenza React/store): easing, durate, pose d'arrivo, orbit, dolly — tutto unit-testato.
+- Bridge e2e `?pdb=1` esteso con `mode` (cameraMode dallo store).
+- Test: **80 unit** (+17: cameraTween completo, store lock/release) + **22 e2e** (+3 in `orbit.spec.ts`: volo interpolato con campione mid-flight + arrivo centrato + orbit attivo; reduced-motion = salto entro 1 s vs 2,5 s di volo; drag in orbita = posizione cambiata + raggio costante ±0,05 + bersaglio centrato, wheel zoom, W rilascia il lock col pannello ancora aperto).
+
+## Esiti verifica M5 (AC) e note
+
+- AC ✅ (tutti via e2e su fixture): il lock orbita il bersaglio; transizioni interpolate (mid-flight ≠ start ≠ end); `prefers-reduced-motion` rispettato (`page.emulateMedia`).
+- **Gotcha ritrovato**: i 3 e2e nuovi fallivano con `mode: undefined` — `npm run preview` (webServer Playwright) serve l'**ultima build**: dopo modifiche al codice serve `npm run build` prima di `playwright test` (variante del gotcha M2 sui preview stantii).
+- e2e esistenti adeguati al volo animato: helper `waitForFlyToArrival` (2,8 s > durata max) in `fixtures.ts`, usato nei 5 punti che interagiscono col centro schermo dopo una ricerca (selection×2, filters×2, camera×1).
+- Regola module-holder rispettata: `CameraControls` legge le posizioni stelle da `starCoreStore`, nessun typed array in React/zustand.
+- Nessuna stringa utente nuova (niente i18n da aggiornare).
 
 ## 🔥 Hotfix post-M4: OOM del browser in `npm run dev` (RISOLTO)
 
@@ -21,8 +39,8 @@
 - **Sintomo** (segnalato dall'utente): la camera non ruota col mouse, solo WASD. Diagnosi strumentata (bridge `window.__camera` con `?pdb=1` + drag Playwright): il meccanismo di three **funzionava** (112° tenendo premuto al bordo) — il problema era la **UX del `dragToLook` di FlyControls**: rotazione ∝ distanza del cursore dal centro **mentre si tiene premuto**; un drag normale vicino al centro produce rotazione quasi nulla. Non era una regressione del fix OOM.
 - **Fix**: `FreeFlyControls.tsx` custom sostituisce drei/three FlyControls — il look segue il **delta del mouse 1:1** (fermi il mouse → si ferma), pointer capture, WASD + R/F (su/giù) + Q/E (roll), tasti ignorati quando il focus è in un input. Hover-picking soppresso durante il drag (evita pick render inutili). Costanti: LOOK_SENSITIVITY 0.0025 rad/px, 25 ly/s, roll 1 rad/s.
 - **Test**: `tests/e2e/camera.spec.ts` (4 test: rotazione da delta, stop col mouse fermo — anti hold-at-offset —, WASD/R/F/Q/E, click pulito seleziona ancora) usando il bridge camera, che è permanente per gli e2e di M5. Suite completa: 63 unit + 19 e2e verdi.
-- Nota M5: orbit-on-lock e fly-to animato si costruiranno sopra `FreeFlyControls`.
-- **Prossimo passo:** attendere ok umano al `[CHECKPOINT 3]`, poi **M5 — Modalità camera & transizioni**: free-fly + orbit on lock (selezione → orbita attorno al bersaglio, SPEC §6.3), fly-to animato con tween, rispetto di `prefers-reduced-motion`. Il `FlyToHandler` attuale (salto istantaneo) va sostituito con transizioni interpolate; lo store ha già `cameraMode`.
+- Nota M5: orbit-on-lock e fly-to animato sono stati costruiti sopra questo fix (ora tutto in `CameraControls.tsx`).
+- **Prossimo passo:** **M6 — Etichette & costellazioni** (SPEC §6.2, §9): toggle "mostra sempre i nomi" con culling per luminosità/zoom; linee costellazioni con toggle (default off). ⚠️ **Decisione aperta da M1**: fonte e licenza del set di linee delle costellazioni (asterismi standard o da ID costellazione HYG) — da scegliere e documentare prima di implementare. Regola permanente: le posizioni schermo/label per-stella vanno in module holder, mai nello store reattivo.
 
 ## Cosa esiste (M4, in aggiunta a M0–M3)
 
@@ -114,10 +132,11 @@
 | `[CHECKPOINT 2]` | M2 | ✅ tutti passati | rendering corretto su fixture (e2e readPixels) e su dati completi (screenshot ispezionato, 2.49M stelle); smoke visivo Playwright verde (3 test); FPS misurato 58–60 @1080p RTX 3080 vs budget 60 |
 | — (M3, no checkpoint) | M3 | ✅ tutti passati | Polaris corretta via ricerca E via click (valori dalla fixture + spot check dati completi); TRAPPIST-1 via ricerca (non agganciata by design, badge + 7 pianeti) |
 | `[CHECKPOINT 3]` | M4 | ✅ tutti passati | ogni filtro produce l'insieme visibile esatto (conteggi attesi calcolati dalla fixture); ricerca→fly-to ok (HD id incluso); stelle filtrate non pickabili; 62 unit + 15 e2e verdi ×2 run |
+| — (M5, no checkpoint) | M5 | ✅ tutti passati | lock → orbita attorno al bersaglio (raggio costante, bersaglio centrato); fly-to interpolato (campione mid-flight); reduced-motion = salto istantaneo; 80 unit + 22 e2e verdi ×2 run |
 
 ## Come riprendere
 
 1. Leggi `docs/SPEC.md` e `AGENTS.md`.
-2. Guarda "Milestone corrente / Prossimo passo" qui sopra — **CHECKPOINT 1 ha 2 punti aperti che richiedono decisione umana** prima di M3/M4 (il punto 1 può anche slittare: M2 usa solo stars.bin+manifest).
+2. Guarda "Milestone corrente / Prossimo passo" qui sopra — **M6 ha una decisione aperta** (fonte+licenza delle linee delle costellazioni) da prendere prima di implementare.
 3. Pipeline: `cd data-pipeline && .venv/Scripts/python -m pytest` (82 test); rigenerare artefatti: `fetch_athyg.py` → `fetch_exoplanets.py` → `build_star_binary.py` → `crossmatch.py`.
 4. M2 parte da `app/src/data/` (loader) e `app/src/scene/` + `app/src/shaders/`: leggere `.claude/skills/three-points-shader/SKILL.md`; le fixtures in `data-pipeline/fixtures/` sono una data-dir drop-in per i test.

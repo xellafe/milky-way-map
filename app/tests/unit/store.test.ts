@@ -40,6 +40,26 @@ describe('galaxy map store', () => {
     });
   });
 
+  it('locking a star switches the camera to orbit; deselecting releases it (SPEC §6.3)', () => {
+    useGalaxyMapStore.getState().selectStar(42);
+    expect(useGalaxyMapStore.getState().cameraMode).toBe('orbit');
+    useGalaxyMapStore.getState().selectStar(null);
+    expect(useGalaxyMapStore.getState().cameraMode).toBe('free-fly');
+  });
+
+  it('selecting a host (not in the cloud) does NOT orbit', () => {
+    useGalaxyMapStore.getState().selectStar(42);
+    useGalaxyMapStore.getState().selectHost('TRAPPIST-1');
+    expect(useGalaxyMapStore.getState().cameraMode).toBe('free-fly');
+  });
+
+  it('releasing orbit via setCameraMode keeps the selection', () => {
+    useGalaxyMapStore.getState().selectStar(42);
+    useGalaxyMapStore.getState().setCameraMode('free-fly');
+    expect(useGalaxyMapStore.getState().cameraMode).toBe('free-fly');
+    expect(useGalaxyMapStore.getState().selection).toEqual({ kind: 'star', index: 42 });
+  });
+
   it('fly-to request is one-shot', () => {
     useGalaxyMapStore.getState().requestFlyTo([1, 2, 3]);
     expect(useGalaxyMapStore.getState().pendingFlyTo).toEqual([1, 2, 3]);

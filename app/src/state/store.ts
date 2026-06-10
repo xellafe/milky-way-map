@@ -75,8 +75,16 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   dataBounds: null,
   visibleCount: null,
 
-  selectStar: (index) => set({ selection: index === null ? null : { kind: 'star', index } }),
-  selectHost: (hostname) => set({ selection: { kind: 'host', hostname } }),
+  // SPEC §6.3: locking a body switches the camera to orbit around it;
+  // deselecting releases the lock. Hosts (matched:false, e.g. TRAPPIST-1)
+  // have no position in the cloud, so there is nothing to orbit.
+  selectStar: (index) =>
+    set(
+      index === null
+        ? { selection: null, cameraMode: 'free-fly' }
+        : { selection: { kind: 'star', index }, cameraMode: 'orbit' },
+    ),
+  selectHost: (hostname) => set({ selection: { kind: 'host', hostname }, cameraMode: 'free-fly' }),
   setHoveredStar: (index) => set({ hoveredStarIndex: index }),
   requestFlyTo: (position) => set({ pendingFlyTo: position }),
   clearFlyTo: () => set({ pendingFlyTo: null }),

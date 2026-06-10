@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { serveFixtureData } from './fixtures';
+import { serveFixtureData, waitForFlyToArrival } from './fixtures';
 
 const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import.meta.url));
 
@@ -74,6 +74,7 @@ test('Polaris via click (after fly-to centers it) shows the same panel', async (
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
   await page.getByTestId('panel-close').click();
   await expect(page.getByTestId('star-panel')).toHaveCount(0);
+  await waitForFlyToArrival(page);
 
   // Click the canvas center → GPU picking must select Polaris.
   const canvas = page.locator('canvas');
@@ -118,6 +119,7 @@ test('hovering a star shows its name label', async ({ page }) => {
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
   await page.getByTestId('panel-close').click();
+  await waitForFlyToArrival(page);
 
   const canvas = page.locator('canvas');
   const box = (await canvas.boundingBox())!;

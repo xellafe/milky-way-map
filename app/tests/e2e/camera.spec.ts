@@ -5,7 +5,7 @@
  * not three's FlyControls hold-at-offset model.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { serveFixtureData } from './fixtures';
+import { serveFixtureData, waitForFlyToArrival } from './fixtures';
 
 interface CameraPose {
   position: [number, number, number];
@@ -85,6 +85,7 @@ test('a clean click (no drag) still selects a star after the controls change', a
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
   await page.getByTestId('panel-close').click();
+  await waitForFlyToArrival(page);
 
   const box = (await page.locator('canvas').boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

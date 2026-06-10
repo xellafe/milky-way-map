@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { serveFixtureData } from './fixtures';
+import { serveFixtureData, waitForFlyToArrival } from './fixtures';
 
 const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import.meta.url));
 
@@ -163,6 +163,7 @@ test('search by HD id finds the star and flies to it', async ({ page }) => {
 
   // Fly-to centered the star: hovering the canvas center names Polaris.
   await page.getByTestId('panel-close').click();
+  await waitForFlyToArrival(page);
   const box = (await page.locator('canvas').boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.getByTestId('hover-label')).toHaveText('Polaris', { timeout: 5_000 });
@@ -175,6 +176,7 @@ test('filtered-out stars are not pickable', async ({ page }) => {
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
   await page.getByTestId('panel-close').click();
+  await waitForFlyToArrival(page);
 
   await page.getByTestId('filter-class-F').click();
   await pollCount(page).toBe(countWhere((i) => fx.spectralClass[i] !== 3));
