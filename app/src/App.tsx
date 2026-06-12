@@ -11,6 +11,7 @@ import { SystemScene } from './scene/SystemScene';
 import { useGalaxyMapStore } from './state/store';
 import { FiltersPanel } from './ui/FiltersPanel';
 import { HoverLabel } from './ui/HoverLabel';
+import { LanguageSelector } from './ui/LanguageSelector';
 import { LoadingOverlay } from './ui/LoadingOverlay';
 import { SearchBox } from './ui/SearchBox';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
@@ -22,7 +23,7 @@ const webgl2Available = isWebGL2Available();
 const DATA_BASE_URL = '/data/';
 
 export default function App() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const view = useGalaxyMapStore((s) => s.view);
   const setDataStatus = useGalaxyMapStore((s) => s.setDataStatus);
   const setDataProgress = useGalaxyMapStore((s) => s.setDataProgress);
@@ -62,6 +63,17 @@ export default function App() {
     };
   }, [setDataStatus, setDataProgress]);
 
+  // Keep <html lang> in sync with the active language (a11y / SPEC §6.9):
+  // screen readers pick pronunciation from the document language.
+  useEffect(() => {
+    const sync = (lng: string) => {
+      document.documentElement.lang = lng.split('-')[0]!;
+    };
+    sync(i18n.language);
+    i18n.on('languageChanged', sync);
+    return () => i18n.off('languageChanged', sync);
+  }, [i18n]);
+
   if (!webgl2Available) {
     return (
       <main role="alert" className="flex h-full items-center justify-center bg-black p-8">
@@ -88,6 +100,7 @@ export default function App() {
           <SystemOverlay />
         </>
       )}
+      <LanguageSelector />
       {/* SPEC §6.3: animated transition into/out of the System View — a CSS
           fade keyed by view (motion-safe only: reduced motion = hard cut). */}
       <div

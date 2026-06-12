@@ -1,4 +1,8 @@
 {
+  "language": {
+    "label": "Sprache",
+    "menuLabel": "Sprache auswählen"
+  },
   "ui": {
     "appName": "Galaxy Map",
     "loading": "Wird geladen…",

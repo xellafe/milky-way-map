@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { DEFAULT_FILTERS, type DataBounds, type Filters } from '../lib/filterMask';
+import { prefersReducedMotion } from '../lib/motion';
 
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
@@ -113,8 +114,16 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   bumpLabelsVersion: () => set((s) => ({ labelsVersion: s.labelsVersion + 1 })),
   setCameraMode: (mode) => set({ cameraMode: mode }),
   setView: (view) => set({ view }),
+  // Under prefers-reduced-motion the orbital animation starts PAUSED (M8
+  // decision): the motion is informative content, but continuous motion can
+  // disturb users who asked for less of it — they press play to animate.
   enterSystemView: (hostname) =>
-    set({ view: 'system', systemHostname: hostname, selectedPlanet: null }),
+    set({
+      view: 'system',
+      systemHostname: hostname,
+      selectedPlanet: null,
+      ...(prefersReducedMotion() ? { timeScaleDaysPerSecond: 0 } : {}),
+    }),
   // The galaxy selection survives: leaving the system brings back the same
   // star panel (and the galaxy camera pose is restored from its holder).
   exitSystemView: () => set({ view: 'galaxy', systemHostname: null, selectedPlanet: null }),

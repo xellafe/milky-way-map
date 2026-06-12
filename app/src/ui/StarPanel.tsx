@@ -286,7 +286,7 @@ export function StarPanel() {
       role="region"
       aria-label={t('panel.regionLabel')}
       data-testid="star-panel"
-      className="absolute top-4 right-4 z-10 max-h-[calc(100%-2rem)] w-80 overflow-y-auto rounded-lg bg-zinc-900/90 p-4 shadow-xl backdrop-blur"
+      className="absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg bg-zinc-900/90 p-4 shadow-xl backdrop-blur"
     >
       <button
         type="button"

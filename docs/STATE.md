@@ -4,9 +4,26 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-06-11 (M7 completata)
-- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5** ✅, **M6** ✅, **M7 — System View & esopianeti** ✅
-- **Milestone corrente:** — (M7 chiusa, **fermo al `[CHECKPOINT 4]`** in attesa di ok umano)
+- **Data ultimo aggiornamento:** 2026-06-12 (M8 completata)
+- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5** ✅, **M6** ✅, **M7 — System View & esopianeti** ✅, **M8 — i18n & accessibilità** ✅
+- **Milestone corrente:** — (M8 chiusa; `[CHECKPOINT 4]` confermato dall'umano 2026-06-12). **M8 non ha `[CHECKPOINT]`**: prossimo passo **M9** (l'ultima, con `[FINAL HUMAN CHECK]` obbligatorio) — vale comunque la pena un ok umano prima di iniziarla.
+
+## Cosa esiste (M8, in aggiunta a M0–M7)
+
+- **Selettore lingua** (`ui/LanguageSelector.tsx`): bottone globo in alto a destra (`z-40`, in entrambe le viste) che apre un menu delle 5 lingue. **Pattern WAI-ARIA menu-button** completo: `aria-haspopup="menu"`/`aria-expanded` sul trigger, voci `role="menuitemradio"` con `aria-checked` sulla lingua attiva, navigazione tastiera (frecce/Home/End/Enter/Spazio per aprire, Escape per chiudere, Tab esce), **focus che torna al bottone** alla chiusura/selezione, chiusura su click-fuori (`pointerdown`). Roving tabindex (solo la lingua corrente è `tabIndex 0`). **Endonimi NON tradotti** (English/Italiano/Español/Français/Deutsch — costante in codice: un picker deve leggersi uguale in ogni locale). i18next già configurato (persistenza **solo-sessione** via sessionStorage, SPEC §6.8) — mancava solo questa UI.
+- **`<html lang>` sincronizzato** alla lingua attiva (effetto in `App.tsx`, listener `i18n.on('languageChanged')` + cleanup): gli screen reader scelgono la pronuncia dalla lingua del documento.
+- **Stringhe `language.*`** (`label`, `menuLabel`) aggiunte ai 5 locale; l'unit test `i18n.test.ts` (key-set identico + nessuna stringa vuota) resta verde → coerenza garantita.
+- **Pannelli top-right** (`StarPanel`, aside pianeti della System View) spostati a `top-16` (max-h `calc(100%-5rem)`) per non finire sotto il bottone globo.
+- **Reduced-motion → System View parte in pausa** (decisione umana M8, scioglie la nota lasciata in M7): `enterSystemView` nello store mette `timeScaleDaysPerSecond: 0` quando `prefersReducedMotion()` (l'animazione orbitale è contenuto informativo, ma il moto continuo disturba chi ha chiesto meno movimento → l'utente preme play). Resta valido per fade di transizione e auto-orbita camera (già da M5).
+- **Test a11y**: `@axe-core/playwright` (devDependency, MPL-2.0, solo test — non nel bundle) + `tests/e2e/a11y.spec.ts` (5 e2e): cambio lingua su tutta la UI + `html lang`; menu lingua operabile da tastiera (frecce/Enter/Escape, focus di ritorno); **scan `axe` su overlay galassia e su overlay System View → zero violazioni serious/critical** (il canvas 3D è escluso dallo scan: limite a11y noto e documentato, SPEC §6.9); reduced-motion → System View in pausa. Totale: **106 unit + 38 e2e**.
+
+## Esiti verifica M8 (AC)
+
+- **Cambio lingua su tutta la UI** ✅: EN→IT cambia il placeholder di ricerca (e l'intera UI), il codice nel bottone (EN→IT) e `document.documentElement.lang` (→ `it`); la lingua corrente è `aria-checked` nel menu. Persistenza solo-sessione (sessionStorage, by-design SPEC §6.8).
+- **Navigazione da tastiera dei pannelli** ✅: i controlli sono nativamente focusabili (button/input/checkbox → Tab); il menu lingua (custom) è pienamente operabile da tastiera con focus management e ritorno al trigger. Verificato via e2e.
+- **`axe` sull'overlay senza violazioni bloccanti** ✅: scan su overlay galassia (con pannello stella aperto) e System View (con pannello pianeta) → 0 serious/critical. Canvas 3D escluso come limite documentato (SPEC §6.9).
+- Suite: 106 unit + 38 e2e verdi (1ª run completa; 2ª run di conferma in corso al momento del commit — i nuovi test sono deterministici, non dipendono da timing pixel/WebGL salvo il poll del bridge in reduced-motion).
+- **Nota per M9**: warning di build "chunk > 500 kB" già presente (three.js) — il budget bundle (SPEC §7) si misura/affina in M9; nessuna azione in M8.
 
 ## Cosa esiste (M7, in aggiunta a M0–M6)
 
@@ -75,7 +92,7 @@
 - **Fix**: `FreeFlyControls.tsx` custom sostituisce drei/three FlyControls — il look segue il **delta del mouse 1:1** (fermi il mouse → si ferma), pointer capture, WASD + R/F (su/giù) + Q/E (roll), tasti ignorati quando il focus è in un input. Hover-picking soppresso durante il drag (evita pick render inutili). Costanti: LOOK_SENSITIVITY 0.0025 rad/px, 25 ly/s, roll 1 rad/s.
 - **Test**: `tests/e2e/camera.spec.ts` (4 test: rotazione da delta, stop col mouse fermo — anti hold-at-offset —, WASD/R/F/Q/E, click pulito seleziona ancora) usando il bridge camera, che è permanente per gli e2e di M5. Suite completa: 63 unit + 19 e2e verdi.
 - Nota M5: orbit-on-lock e fly-to animato sono stati costruiti sopra questo fix (ora tutto in `CameraControls.tsx`).
-- **Prossimo passo:** attendere **ok umano al `[CHECKPOINT 4]`** (per la revisione visiva: `cd app && npm run build && npm run preview` + browser, oppure `node scripts/check-m7.mjs` con preview attivo), poi **M8 — i18n & accessibilità** (SPEC §6.8/§6.9, §9): selettore lingua persistente in sessione (i18next già configurato con sessionStorage, manca la UI), pass a11y sulla UI 2D (tastiera, ARIA, focus), check `axe` senza violazioni bloccanti, reduced-motion (valutare partenza in pausa della System View). AC M8: cambio lingua su tutta la UI; navigazione tastiera dei pannelli; axe pulito sull'overlay.
+- **Prossimo passo:** M7 e M8 chiuse. Resta **M9 — rifinitura, performance, refresh CI, docs** (SPEC §9): profiling fino al budget prestazionale (SPEC §7, misurare con `app/scripts/measure-fps.mjs`/`measure-memory.mjs`), cablare la CI cron di refresh dati (`data-refresh.yml` ancora placeholder, vedi assunzioni aperte), README completo, valutare code-splitting per il warning "chunk > 500 kB". M9 termina col **`[FINAL HUMAN CHECK]` obbligatorio** prima di qualsiasi rilascio pubblico (AGENTS.md §4). Consigliato un ok umano prima di iniziare M9.
 
 ## Cosa esiste (M4, in aggiunta a M0–M3)
 
@@ -169,11 +186,12 @@
 | `[CHECKPOINT 3]` | M4 | ✅ tutti passati | ogni filtro produce l'insieme visibile esatto (conteggi attesi calcolati dalla fixture); ricerca→fly-to ok (HD id incluso); stelle filtrate non pickabili; 62 unit + 15 e2e verdi ×2 run |
 | — (M5, no checkpoint) | M5 | ✅ tutti passati | lock → orbita attorno al bersaglio (raggio costante, bersaglio centrato); fly-to interpolato (campione mid-flight); reduced-motion = salto istantaneo; 80 unit + 22 e2e verdi ×2 run |
 | — (M6, no checkpoint) | M6 | ✅ tutti passati | toggle funzionanti (e2e ×2 run); default zero clutter; spot-check dati completi PASS (20 label cap, linee visibili, no errori); 92 unit + 28 e2e + 97 pytest verdi |
-| `[CHECKPOINT 4]` | M7 | ✅ auto-verifica passata — **in attesa di ok umano** | TRAPPIST-1: 7 pianeti, periodi verificati dal bridge; Proxima Cen: orbite schematiche (incl. assente); HZ √L coerente coi flag in_hz; 106 unit + 33 e2e verdi ×2; spot-check reale PASS |
+| `[CHECKPOINT 4]` | M7 | ✅ **confermato dall'umano (2026-06-12)** | TRAPPIST-1: 7 pianeti, periodi verificati dal bridge; Proxima Cen: orbite schematiche (incl. assente); HZ √L coerente coi flag in_hz; 106 unit + 33 e2e verdi ×2; spot-check reale PASS |
+| — (M8, no checkpoint) | M8 | ✅ tutti passati | cambio lingua su tutta la UI + `html lang` (e2e); menu lingua operabile da tastiera con focus management; `axe` su overlay galassia e System View → 0 serious/critical; reduced-motion → System View in pausa; 106 unit + 38 e2e verdi |
 
 ## Come riprendere
 
 1. Leggi `docs/SPEC.md` e `AGENTS.md`.
-2. Guarda "Milestone corrente / Prossimo passo" qui sopra — **fermo al `[CHECKPOINT 4]`** (fine M7): serve l'ok umano prima di M8.
+2. Guarda "Milestone corrente / Prossimo passo" qui sopra — **M0–M8 chiuse**; prossimo passo **M9** (ultima milestone, finisce col `[FINAL HUMAN CHECK]`). Consigliato un ok umano prima di iniziare M9.
 3. Pipeline: `cd data-pipeline && .venv/Scripts/python -m pytest` (82 test); rigenerare artefatti: `fetch_athyg.py` → `fetch_exoplanets.py` → `build_star_binary.py` → `crossmatch.py`.
 4. M2 parte da `app/src/data/` (loader) e `app/src/scene/` + `app/src/shaders/`: leggere `.claude/skills/three-points-shader/SKILL.md`; le fixtures in `data-pipeline/fixtures/` sono una data-dir drop-in per i test.

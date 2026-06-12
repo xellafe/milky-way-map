@@ -115,7 +115,7 @@ export function SystemOverlay() {
 
       <aside
         aria-label={t('system.planets')}
-        className="absolute top-4 right-4 z-10 max-h-[calc(100%-2rem)] w-80 overflow-y-auto rounded-lg bg-zinc-900/90 p-4 shadow-xl backdrop-blur"
+        className="absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg bg-zinc-900/90 p-4 shadow-xl backdrop-blur"
       >
         <p className="mb-2 text-sm text-white/60">{t('system.planets')}</p>
         <div className="flex flex-wrap gap-1">
