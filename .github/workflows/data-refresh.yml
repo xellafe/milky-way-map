@@ -1,20 +1,102 @@
-# Periodic data refresh (SPEC §8). Skeleton in M0; ETL wired in M1, finalized in M9.
-# On TAP/network failure the previously committed data must remain untouched and
-# the workflow must fail visibly (SPEC §10).
+# Periodic data refresh (SPEC §8). Skeleton in M0; ETL wired in M1; finalized in M9.
+#
+# Re-runs the offline pipeline end-to-end (real sources: Codeberg AT-HYG/HYG,
+# NASA Exoplanet Archive TAP, Stellarium skyculture), regenerates the artifacts,
+# and validates them. On any TAP/network failure the step fails so the run is
+# RED and visible (SPEC §10); the runner data is ephemeral, so previously
+# published data is never touched by a failed run.
+#
+# dry_run (default true): regenerate + validate + upload the artifacts as a CI
+# artifact, but do NOT publish. The scheduled run publishes via the deploy step.
+#
+# NOTE (M9 decision): the publish/deploy step is a documented fail-safe STUB.
+# The generated data is large (~150 MB), gitignored, and CC BY-SA 4.0, and the
+# project has no remote/hosting target yet (M0: the human creates it later).
+# Wiring the real publish (Git LFS, an external bucket/CDN, or a release asset)
+# is left for the human at the [FINAL HUMAN CHECK] once hosting is chosen.
 name: Data refresh
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Regenerate + validate + upload artifact, but do not publish'
+        type: boolean
+        default: true
   schedule:
     - cron: '0 3 * * 1' # weekly, Monday 03:00 UTC
+
+# A scheduled run (no inputs) publishes; a manual run honors the dry_run input.
+env:
+  DRY_RUN: ${{ github.event_name == 'schedule' && 'false' || inputs.dry_run }}
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: data-pipeline
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Refresh data (placeholder until M1/M9)
-        run: echo "ETL refresh is implemented in M1 and wired here in M9."
+          cache: pip
+          cache-dependency-path: data-pipeline/requirements.txt
+
+      - run: pip install -r requirements.txt
+
+      # ETL in dependency order (data-pipeline/README.md). Each script fails the
+      # job on a source/network error (default bash -e): a refresh that cannot
+      # reach a source is RED, not silently stale (SPEC §10).
+      - name: Fetch constellation skyculture (Stellarium)
+        run: python fetch_constellations.py --force
+      - name: Fetch AT-HYG + HYG catalogs (Codeberg)
+        run: python fetch_athyg.py --force
+      - name: Fetch exoplanets (NASA Exoplanet Archive TAP)
+        run: python fetch_exoplanets.py
+      - name: Build star binary (SoA + manifest + names index + catalog ids)
+        run: python build_star_binary.py
+      - name: Cross-match exoplanet hosts → stars
+        run: python crossmatch.py
+      - name: Build constellation lines
+        run: python build_constellations.py
+
+      # Validate the regenerated artifacts: the pipeline test suite (transforms,
+      # SoA roundtrip, cross-match, golden fixtures) plus presence/non-emptiness
+      # of the freshly built production artifacts.
+      - name: Validate (pytest)
+        run: python -m pytest -q
+      - name: Validate regenerated artifacts
+        run: python validate_artifacts.py
+
+      - name: Upload regenerated data artifact (dry-run verification)
+        if: ${{ env.DRY_RUN == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: galaxy-map-data
+          # Raw downloads (~200 MB) are excluded; ship only the served artifacts.
+          path: |
+            data/stars.bin
+            data/stars.manifest.json
+            data/names.index.json
+            data/catalog-ids.bin
+            data/catalog-ids.manifest.json
+            data/exoplanets.json
+            data/constellations.json
+            data/search
+          if-no-files-found: error
+          retention-days: 14
+
+      # Publish path (scheduled run / dry_run=false). STUB — see header note.
+      # Intentionally non-destructive: it reports what WOULD be published and
+      # exits 0. Replace with the real deploy once hosting is chosen.
+      - name: Publish (deploy stub — pending hosting decision)
+        if: ${{ env.DRY_RUN != 'true' }}
+        run: |
+          echo "::notice::Data regenerated and validated. Publish target not yet configured."
+          echo "Would publish these artifacts to the chosen host (Git LFS / bucket / release):"
+          ls -lh data/stars.bin data/names.index.json data/exoplanets.json data/constellations.json
+          echo "See .github/workflows/data-refresh.yml header (M9 decision) and docs/STATE.md."

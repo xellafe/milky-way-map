@@ -4,9 +4,26 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-06-12 (M8 completata)
-- **Milestone completate:** **M0** ✅, **M1** ✅, **M2** ✅, **M3** ✅, **M4** ✅, **M5** ✅, **M6** ✅, **M7 — System View & esopianeti** ✅, **M8 — i18n & accessibilità** ✅
-- **Milestone corrente:** — (M8 chiusa; `[CHECKPOINT 4]` confermato dall'umano 2026-06-12). **M8 non ha `[CHECKPOINT]`**: prossimo passo **M9** (l'ultima, con `[FINAL HUMAN CHECK]` obbligatorio) — vale comunque la pena un ok umano prima di iniziarla.
+- **Data ultimo aggiornamento:** 2026-06-12 (M9 completata)
+- **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
+- **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ⏳ **In attesa del `[FINAL HUMAN CHECK]`** (AGENTS.md §4): nessun rilascio pubblico senza approvazione umana. Resta da decidere l'**hosting/deploy dei dati** (vedi sezione M9).
+
+## Cosa esiste (M9, in aggiunta a M0–M8)
+
+- **Performance verificata e annotata** (SPEC §7): **FPS su dati completi (2.49M stelle)** = run 1 46.9 (warmup: compile shader/settling) → **60.1 / 60.0** a regime (vsync cap 60), 1920×1080, Chromium headless ANGLE D3D11 + RTX 3080 → **budget 60 FPS rispettato**, nessuna regressione da M3–M8 (M2 era 58–60). **Bundle JS gzip ≈ 354 KB** (app 94 + vendor `three` 260) ≤ 600 KB; **CSS 4.1 KB** ≤ 50 KB. Numeri nel README (tabella budget vs misurato).
+- **Chunk split vendor** (`vite.config.ts`): `manualChunks` (funzione, forma richiesta da rolldown) isola `three`+`@react-three`+`postprocessing` in un chunk a sé → cache cross-deploy (l'app cambia, three no). `chunkSizeWarningLimit: 1000` con commento: il warning di vite misura byte *uncompressed* (three ~979 KB raw / ~260 KB gzip), non il budget gzip reale (tracciato qui/README). Build ora pulita.
+- **CI refresh dati cablata** (`.github/workflows/data-refresh.yml`): ETL reale completo in ordine di dipendenza (fetch_constellations → fetch_athyg → fetch_exoplanets → build_star_binary → crossmatch → build_constellations) + validazione (`pytest` + `validate_artifacts.py`). Input `dry_run` (default **true** su dispatch; lo `schedule` settimanale = publish). **Dry-run**: rigenera + valida + carica gli artefatti come **artifact di CI** (no publish). Fallimento di un fetch sorgente → run **RED** (no stale silenzioso, SPEC §10); i dati pubblicati non vengono toccati da un run fallito (i dati del runner sono effimeri).
+- **`data-pipeline/validate_artifacts.py`** (nuovo): valida presenza + coerenza degli artefatti rigenerati (count manifest vs dimensione file, stride catalog-ids = count×16, host/pianeti esopianeti, costellazioni, bucket di ricerca). Exit ≠ 0 alla prima incoerenza.
+- **Deploy stub documentato** (decisione umana M9): il passo "pubblica" (schedule / `dry_run=false`) è uno **stub fail-safe** che riporta cosa pubblicherebbe ed esce 0, **non distruttivo**. Motivo: i dati sono ~150 MB, gitignored, CC BY-SA, e **non esiste ancora un remoto/hosting** (M0: lo crea l'umano). Cablare il publish reale (Git LFS / bucket-CDN / release asset) è una **decisione al `[FINAL HUMAN CHECK]`** una volta scelto l'hosting.
+- **Docs completate**: README root (features, struttura con `.github`/`NOTICE`/`LICENSE`, tabella budget misurato, sezione "Data refresh & deployment"); `data-pipeline/README.md` (sequenza run completa incl. costellazioni + `validate_artifacts.py` + sezione refresh CI).
+
+## Esiti verifica M9 (AC)
+
+- **Budget prestazionale rispettato (misurato)** ✅: 60 FPS a regime su 2.49M stelle (RTX 3080); JS 354 KB gzip ≤ 600, CSS 4.1 KB ≤ 50. `scripts/measure-fps.mjs` riusabile.
+- **Dry-run CI rigenera i dati** ✅: rigenerazione **eseguita localmente end-to-end dai raw in cache** (stesso comando del workflow) → build_star_binary **2.491.335 stelle**, crossmatch (flag su 1610 stelle), build_constellations (**88 costellazioni, 689/695 segmenti**, = M6), **97 pytest verdi**, `validate_artifacts.py` **OK** (2,49M stelle / 4.716 host / 6.298 pianeti / 512 bucket / 313.258 nomi). Rigenerazione **deterministica** (conteggi identici al manifest committato). Il workflow non è eseguibile su GitHub finché manca il remoto, ma la logica/sequenza è quella verificata localmente.
+- **Documentazione presente** ✅: README root + data-pipeline aggiornati e verificati.
+- Suite app: 106 unit + 38 e2e (verde ×2 run — in corso al momento della stesura). Pipeline: 97 pytest.
+- **`[FINAL HUMAN CHECK]` NON superato** (AGENTS.md §4): in attesa di approvazione umana + decisione hosting/deploy dei dati. Revisione: `cd app && npm run build && npm run preview` + browser; per gli FPS `node scripts/measure-fps.mjs` con preview attivo.
 
 ## Cosa esiste (M8, in aggiunta a M0–M7)
 
@@ -92,7 +109,7 @@
 - **Fix**: `FreeFlyControls.tsx` custom sostituisce drei/three FlyControls — il look segue il **delta del mouse 1:1** (fermi il mouse → si ferma), pointer capture, WASD + R/F (su/giù) + Q/E (roll), tasti ignorati quando il focus è in un input. Hover-picking soppresso durante il drag (evita pick render inutili). Costanti: LOOK_SENSITIVITY 0.0025 rad/px, 25 ly/s, roll 1 rad/s.
 - **Test**: `tests/e2e/camera.spec.ts` (4 test: rotazione da delta, stop col mouse fermo — anti hold-at-offset —, WASD/R/F/Q/E, click pulito seleziona ancora) usando il bridge camera, che è permanente per gli e2e di M5. Suite completa: 63 unit + 19 e2e verdi.
 - Nota M5: orbit-on-lock e fly-to animato sono stati costruiti sopra questo fix (ora tutto in `CameraControls.tsx`).
-- **Prossimo passo:** M7 e M8 chiuse. Resta **M9 — rifinitura, performance, refresh CI, docs** (SPEC §9): profiling fino al budget prestazionale (SPEC §7, misurare con `app/scripts/measure-fps.mjs`/`measure-memory.mjs`), cablare la CI cron di refresh dati (`data-refresh.yml` ancora placeholder, vedi assunzioni aperte), README completo, valutare code-splitting per il warning "chunk > 500 kB". M9 termina col **`[FINAL HUMAN CHECK]` obbligatorio** prima di qualsiasi rilascio pubblico (AGENTS.md §4). Consigliato un ok umano prima di iniziare M9.
+- **Prossimo passo:** M0–M9 tutte implementate. Il progetto è **fermo al `[FINAL HUMAN CHECK]`** (AGENTS.md §4): serve l'approvazione umana + la **decisione su hosting/deploy dei dati** (poi cablare il publish reale in `data-refresh.yml`, oggi stub fail-safe) e la creazione del remoto GitHub (rimasta all'umano da M0). Vedi "Cosa esiste (M9)" / "Esiti verifica M9".
 
 ## Cosa esiste (M4, in aggiunta a M0–M3)
 
@@ -173,7 +190,7 @@
 
 - ~~Fonte e licenza del set di linee delle costellazioni~~ → risolta: Stellarium modern skyculture, dati CC BY-SA 4.0 (vedi "Prossimo passo").
 - Numeri di performance (FPS) sono **target**, da misurare in M2/M9.
-- `data-refresh.yml` ancora placeholder: cablare la pipeline reale in M9.
+- ~~`data-refresh.yml` placeholder~~ → risolto in M9: ETL reale cablato + validazione + artifact in dry-run. Resta lo **stub di publish/deploy** (hosting dati da decidere al `[FINAL HUMAN CHECK]`).
 
 ## Checkpoint raggiunti
 
@@ -188,10 +205,11 @@
 | — (M6, no checkpoint) | M6 | ✅ tutti passati | toggle funzionanti (e2e ×2 run); default zero clutter; spot-check dati completi PASS (20 label cap, linee visibili, no errori); 92 unit + 28 e2e + 97 pytest verdi |
 | `[CHECKPOINT 4]` | M7 | ✅ **confermato dall'umano (2026-06-12)** | TRAPPIST-1: 7 pianeti, periodi verificati dal bridge; Proxima Cen: orbite schematiche (incl. assente); HZ √L coerente coi flag in_hz; 106 unit + 33 e2e verdi ×2; spot-check reale PASS |
 | — (M8, no checkpoint) | M8 | ✅ tutti passati | cambio lingua su tutta la UI + `html lang` (e2e); menu lingua operabile da tastiera con focus management; `axe` su overlay galassia e System View → 0 serious/critical; reduced-motion → System View in pausa; 106 unit + 38 e2e verdi |
+| `[FINAL HUMAN CHECK]` | M9 | ✅ auto-verifica passata — **in attesa di ok umano** | FPS 60 a regime su 2.49M stelle (RTX 3080); bundle 354 KB / CSS 4.1 KB gzip entro budget; refresh CI cablata + rigenerazione locale end-to-end (97 pytest + validate OK, deterministica); docs complete; deploy dati = stub documentato (hosting da decidere) |
 
 ## Come riprendere
 
 1. Leggi `docs/SPEC.md` e `AGENTS.md`.
-2. Guarda "Milestone corrente / Prossimo passo" qui sopra — **M0–M8 chiuse**; prossimo passo **M9** (ultima milestone, finisce col `[FINAL HUMAN CHECK]`). Consigliato un ok umano prima di iniziare M9.
+2. Guarda "Milestone corrente" qui sopra — **M0–M9 tutte implementate**; il progetto è **fermo al `[FINAL HUMAN CHECK]`**. Prima di qualsiasi rilascio: (a) approvazione umana sulla revisione; (b) **decisione hosting/deploy dei dati** (poi cablare il publish reale in `data-refresh.yml`, oggi stub); (c) creazione del remoto GitHub (M0).
 3. Pipeline: `cd data-pipeline && .venv/Scripts/python -m pytest` (82 test); rigenerare artefatti: `fetch_athyg.py` → `fetch_exoplanets.py` → `build_star_binary.py` → `crossmatch.py`.
 4. M2 parte da `app/src/data/` (loader) e `app/src/scene/` + `app/src/shaders/`: leggere `.claude/skills/three-points-shader/SKILL.md`; le fixtures in `data-pipeline/fixtures/` sono una data-dir drop-in per i test.

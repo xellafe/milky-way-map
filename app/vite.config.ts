@@ -56,6 +56,23 @@ function serveDataDir(): Plugin {
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), serveDataDir()],
+  build: {
+    // The default warning threshold measures UNcompressed bytes; our budget is
+    // gzip (≤600 KB JS, SPEC §7) and is tracked in STATE.md by measurement. The
+    // three vendor chunk is ~979 KB raw but ~260 KB gzip, so raise the limit to
+    // silence a warning that doesn't reflect the budget we actually enforce.
+    chunkSizeWarningLimit: 1000,
+    // Split the rarely-changing 3D vendor (three + R3F + postprocessing) into
+    // its own chunk so repeat visits cache it across app deploys.
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules') && /[\\/](three|@react-three|postprocessing)[\\/]/.test(id))
+            return 'three';
+        },
+      },
+    },
+  },
   test: {
     include: ['tests/unit/**/*.test.{ts,tsx}'],
     environment: 'node',
