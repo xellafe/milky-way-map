@@ -14,6 +14,7 @@ attribute float aVisible; // runtime filter mask (SPEC §6.5): 0 = hidden
 
 varying vec3 vColor;
 varying float vAlpha;
+varying float vPx;
 
 void main() {
   if (aVisible < 0.5) {
@@ -22,6 +23,7 @@ void main() {
     gl_PointSize = 0.0;
     vColor = vec3(0.0);
     vAlpha = 0.0;
+    vPx = 0.0;
     return;
   }
   vColor = aColor;
@@ -34,5 +36,6 @@ void main() {
   vAlpha = sub * sub;
 
   gl_PointSize = clamp(px, uMinPx, uMaxPx);
+  vPx = gl_PointSize;
   gl_Position = projectionMatrix * mvPosition;
 }

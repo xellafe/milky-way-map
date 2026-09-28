@@ -5,11 +5,15 @@ import starFrag from '../shaders/star.frag?raw';
 import starVert from '../shaders/star.vert?raw';
 
 // Tuning constants (aesthetic, documented): uPixelScale is multiplied by the
-// device pixel ratio at material creation; sizes clamp to [1, 14] px so nearby
-// bright stars saturate into the bloom instead of becoming huge discs.
+// device pixel ratio at material creation; sizes clamp to [1, 24] px: large enough
+// for nearby bright stars to show the fireball core/corona, small enough not
+// to become huge discs.
 export const STAR_PIXEL_SCALE = 60.0;
 export const STAR_MIN_PX = 1.0;
-export const STAR_MAX_PX = 14.0;
+export const STAR_MAX_PX = 24.0;
+// Hue exaggeration in the fragment shader (aesthetic, SPEC §13): per-channel
+// power curve on the pastel catalog colors; neutral white stays white.
+export const STAR_COLOR_GAMMA = 2.5;
 
 /**
  * The whole star catalog as ONE THREE.Points / one draw call (SPEC §4.2).
@@ -31,6 +35,7 @@ export function StarCloud() {
           },
           uMinPx: { value: STAR_MIN_PX },
           uMaxPx: { value: STAR_MAX_PX },
+          uColorGamma: { value: STAR_COLOR_GAMMA },
         },
         blending: THREE.AdditiveBlending,
         transparent: true,
