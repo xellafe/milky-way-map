@@ -49,3 +49,10 @@ Acknowledgment standard da includere:
   Le illustrazioni (Free Art License) **non** sono usate.
 - **Obblighi:** attribuzione + share-alike: `constellations.json` è un derivato
   e resta sotto CC BY-SA 4.0 (come gli altri artefatti dati, vedi §1).
+
+## 4. Musica di sottofondo
+
+- **File:** `app/src/assets/background-music.mp3` (fornito dall'utente, 2026-09-28).
+- **Autore:** Federico Xella, titolare dei diritti; incluso nell'app per sua scelta.
+- **Licenza:** tutti i diritti riservati all'autore. **Non** è coperto dalla
+  licenza MIT del codice né dalla CC BY-SA dei dati.

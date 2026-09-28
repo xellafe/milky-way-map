@@ -97,5 +97,10 @@
     "eqTemp": "Gleichgewichtstemperatur",
     "inHz": "In habitabler Zone",
     "schematicOrbit": "Schematische Bahn (Neigung n. v.)"
+  },
+  "music": {
+    "play": "Musik abspielen",
+    "pause": "Musik pausieren",
+    "volume": "Musiklautstärke"
   }
 }

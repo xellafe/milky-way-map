@@ -13,6 +13,7 @@ import { FiltersPanel } from './ui/FiltersPanel';
 import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
 import { LoadingOverlay } from './ui/LoadingOverlay';
+import { MusicControl } from './ui/MusicControl';
 import { SearchBox } from './ui/SearchBox';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
 import { StarPanel } from './ui/StarPanel';
@@ -100,6 +101,7 @@ export default function App() {
           <SystemOverlay />
         </>
       )}
+      <MusicControl />
       <LanguageSelector />
       {/* SPEC §6.3: animated transition into/out of the System View — a CSS
           fade keyed by view (motion-safe only: reduced motion = hard cut). */}

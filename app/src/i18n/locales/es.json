@@ -97,5 +97,10 @@
     "eqTemp": "Temperatura de equilibrio",
     "inHz": "En zona habitable",
     "schematicOrbit": "Órbita esquemática (inclinación n/d)"
+  },
+  "music": {
+    "play": "Reproducir música",
+    "pause": "Pausar música",
+    "volume": "Volumen de la música"
   }
 }
