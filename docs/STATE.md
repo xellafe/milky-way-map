@@ -4,9 +4,16 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-06-12 (M9 completata)
+- **Data ultimo aggiornamento:** 2026-09-28 (modifiche post-M9 richieste dall'umano: resa stelle + musica; remoto GitHub creato)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ⏳ **In attesa del `[FINAL HUMAN CHECK]`** (AGENTS.md §4): nessun rilascio pubblico senza approvazione umana. Resta da decidere l'**hosting/deploy dei dati** (vedi sezione M9).
+
+## Modifiche post-M9 (2026-09-28, richieste dall'umano)
+
+- **Git:** M8 e M9 mergiati su `main` (fast-forward); branch mergiati eliminati; remoto `origin` = https://github.com/xellafe/milky-way-map.git, `main` pushato.
+- **Resa stelle "palla di fuoco"** (`app/src/shaders/star.frag`, `star.vert`, `scene/StarCloud.tsx`): nucleo bianco + corpo colorato + corona debole; nucleo/corona solo su punti risolti (`smoothstep(3, 9 px)`, varying `vPx`), le stelle lontane restano punti di colore pieno. Colore più marcato con curva di potenza per canale `STAR_COLOR_GAMMA = 2.5` (i colori pipeline sono pastello per il lightness floor 0.70; il bianco neutro resta bianco → nessun colore inventato). `STAR_MAX_PX` 14 → 24 (condiviso dal picking). Scelta estetica, meno realistica per richiesta esplicita. Dati da rigenerare: nessuno.
+- **Musica di sottofondo** (`app/src/ui/MusicControl.tsx`, asset `app/src/assets/background-music.mp3` ~7 MB committato): `<audio loop>` fuori dallo switch galassia/System View; parte al mount o al primo gesto utente (policy autoplay), non se il gesto è sul controllo stesso. Pulsante play/pausa + slider volume (default 0.4), stringhe `music.*` in 5 lingue. Brano dell'autore (Federico Xella), tutti i diritti riservati → `NOTICE.md` §4.
+- **Verifiche:** typecheck ok; 106 unit verdi; e2e `music.spec.ts` + `a11y.spec.ts` verdi (6/6); resa stelle ispezionata a video su dati completi; riproduzione verificata anche su Opera GX (autoplay bloccato → parte al primo click). Suite e2e completa **non** rieseguita; FPS con `STAR_MAX_PX = 24` **non** rimisurati.
 
 ## Cosa esiste (M9, in aggiunta a M0–M8)
 
@@ -210,6 +217,6 @@
 ## Come riprendere
 
 1. Leggi `docs/SPEC.md` e `AGENTS.md`.
-2. Guarda "Milestone corrente" qui sopra — **M0–M9 tutte implementate**; il progetto è **fermo al `[FINAL HUMAN CHECK]`**. Prima di qualsiasi rilascio: (a) approvazione umana sulla revisione; (b) **decisione hosting/deploy dei dati** (poi cablare il publish reale in `data-refresh.yml`, oggi stub); (c) creazione del remoto GitHub (M0).
+2. Guarda "Milestone corrente" qui sopra — **M0–M9 tutte implementate**; il progetto è **fermo al `[FINAL HUMAN CHECK]`**. Prima di qualsiasi rilascio: (a) approvazione umana sulla revisione; (b) **decisione hosting/deploy dei dati** (poi cablare il publish reale in `data-refresh.yml`, oggi stub); (c) ~~creazione del remoto GitHub~~ → fatto 2026-09-28 (`origin`). Vedi anche "Modifiche post-M9": rieseguire e2e completi + misura FPS (`node scripts/measure-fps.mjs`).
 3. Pipeline: `cd data-pipeline && .venv/Scripts/python -m pytest` (82 test); rigenerare artefatti: `fetch_athyg.py` → `fetch_exoplanets.py` → `build_star_binary.py` → `crossmatch.py`.
 4. M2 parte da `app/src/data/` (loader) e `app/src/scene/` + `app/src/shaders/`: leggere `.claude/skills/three-points-shader/SKILL.md`; le fixtures in `data-pipeline/fixtures/` sono una data-dir drop-in per i test.
