@@ -21,10 +21,17 @@ from pathlib import Path
 import requests
 
 # Codeberg serves Git-LFS content from the /media/ endpoint (raw/ returns pointers).
+# Pinned to COMMITS, not branch/main: upstream replaced AT-HYG v3.3 with v4.0
+# (2026-07-25, 57c149b) and moved HYG v4.2 to OLDER/ for v4.3 (2026-07-05,
+# f3b7a9f), which 404'd the branch URLs. These commits serve byte-identical
+# files to the M1 downloads (sha256 verified 2026-09-28). Moving to v4.0/v4.3
+# is a data-version change → human approval (AGENTS.md §6) + re-validation.
+_ATHYG_COMMIT = "e2d25eb56726ddede7722d8885a49bb2b8583c7e"
+_HYG_COMMIT = "b457d51b235aae40fb3ac9fa6ad7554d237c406d"
 SOURCES: dict[str, str] = {
-    "athyg_v33-1.csv.gz": "https://codeberg.org/astronexus/athyg/media/branch/main/data/athyg_v33-1.csv.gz",
-    "athyg_v33-2.csv.gz": "https://codeberg.org/astronexus/athyg/media/branch/main/data/athyg_v33-2.csv.gz",
-    "hyg_v42.csv.gz": "https://codeberg.org/astronexus/hyg/media/branch/main/data/hyg/CURRENT/hyg_v42.csv.gz",
+    "athyg_v33-1.csv.gz": f"https://codeberg.org/astronexus/athyg/media/commit/{_ATHYG_COMMIT}/data/athyg_v33-1.csv.gz",
+    "athyg_v33-2.csv.gz": f"https://codeberg.org/astronexus/athyg/media/commit/{_ATHYG_COMMIT}/data/athyg_v33-2.csv.gz",
+    "hyg_v42.csv.gz": f"https://codeberg.org/astronexus/hyg/media/commit/{_HYG_COMMIT}/data/hyg/CURRENT/hyg_v42.csv.gz",
 }
 
 CATALOG_LICENSE = "CC BY-SA 4.0 (astronexus / David Nash)"
