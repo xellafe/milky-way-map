@@ -7,6 +7,8 @@
 uniform float uPixelScale; // px·ly, already multiplied by devicePixelRatio
 uniform float uMinPx;
 uniform float uMaxPx;
+uniform float uSizeGamma; // >1 widens the size contrast between stars
+uniform float uDistExp;   // <1 softens the distance falloff (far giants stay distinguishable)
 
 attribute vec3 aColor;   // normalized uint8 -> [0,1]
 attribute float aSize;   // from absolute magnitude, ~[0.5, 16], Sun ≈ 1
@@ -31,7 +33,8 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
   float dist = max(length(mvPosition.xyz), 1e-3);
 
-  float px = uPixelScale * aSize / dist;
+  // Same formula as star-pick.vert — keep them in sync.
+  float px = uPixelScale * pow(aSize, uSizeGamma) / pow(dist, uDistExp);
   float sub = clamp(px / uMinPx, 0.0, 1.0);
   vAlpha = sub * sub;
 

@@ -9,7 +9,7 @@ import { getStarCore, getStarGeometry } from '../data/starCoreStore';
 import starPickFrag from '../shaders/star-pick.frag?raw';
 import starPickVert from '../shaders/star-pick.vert?raw';
 import { useGalaxyMapStore } from '../state/store';
-import { STAR_MAX_PX, STAR_PIXEL_SCALE } from './StarCloud';
+import { STAR_DIST_EXP, STAR_MAX_PX, STAR_PIXEL_SCALE, STAR_SIZE_GAMMA } from './StarCloud';
 
 const PICK_MIN_PX = 7.0; // hover comfort: tiny stars get a larger hit target
 const CLICK_MAX_DRAG_PX = 5; // pointerdown→up movement below this = click, not a look-drag
@@ -60,6 +60,8 @@ export function StarPicking() {
           value: STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, 2),
         },
         uMaxPx: { value: STAR_MAX_PX },
+        uSizeGamma: { value: STAR_SIZE_GAMMA },
+        uDistExp: { value: STAR_DIST_EXP },
         uPickMinPx: { value: PICK_MIN_PX },
       },
       depthTest: true,

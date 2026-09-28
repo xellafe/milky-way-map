@@ -8,7 +8,15 @@ import starVert from '../shaders/star.vert?raw';
 // device pixel ratio at material creation; sizes clamp to [1, 24] px: large enough
 // for nearby bright stars to show the fireball core/corona, small enough not
 // to become huge discs.
-export const STAR_PIXEL_SCALE = 60.0;
+// Screen size = STAR_PIXEL_SCALE · size^STAR_SIZE_GAMMA / dist^STAR_DIST_EXP
+// (aesthetic, SPEC §6.1 still holds: bigger for brighter absolute magnitude,
+// perspective-attenuated). With the plain size/dist law almost every star
+// beyond a few tens of ly collapsed to the 1 px floor and looked identical:
+// the gamma widens the 32:1 catalog size range, the softer distance exponent
+// keeps far giants visibly larger than dwarfs at the same distance.
+export const STAR_PIXEL_SCALE = 25.0;
+export const STAR_SIZE_GAMMA = 1.2;
+export const STAR_DIST_EXP = 0.75;
 export const STAR_MIN_PX = 1.0;
 export const STAR_MAX_PX = 24.0;
 // Hue exaggeration in the fragment shader (aesthetic, SPEC §13): per-channel
@@ -35,6 +43,8 @@ export function StarCloud() {
           },
           uMinPx: { value: STAR_MIN_PX },
           uMaxPx: { value: STAR_MAX_PX },
+          uSizeGamma: { value: STAR_SIZE_GAMMA },
+          uDistExp: { value: STAR_DIST_EXP },
           uColorGamma: { value: STAR_COLOR_GAMMA },
         },
         blending: THREE.AdditiveBlending,

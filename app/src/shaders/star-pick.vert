@@ -5,6 +5,8 @@
 
 uniform float uPixelScale;
 uniform float uMaxPx;
+uniform float uSizeGamma;
+uniform float uDistExp;
 uniform float uPickMinPx; // larger than the visual minimum: comfortable hover targets
 
 in float aSize;
@@ -24,6 +26,8 @@ void main() {
 
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
   float dist = max(length(mvPosition.xyz), 1e-3);
-  gl_PointSize = clamp(uPixelScale * aSize / dist, uPickMinPx, uMaxPx);
+  // Same size formula as star.vert — keep them in sync.
+  float px = uPixelScale * pow(aSize, uSizeGamma) / pow(dist, uDistExp);
+  gl_PointSize = clamp(px, uPickMinPx, uMaxPx);
   gl_Position = projectionMatrix * mvPosition;
 }
