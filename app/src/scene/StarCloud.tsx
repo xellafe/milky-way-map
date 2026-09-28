@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarGeometry } from '../data/starCoreStore';
+import { prefersReducedMotion } from '../lib/motion';
 import starFrag from '../shaders/star.frag?raw';
 import starVert from '../shaders/star.vert?raw';
 
@@ -22,6 +24,14 @@ export const STAR_MAX_PX = 24.0;
 // Hue exaggeration in the fragment shader (aesthetic, SPEC §13): per-channel
 // power curve on the pastel catalog colors; neutral white stays white.
 export const STAR_COLOR_GAMMA = 2.5;
+// Twinkle (aesthetic): brightness swings ±STAR_TWINKLE_AMPLITUDE on stars
+// farther than the range start (ly from camera), full effect past its end.
+// Disabled under prefers-reduced-motion (SPEC §6.9).
+export const STAR_TWINKLE_AMPLITUDE = 0.5;
+export const STAR_TWINKLE_NEAR_LY = 20;
+export const STAR_TWINKLE_FAR_LY = 200;
+// Time scale of the twinkle waves (1 = shader base frequencies ~0.3–1.4 Hz).
+export const STAR_TWINKLE_SPEED = 2 / 3;
 
 /**
  * The whole star catalog as ONE THREE.Points / one draw call (SPEC §4.2).
@@ -46,6 +56,9 @@ export function StarCloud() {
           uSizeGamma: { value: STAR_SIZE_GAMMA },
           uDistExp: { value: STAR_DIST_EXP },
           uColorGamma: { value: STAR_COLOR_GAMMA },
+          uTime: { value: 0 },
+          uTwinkle: { value: STAR_TWINKLE_AMPLITUDE },
+          uTwinkleRange: { value: new THREE.Vector2(STAR_TWINKLE_NEAR_LY, STAR_TWINKLE_FAR_LY) },
         },
         blending: THREE.AdditiveBlending,
         transparent: true,
@@ -54,6 +67,14 @@ export function StarCloud() {
     [],
   );
 
+  const pointsRef = useRef<THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
+  useFrame(({ clock }) => {
+    const uniforms = pointsRef.current?.material.uniforms;
+    if (!uniforms) return;
+    uniforms.uTime!.value = clock.elapsedTime * STAR_TWINKLE_SPEED;
+    uniforms.uTwinkle!.value = prefersReducedMotion() ? 0 : STAR_TWINKLE_AMPLITUDE;
+  });
+
   if (!geometry) return null;
-  return <points geometry={geometry} material={material} frustumCulled={false} />;
+  return <points ref={pointsRef} geometry={geometry} material={material} frustumCulled={false} />;
 }

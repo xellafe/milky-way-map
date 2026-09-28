@@ -9,6 +9,9 @@ uniform float uMinPx;
 uniform float uMaxPx;
 uniform float uSizeGamma; // >1 widens the size contrast between stars
 uniform float uDistExp;   // <1 softens the distance falloff (far giants stay distinguishable)
+uniform float uTime;         // seconds
+uniform float uTwinkle;      // twinkle amplitude on brightness (0 = off, e.g. reduced motion)
+uniform vec2 uTwinkleRange;  // ly from camera: no twinkle below .x, full above .y
 
 attribute vec3 aColor;   // normalized uint8 -> [0,1]
 attribute float aSize;   // from absolute magnitude, ~[0.5, 16], Sun ≈ 1
@@ -37,6 +40,14 @@ void main() {
   float px = uPixelScale * pow(aSize, uSizeGamma) / pow(dist, uDistExp);
   float sub = clamp(px / uMinPx, 0.0, 1.0);
   vAlpha = sub * sub;
+
+  // Twinkle (aesthetic, not physical — there is no atmosphere in space):
+  // per-star phase/frequency from a position hash, two incommensurate sines,
+  // amplitude ramping in with distance so nearby stars stay steady.
+  float h = fract(sin(dot(position.xy + position.z, vec2(12.9898, 78.233))) * 43758.5453);
+  float wave = 0.5 * sin(uTime * (2.0 + 3.0 * h) + h * 6.2832)
+             + 0.5 * sin(uTime * (5.0 + 4.0 * fract(h * 7.13)) + h * 14.0);
+  vAlpha *= 1.0 + uTwinkle * smoothstep(uTwinkleRange.x, uTwinkleRange.y, dist) * wave;
 
   gl_PointSize = clamp(px, uMinPx, uMaxPx);
   vPx = gl_PointSize;
