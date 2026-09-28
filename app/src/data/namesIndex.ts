@@ -6,6 +6,7 @@
  * from catalog-ids.bin instead (see catalogIds.ts).
  */
 
+import { DATA_BASE_URL } from './starData';
 export interface NamesEntry {
   proper?: string;
   hd?: string;
@@ -64,7 +65,7 @@ function buildSearchEntries(index: NamesIndex): SearchEntry[] {
   return entries;
 }
 
-export function loadNamesIndex(baseUrl = '/data/'): Promise<NamesIndex> {
+export function loadNamesIndex(baseUrl = DATA_BASE_URL): Promise<NamesIndex> {
   loadPromise ??= (async () => {
     const resp = await fetch(`${baseUrl}names.index.json`);
     if (!resp.ok) throw new Error(`names index fetch failed: ${resp.status}`);

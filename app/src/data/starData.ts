@@ -49,6 +49,12 @@ export interface StarDetailData {
   luminosity: Float32Array;
 }
 
+/**
+ * Where the data artifacts are served: `<app base>/data/`. The base is `/`
+ * locally and the repo sub-path on GitHub Pages (VITE_BASE at build time).
+ */
+export const DATA_BASE_URL = `${import.meta.env.BASE_URL}data/`;
+
 const CORE_ATTRIBUTES = ['position', 'colorRGB', 'sizeAbsMag', 'spectralClass', 'flags'] as const;
 const DETAIL_ATTRIBUTES = ['distanceLy', 'appMag', 'absMag', 'colorIndex', 'luminosity'] as const;
 

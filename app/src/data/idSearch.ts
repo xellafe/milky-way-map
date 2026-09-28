@@ -7,6 +7,7 @@
  *   search/tyc-XX.json   — XX = TYC1 % 256 in hex, keys "a-b-c".
  * Only the single matching bucket (~100–300 KB) is fetched, then cached.
  */
+import { DATA_BASE_URL } from './starData';
 import type { StarSearchResult } from './namesIndex';
 
 const bucketCache = new Map<string, Promise<Record<string, number>>>();
@@ -35,7 +36,7 @@ export function looksLikeCatalogId(query: string): boolean {
 
 export async function searchByCatalogId(
   query: string,
-  baseUrl = '/data/',
+  baseUrl = DATA_BASE_URL,
 ): Promise<StarSearchResult[]> {
   const q = query.trim();
 

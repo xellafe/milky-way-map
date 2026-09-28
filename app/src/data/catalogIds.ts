@@ -6,6 +6,7 @@
  * so the 40 MB file is never downloaded in full.
  */
 
+import { DATA_BASE_URL } from './starData';
 export interface CatalogIds {
   gaia: string | null; // decimal string — Gaia ids exceed JS safe integers
   tyc: string | null; // "tyc1-tyc2-tyc3"
@@ -26,7 +27,7 @@ export function parseCatalogIdsRecord(bytes: Uint8Array): CatalogIds {
   };
 }
 
-export async function fetchCatalogIds(index: number, baseUrl = '/data/'): Promise<CatalogIds> {
+export async function fetchCatalogIds(index: number, baseUrl = DATA_BASE_URL): Promise<CatalogIds> {
   const cached = cache.get(index);
   if (cached) return cached;
 

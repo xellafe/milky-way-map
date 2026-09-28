@@ -69,18 +69,29 @@ WebGL2 baseline with a friendly fallback message. Re-measure with
 ## Data refresh & deployment
 
 The Python pipeline (`data-pipeline/`) produces the served artifacts under
-`data/` (gitignored; ~150 MB; CC BY-SA 4.0 derivatives). In dev/preview they are
-served at `/data/*` with HTTP Range support by a Vite plugin (`vite.config.ts`);
-in production the same files are expected on a CDN/host under `/data/`.
+`data/` (gitignored; ~155 MB served; CC BY-SA 4.0 derivatives). In dev/preview
+they are served at `<base>/data/*` with HTTP Range support by a Vite plugin
+(`vite.config.ts`).
+
+**Live site:** https://xellafe.github.io/milky-way-map/ (GitHub Pages).
 
 `.github/workflows/data-refresh.yml` re-runs the pipeline weekly (and on manual
 dispatch), regenerates the artifacts, and validates them
 (`data-pipeline/validate_artifacts.py`). A failed source fetch makes the run RED
-rather than silently stale (SPEC §10). The publish/deploy step is a documented
-fail-safe **stub**: the data is large, gitignored, and the project has no
-remote/hosting target yet — wiring the real publish (Git LFS, an external
-bucket/CDN, or a release asset) is a `[FINAL HUMAN CHECK]` decision once hosting
-is chosen.
+rather than silently stale (SPEC §10). The scheduled run — or a manual run with
+`dry_run=false` — then **deploys to GitHub Pages**: the app is built with
+`VITE_BASE=/<repo>/` (all data URLs derive from it) and the validated data
+artifact is shipped under `<base>/data/`, with `NOTICE.md`/`LICENSE` for
+attribution. The data never enters git. To publish app code changes, dispatch
+the workflow manually with `dry_run=false`:
+
+```bash
+gh workflow run data-refresh.yml -f dry_run=false
+```
+
+To preview the Pages build locally: `VITE_BASE=/milky-way-map/ npm run build`
+then `VITE_BASE=/milky-way-map/ npm run preview` (Git Bash: prefix
+`MSYS_NO_PATHCONV=1`).
 
 ## Licensing
 

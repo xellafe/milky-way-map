@@ -6,6 +6,7 @@
  * Loaded on first toggle-on only (lines are hidden by default, SPEC §6.2).
  */
 
+import { DATA_BASE_URL } from './starData';
 export interface Constellation {
   id: string;
   name: string;
@@ -23,7 +24,7 @@ export interface ConstellationsData {
 let constellations: ConstellationsData | null = null;
 let loadPromise: Promise<ConstellationsData> | null = null;
 
-export function loadConstellations(baseUrl = '/data/'): Promise<ConstellationsData> {
+export function loadConstellations(baseUrl = DATA_BASE_URL): Promise<ConstellationsData> {
   loadPromise ??= (async () => {
     const resp = await fetch(`${baseUrl}constellations.json`);
     if (!resp.ok) throw new Error(`constellations fetch failed: ${resp.status}`);

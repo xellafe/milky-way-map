@@ -4,6 +4,7 @@
  * Builds a reverse map matchedIndex → hostname for panel lookups.
  */
 
+import { DATA_BASE_URL } from './starData';
 export interface ExoplanetRecord {
   pl_name: string;
   pl_orbper: number | null;
@@ -35,7 +36,7 @@ let data: ExoplanetsData | null = null;
 let hostByIndex: Map<number, string> | null = null;
 let loadPromise: Promise<ExoplanetsData> | null = null;
 
-export function loadExoplanets(baseUrl = '/data/'): Promise<ExoplanetsData> {
+export function loadExoplanets(baseUrl = DATA_BASE_URL): Promise<ExoplanetsData> {
   loadPromise ??= (async () => {
     const resp = await fetch(`${baseUrl}exoplanets.json`);
     if (!resp.ok) throw new Error(`exoplanets fetch failed: ${resp.status}`);

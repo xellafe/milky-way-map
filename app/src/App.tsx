@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadNamesIndex } from './data/namesIndex';
 import { setStarCore } from './data/starCoreStore';
-import { fetchManifest, loadStars } from './data/starData';
+import { DATA_BASE_URL, fetchManifest, loadStars } from './data/starData';
 import { setStarDetails } from './data/starDetailsStore';
 import { computeDataBounds } from './lib/filterMask';
 import { isWebGL2Available } from './lib/webgl';
@@ -21,7 +21,6 @@ import { SystemOverlay } from './ui/SystemOverlay';
 import { ViewTogglesPanel } from './ui/ViewTogglesPanel';
 
 const webgl2Available = isWebGL2Available();
-const DATA_BASE_URL = '/data/';
 
 export default function App() {
   const { t, i18n } = useTranslation();

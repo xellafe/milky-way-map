@@ -12,12 +12,14 @@ const DATA_DIR = fileURLToPath(new URL('../data', import.meta.url));
 /**
  * Serves the generated data artifacts (../data) at /data/* in dev and preview,
  * with HTTP Range support — the star loader fetches stars.bin per-section.
- * In production the same files are expected on the CDN under /data/.
+ * In production the same files are deployed next to the app under <base>/data/
+ * (GitHub Pages: .github/workflows/data-refresh.yml).
  */
 function serveDataDir(): Plugin {
+  let prefix = '/data/'; // becomes `${base}data/` once the config is resolved
   const handler = (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-    if (!req.url?.startsWith('/data/')) return next();
-    const rel = decodeURIComponent(req.url.slice('/data/'.length).split('?')[0] ?? '');
+    if (!req.url?.startsWith(prefix)) return next();
+    const rel = decodeURIComponent(req.url.slice(prefix.length).split('?')[0] ?? '');
     const file = path.resolve(DATA_DIR, rel);
     if (!file.startsWith(DATA_DIR) || !existsSync(file) || !statSync(file).isFile()) {
       res.statusCode = 404;
@@ -45,6 +47,9 @@ function serveDataDir(): Plugin {
   };
   return {
     name: 'serve-data-dir',
+    configResolved(config) {
+      prefix = `${config.base}data/`;
+    },
     configureServer(server) {
       server.middlewares.use(handler);
     },
@@ -55,6 +60,9 @@ function serveDataDir(): Plugin {
 }
 
 export default defineConfig({
+  // App base path: `/` locally; the repo sub-path on GitHub Pages, set by the
+  // deploy workflow (VITE_BASE=/milky-way-map/). Data URLs derive from it.
+  base: process.env.VITE_BASE ?? '/',
   plugins: [react(), tailwindcss(), serveDataDir()],
   build: {
     // The default warning threshold measures UNcompressed bytes; our budget is

@@ -1,4 +1,5 @@
-# Periodic data refresh (SPEC §8). Skeleton in M0; ETL wired in M1; finalized in M9.
+# Periodic data refresh + GitHub Pages deploy (SPEC §8). Skeleton in M0; ETL
+# wired in M1; finalized in M9; Pages deploy wired post-M9 (hosting decision).
 #
 # Re-runs the offline pipeline end-to-end (real sources: Codeberg AT-HYG/HYG,
 # NASA Exoplanet Archive TAP, Stellarium skyculture), regenerates the artifacts,
@@ -7,14 +8,16 @@
 # published data is never touched by a failed run.
 #
 # dry_run (default true): regenerate + validate + upload the artifacts as a CI
-# artifact, but do NOT publish. The scheduled run publishes via the deploy step.
+# artifact, but do NOT deploy. The scheduled run (and a manual run with
+# dry_run=false) also runs the `deploy` job.
 #
-# NOTE (M9 decision): the publish/deploy step is a documented fail-safe STUB.
-# The generated data is large (~150 MB), gitignored, and CC BY-SA 4.0, and the
-# project has no remote/hosting target yet (M0: the human creates it later).
-# Wiring the real publish (Git LFS, an external bucket/CDN, or a release asset)
-# is left for the human at the [FINAL HUMAN CHECK] once hosting is chosen.
-name: Data refresh
+# Hosting (human decision at the [FINAL HUMAN CHECK]): GitHub Pages. The data
+# (~155 MB, gitignored, CC BY-SA 4.0) never enters git: the deploy job builds
+# the app with the repo sub-path as base and ships the freshly validated data
+# artifact under <base>/data/, plus NOTICE.md/LICENSE for attribution. Pages
+# must be set to "GitHub Actions" as its source (repo Settings → Pages).
+# To deploy app code changes, run this workflow manually with dry_run=false.
+name: Data refresh & deploy
 
 on:
   workflow_dispatch:
@@ -72,8 +75,8 @@ jobs:
       - name: Validate regenerated artifacts
         run: python validate_artifacts.py
 
-      - name: Upload regenerated data artifact (dry-run verification)
-        if: ${{ env.DRY_RUN == 'true' }}
+      # Always uploaded: dry-run verification, and the input of the deploy job.
+      - name: Upload regenerated data artifact
         uses: actions/upload-artifact@v4
         with:
           name: galaxy-map-data
@@ -90,13 +93,60 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      # Publish path (scheduled run / dry_run=false). STUB — see header note.
-      # Intentionally non-destructive: it reports what WOULD be published and
-      # exits 0. Replace with the real deploy once hosting is chosen.
-      - name: Publish (deploy stub — pending hosting decision)
-        if: ${{ env.DRY_RUN != 'true' }}
-        run: |
-          echo "::notice::Data regenerated and validated. Publish target not yet configured."
-          echo "Would publish these artifacts to the chosen host (Git LFS / bucket / release):"
-          ls -lh data/stars.bin data/names.index.json data/exoplanets.json data/constellations.json
-          echo "See .github/workflows/data-refresh.yml header (M9 decision) and docs/STATE.md."
+
+  deploy:
+    needs: refresh
+    # Job-level `if` cannot read `env`: same rule as DRY_RUN, spelled out.
+    if: ${{ github.event_name == 'schedule' || !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - run: npm ci
+
+      # Project Pages are served from /<repo>/: the app base and every data URL
+      # derive from VITE_BASE (vite.config.ts, src/data/starData.ts).
+      - name: Build app for Pages
+        run: npm run build
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+
+      - name: Add the validated data artifact under dist/data
+        uses: actions/download-artifact@v4
+        with:
+          name: galaxy-map-data
+          path: app/dist/data
+
+      # CC BY-SA 4.0 attribution travels with the published data (SPEC §12).
+      - name: Add attribution and license files
+        run: cp ../NOTICE.md ../LICENSE dist/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
