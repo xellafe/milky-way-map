@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getHost, type ExoplanetRecord } from '../data/exoplanets';
 import { formatNumber } from '../lib/format';
+import { ORBIT_STYLES, type OrbitStyle } from '../lib/planetStyle';
 import { classifyPlanet, PLANET_TYPES } from '../lib/planetType';
+import { useSettingsStore } from '../state/settings';
 import {
   TIME_SCALE_MAX_DAYS_PER_SECOND,
   TIME_SCALE_MIN_DAYS_PER_SECOND,
@@ -93,6 +95,8 @@ export function SystemOverlay() {
   const toggleHz = useGalaxyMapStore((s) => s.toggleHabitableZone);
   const visibleTypes = useGalaxyMapStore((s) => s.visiblePlanetTypes);
   const togglePlanetType = useGalaxyMapStore((s) => s.togglePlanetType);
+  const orbitStyle = useSettingsStore((s) => s.orbitStyle);
+  const setSettings = useSettingsStore((s) => s.setSettings);
   const [logMode, setLogMode] = useState(false);
   const [pausedFrom, setPausedFrom] = useState<number | null>(null);
 
@@ -139,6 +143,21 @@ export function SystemOverlay() {
             ))}
           </div>
         </fieldset>
+        <label className="mb-2 flex items-center justify-between gap-2 text-xs text-white/60">
+          {t('system.orbitStyle')}
+          <select
+            value={orbitStyle}
+            data-testid="orbit-style"
+            onChange={(e) => setSettings({ orbitStyle: e.target.value as OrbitStyle })}
+            className="rounded bg-white/10 px-2 py-1 text-sm text-white"
+          >
+            {ORBIT_STYLES.map((style) => (
+              <option key={style} value={style} className="bg-zinc-900">
+                {t(`orbitStyle.${style}`)}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="flex flex-wrap gap-1">
           {shownPlanets.map((p) => (
             <button

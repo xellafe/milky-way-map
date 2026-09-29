@@ -4,7 +4,7 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-09-29 (issue #1: pannello Opzioni + filtro pianeti per tipo)
+- **Data ultimo aggiornamento:** 2026-09-29 (issue #1 mergiata; issue #2: stili pianeti e orbite)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
@@ -26,6 +26,10 @@
   - **Store `state/settings.ts`** separato, persistito in `localStorage` (`galaxy-map-settings`, zustand `persist`); default = costanti precedenti (nessun cambio visivo senza interazione). Le ex-costanti `STAR_SIZE_GAMMA`, `STAR_TWINKLE_*` (ampiezza/velocità), `MOVE_SPEED_LY_PER_S` ora vivono lì. `uTime` del luccichio ora è accumulato (delta·speed) per evitare salti di fase quando cambia la velocità.
   - **Filtro pianeti per tipo** nella System View (`lib/planetType.ts`, checkbox nella lista pianeti, stato di sessione `visiblePlanetTypes` nello store, non persistito): nasconde pianeta + orbita; la scala della scena resta quella dell'intero sistema. Tipo mostrato anche nel dettaglio pianeta.
   - **Assunzione dati:** raggio prima (roccioso < 1,6 R⊕, sub-nettuniano 1,6–4, gigante ≥ 4); se manca, massa con le stesse soglie via Chen & Kipping 2017 (≈3 e ≈15 M⊕) — per pianeti RV `pl_bmasse` è spesso massa minima → classe possibilmente sottostimata; nessuno dei due → `unknown`.
+
+- **#2 Add style for planet and orbits** (branch `feat/planet-styles`, parte da `main` dopo il merge della #1 — PR #5).
+  - **Pianeti procedurali per tipo** (`shaders/planet.vert/.frag`, `lib/planetStyle.ts`): roccioso fbm terroso, sub-nettuniano azzurro velato, gigante a bande turbolente, sconosciuto grigio neutro. Illuminazione dalla stella ospite nell'origine (terminatore morbido, ambient 0.06) + rim fresnel (atmosfera). **Estetico, non dato**: nessun colore in pscomppars; variazione per pianeta da seed = hash FNV-1a di `pl_name` (jitter di tinta ±0.04).
+  - **Orbite in 3 stili** (`settings.orbitStyle`, persistito; `<select>` nel pannello pianeti della System View): `trail` (default: orbita a opacità 0.25 + scia che sfuma in 90° dietro al pianeta, `shaders/orbit-trail.*`, rispecchia `trailAlpha()`), `thick` (`Line` drei 2.5 px), `simple` (linea originale). Tinte per tipo; le orbite schematiche restano tratteggiate in tutti gli stili (SPEC §6.7).
 
 ## Cosa esiste (M9, in aggiunta a M0–M8)
 

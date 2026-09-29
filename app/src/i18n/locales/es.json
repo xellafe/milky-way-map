@@ -98,7 +98,8 @@
     "inHz": "En zona habitable",
     "schematicOrbit": "Órbita esquemática (inclinación n/d)",
     "type": "Tipo",
-    "planetTypes": "Tipos de planeta"
+    "planetTypes": "Tipos de planeta",
+    "orbitStyle": "Estilo de órbitas"
   },
   "music": {
     "play": "Reproducir música",
@@ -120,5 +121,10 @@
     "subNeptune": "Subneptuno",
     "giant": "Gigante",
     "unknown": "Desconocido"
+  },
+  "orbitStyle": {
+    "trail": "Estela",
+    "thick": "Gruesa",
+    "simple": "Simple"
   }
 }

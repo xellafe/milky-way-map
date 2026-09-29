@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { OrbitStyle } from '../lib/planetStyle';
 
 /**
  * User customizations (issue #1), persisted in localStorage. Defaults equal
@@ -20,6 +21,8 @@ export interface Settings {
   twinkleAmplitude: number;
   /** Star size contrast exponent (>1 widens the size range). */
   sizeGamma: number;
+  /** System View orbit look (issue #2). */
+  orbitStyle: OrbitStyle;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -29,6 +32,7 @@ export const DEFAULT_SETTINGS: Settings = {
   twinkleSpeed: 2 / 3,
   twinkleAmplitude: 0.5,
   sizeGamma: 1.2,
+  orbitStyle: 'trail',
 };
 
 interface SettingsState extends Settings {
