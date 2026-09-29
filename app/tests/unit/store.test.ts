@@ -112,4 +112,25 @@ describe('galaxy map store', () => {
     expect(useGalaxyMapStore.getState().visiblePlanetTypes.giant).toBe(false);
     expect(useGalaxyMapStore.getState().visiblePlanetTypes.rocky).toBe(true);
   });
+
+  it('dock: one panel at a time, toggle closes', () => {
+    const s = () => useGalaxyMapStore.getState();
+    expect(s().dockPanel).toBeNull();
+    s().toggleDockPanel('filters');
+    expect(s().dockPanel).toBe('filters');
+    s().toggleDockPanel('music');
+    expect(s().dockPanel).toBe('music');
+    s().toggleDockPanel('music');
+    expect(s().dockPanel).toBeNull();
+  });
+
+  it('dock: view changes close the open panel', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().toggleDockPanel('filters');
+    s().enterSystemView('TRAPPIST-1');
+    expect(s().dockPanel).toBeNull();
+    s().toggleDockPanel('options');
+    s().exitSystemView();
+    expect(s().dockPanel).toBeNull();
+  });
 });
