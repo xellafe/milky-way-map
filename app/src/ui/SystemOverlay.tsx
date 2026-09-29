@@ -219,11 +219,14 @@ export function SystemOverlay() {
             className="flex-1"
           />
           <HudCheckbox
-            label={t('system.logScale')}
+            // The wrapping label bakes in text-sm; a same-specificity text-xs in
+            // className would conflict with it by stylesheet order, not intent, so
+            // the smaller size is set on the label text itself instead.
+            label={<span className="text-xs">{t('system.logScale')}</span>}
             checked={logMode}
             data-testid="time-log-mode"
             onChange={(e) => setLogMode(e.target.checked)}
-            className="text-xs whitespace-nowrap"
+            className="whitespace-nowrap"
           />
         </div>
         <div className="mt-2 flex items-center gap-2">

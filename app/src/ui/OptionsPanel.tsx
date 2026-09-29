@@ -49,6 +49,7 @@ function SliderSetting({
         disabled={disabled}
         data-testid={`option-${id}`}
         onChange={(e) => setSettings({ [id]: Number(e.target.value) })}
+        className="w-full"
       />
     </label>
   );

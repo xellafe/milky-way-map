@@ -14,19 +14,18 @@ export function HudCheckbox({
   );
 }
 
-/** Native range input with HUD accent styling. */
-export function HudSlider({
-  className = '',
-  ...rest
-}: InputHTMLAttributes<HTMLInputElement>) {
-  return <input type="range" className={`w-full accent-hud-accent ${className}`} {...rest} />;
+/**
+ * Native range input with HUD accent styling. No default width utility: a
+ * caller's width override (`w-20`, `flex-1`, …) would conflict with a baked-in
+ * `w-full` at the same specificity, resolved by stylesheet order rather than
+ * by which one is passed last — so every caller sets its own width instead.
+ */
+export function HudSlider({ className = '', ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+  return <input type="range" className={`accent-hud-accent ${className}`} {...rest} />;
 }
 
 /** Native select with HUD styling. */
-export function HudSelect({
-  className = '',
-  ...rest
-}: SelectHTMLAttributes<HTMLSelectElement>) {
+export function HudSelect({ className = '', ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       className={`rounded border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud text-sm text-hud-text ${className}`}

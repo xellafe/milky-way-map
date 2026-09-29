@@ -120,7 +120,7 @@ export function FiltersPanel() {
           id="filters-panel"
           aria-label={t('filters.title')}
           data-testid="filters-panel"
-          className="mt-1 max-h-[60vh] overflow-y-auto"
+          className="mt-1 max-h-[60vh] overflow-x-hidden overflow-y-auto"
         >
           <fieldset>
             <legend className="font-hud text-xs text-hud-muted">

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import musicUrl from '../assets/background-music.mp3';
-import { HudButton } from './hud/HudButton';
 import { HudSlider } from './hud/HudInputs';
 
 const DEFAULT_VOLUME = 0.4;
@@ -67,14 +66,24 @@ export function MusicControl() {
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
       />
-      <HudButton
-        variant="secondary"
+      {/*
+       * Native button, not HudButton: HudButton hardcodes px-3 py-1.5 padding
+       * that a className override cannot reliably shrink (same-specificity
+       * conflict resolved by stylesheet order, not by prop precedence — see
+       * the time-log-mode fix in SystemOverlay). This compact icon toggle
+       * needs to stay small so it doesn't grow into the options-toggle
+       * button's fixed position (`right-24` vs `right-[15rem]`, unchanged
+       * from before the restyle).
+       */}
+      <button
+        type="button"
         data-testid="music-toggle"
         aria-label={playing ? t('music.pause') : t('music.play')}
         onClick={toggle}
+        className="rounded border border-hud-accent/30 bg-white/5 px-1.5 py-0.5 font-hud text-sm text-hud-text hover:bg-white/10"
       >
         <span aria-hidden>{playing ? '❚❚' : '▶'}</span>
-      </HudButton>
+      </button>
       <HudSlider
         min={0}
         max={1}
