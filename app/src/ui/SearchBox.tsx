@@ -133,7 +133,7 @@ export function SearchBox() {
         aria-autocomplete="list"
         placeholder={t('ui.searchPlaceholder')}
         data-testid="search-input"
-        className="w-full rounded-lg bg-zinc-900/90 px-3 py-2 text-sm text-white placeholder-white/40 shadow-xl backdrop-blur outline-none focus:ring-2 focus:ring-sky-400"
+        className="hud-panel w-full rounded-lg px-3 py-2 font-hud text-sm text-hud-text placeholder-hud-muted outline-none focus:ring-2 focus:ring-hud-accent"
         onChange={(e) => {
           setQuery(e.target.value);
           setActive(0);
@@ -153,10 +153,10 @@ export function SearchBox() {
           id="search-results"
           role="listbox"
           data-testid="search-results"
-          className="mt-1 overflow-hidden rounded-lg bg-zinc-900/95 text-sm shadow-xl backdrop-blur"
+          className="hud-panel mt-1 overflow-hidden rounded-lg font-hud text-sm"
         >
           {results.length === 0 && (
-            <li className="px-3 py-2 text-white/50">
+            <li className="px-3 py-2 text-hud-muted">
               {isNamesIndexReady() ? t('ui.searchNoResults') : t('ui.loading')}
             </li>
           )}
@@ -164,7 +164,7 @@ export function SearchBox() {
             <li key={item.key} role="option" aria-selected={i === activeIndex}>
               <button
                 type="button"
-                className={`flex w-full items-center justify-between px-3 py-2 text-left text-white hover:bg-white/10 ${
+                className={`flex w-full items-center justify-between px-3 py-2 text-left text-hud-text hover:bg-white/10 ${
                   i === activeIndex ? 'bg-white/10' : ''
                 }`}
                 onMouseDown={(e) => {
@@ -174,7 +174,7 @@ export function SearchBox() {
               >
                 <span>{item.label}</span>
                 {item.unanchored && (
-                  <span className="ml-2 text-xs text-amber-300">{t('ui.searchUnanchored')}</span>
+                  <span className="ml-2 text-xs text-hud-warn">{t('ui.searchUnanchored')}</span>
                 )}
               </button>
             </li>

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import musicUrl from '../assets/background-music.mp3';
+import { HudButton } from './hud/HudButton';
+import { HudSlider } from './hud/HudInputs';
 
 const DEFAULT_VOLUME = 0.4;
 
@@ -54,7 +56,7 @@ export function MusicControl() {
     <div
       ref={containerRef}
       data-testid="music-control"
-      className="absolute top-4 right-24 z-40 flex items-center gap-2 rounded-lg bg-zinc-900/90 px-2 py-1 text-sm text-white shadow-xl backdrop-blur"
+      className="hud-panel absolute top-4 right-24 z-40 flex items-center gap-2 rounded-lg px-2 py-1"
     >
       <audio
         ref={audioRef}
@@ -65,24 +67,22 @@ export function MusicControl() {
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
       />
-      <button
-        type="button"
+      <HudButton
+        variant="secondary"
         data-testid="music-toggle"
         aria-label={playing ? t('music.pause') : t('music.play')}
-        className="rounded px-1.5 py-0.5 hover:bg-white/10"
         onClick={toggle}
       >
         <span aria-hidden>{playing ? '❚❚' : '▶'}</span>
-      </button>
-      <input
-        type="range"
+      </HudButton>
+      <HudSlider
         min={0}
         max={1}
         step={0.05}
         value={volume}
         aria-label={t('music.volume')}
         data-testid="music-volume"
-        className="w-20 accent-white"
+        className="w-20"
         onChange={(event) => changeVolume(Number(event.target.value))}
       />
     </div>

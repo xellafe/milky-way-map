@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../lib/format';
 import { isDefaultSettings, type Settings, useSettingsStore } from '../state/settings';
+import { HudButton } from './hud/HudButton';
+import { HudCheckbox, HudSlider } from './hud/HudInputs';
+import { HudPanel } from './hud/HudPanel';
 
 type NumericKey = {
   [K in keyof Settings]: Settings[K] extends number ? K : never;
@@ -31,22 +34,20 @@ function SliderSetting({
   const setSettings = useSettingsStore((s) => s.setSettings);
   return (
     <label className={`mt-2 block ${disabled ? 'opacity-40' : ''}`}>
-      <span className="flex justify-between text-xs text-white/60">
+      <span className="flex justify-between font-hud text-xs text-hud-muted">
         <span>{label}</span>
-        <span>
+        <span className="font-hud-mono text-hud-bright">
           {formatNumber(value, i18n.language, { maximumFractionDigits: digits })}
           {suffix}
         </span>
       </span>
-      <input
-        type="range"
+      <HudSlider
         min={min}
         max={max}
         step={step}
         value={value}
         disabled={disabled}
         data-testid={`option-${id}`}
-        className="w-full accent-white"
         onChange={(e) => setSettings({ [id]: Number(e.target.value) })}
       />
     </label>
@@ -61,24 +62,23 @@ export function OptionsPanel() {
 
   return (
     <div className="absolute top-4 right-[15rem] z-40">
-      <button
-        type="button"
+      <HudButton
+        variant="secondary"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls="options-panel"
         data-testid="options-toggle"
-        className="rounded-lg bg-zinc-900/90 px-3 py-1.5 text-sm text-white shadow-xl backdrop-blur hover:bg-zinc-800/90"
       >
         <span aria-hidden>⚙ </span>
         {t('options.title')}
-      </button>
+      </HudButton>
 
       {open && (
-        <section
+        <HudPanel
           id="options-panel"
           aria-label={t('options.title')}
           data-testid="options-panel"
-          className="absolute right-0 mt-1 max-h-[70vh] w-72 overflow-y-auto rounded-lg bg-zinc-900/95 p-3 text-sm text-white shadow-xl backdrop-blur"
+          className="absolute right-0 mt-1 max-h-[70vh] w-72 overflow-y-auto text-sm"
         >
           <SliderSetting
             id="moveSpeedLyPerS"
@@ -89,24 +89,22 @@ export function OptionsPanel() {
             digits={0}
             suffix={` ${t('units.ly')}/s`}
           />
-          <label className="mt-3 flex items-center gap-2">
-            <input
-              type="checkbox"
+          <div className="mt-3">
+            <HudCheckbox
+              label={t('options.autoOrbit')}
               checked={settings.autoOrbit}
               data-testid="option-autoOrbit"
               onChange={(e) => settings.setSettings({ autoOrbit: e.target.checked })}
             />
-            {t('options.autoOrbit')}
-          </label>
-          <label className="mt-1 flex items-center gap-2">
-            <input
-              type="checkbox"
+          </div>
+          <div className="mt-1">
+            <HudCheckbox
+              label={t('options.realism')}
               checked={settings.realism}
               data-testid="option-realism"
               onChange={(e) => settings.setSettings({ realism: e.target.checked })}
             />
-            {t('options.realism')}
-          </label>
+          </div>
           <SliderSetting
             id="twinkleSpeed"
             label={t('options.twinkleSpeed')}
@@ -134,16 +132,16 @@ export function OptionsPanel() {
             step={0.05}
             digits={2}
           />
-          <button
-            type="button"
+          <HudButton
+            variant="secondary"
             onClick={settings.resetSettings}
             disabled={isDefaultSettings(settings)}
             data-testid="options-reset"
-            className="mt-3 w-full rounded bg-white/10 px-3 py-1.5 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-3 w-full"
           >
             {t('options.reset')}
-          </button>
-        </section>
+          </HudButton>
+        </HudPanel>
       )}
     </div>
   );

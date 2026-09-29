@@ -18,7 +18,9 @@ export function LoadingOverlay() {
       aria-live="polite"
       data-testid="loading-overlay"
     >
-      <p className="text-lg text-white/80">
+      <p
+        className={`font-hud text-lg ${status === 'error' ? 'text-hud-warn' : 'text-hud-bright'}`}
+      >
         {status === 'error' ? t('errors.dataLoadFailed') : t('ui.loadingStars', { percent })}
       </p>
     </div>

@@ -8,6 +8,11 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #3 — UI sci-fi (2026-09-30, branch `feat/sci-fi-ui`)
+
+- **F1 fatta**: token HUD in `index.css` (`@theme` blu ghiaccio, `.hud-panel` con bordo/alone da `--color-hud-accent` via `color-mix`, angoli a staffa), componenti base `ui/hud/` (`HudPanel`, `HudButton`, `HudCheckbox`/`HudSlider`/`HudSelect`, `Badge`), e **restyling HUD di tutti i pannelli esistenti** (`FiltersPanel`, `ViewTogglesPanel`, `OptionsPanel`, `MusicControl`, `StarPanel`, `SystemOverlay`, `SearchBox`, `LanguageSelector`, `HoverLabel`, `LoadingOverlay`) — stesse posizioni e `data-testid`, numeri in `font-hud-mono`, badge "non ancorato" e stime/avvisi in `text-hud-warn`. `LanguageSelector` tiene il bottone come `<button>` nativo (non `HudButton`) perché serve un `ref` per il ritorno del focus, che `HudButton` non inoltra. Nessuna nuova dipendenza, nessuna stringa i18n nuova. Verifiche: typecheck/lint ok, 121 unit verdi, e2e (incl. `a11y.spec.ts`/axe) verdi. Dock (F2), overlay di selezione (F3) e riscrittura `StarPanel` con `StatTile`/`Gauge` (F4) restano da fare.
+- **Fix filtri in dev già mergiato** (PR #7, commit `f8defa5`): "filters had no visible effect in dev (StrictMode)" — non collegato a questa issue ma citato qui per completezza dello stato corrente.
+
 ## Modifiche post-M9 (2026-09-28, richieste dall'umano)
 
 - **Git:** M8 e M9 mergiati su `main` (fast-forward); branch mergiati eliminati; remoto `origin` = https://github.com/xellafe/milky-way-map.git, `main` pushato.

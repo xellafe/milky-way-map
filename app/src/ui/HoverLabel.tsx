@@ -42,7 +42,7 @@ export function HoverLabel() {
 
   return (
     <div
-      className="pointer-events-none fixed z-20 rounded bg-black/70 px-2 py-0.5 text-sm text-white"
+      className="hud-panel pointer-events-none fixed z-20 rounded px-2 py-0.5 font-hud text-sm text-hud-text"
       style={{ left: pos.x + 14, top: pos.y + 10 }}
       data-testid="hover-label"
     >

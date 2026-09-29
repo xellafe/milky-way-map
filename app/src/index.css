@@ -16,8 +16,8 @@
 .hud-panel {
   position: relative;
   background-color: var(--color-hud-bg);
-  border: 1px solid rgb(158 200 255 / 0.35);
-  box-shadow: inset 0 0 20px rgb(158 200 255 / 0.12);
+  border: 1px solid color-mix(in srgb, var(--color-hud-accent) 35%, transparent);
+  box-shadow: inset 0 0 20px color-mix(in srgb, var(--color-hud-accent) 12%, transparent);
   font-family: var(--font-hud);
   color: var(--color-hud-text);
 }
