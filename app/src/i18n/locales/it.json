@@ -98,7 +98,8 @@
     "inHz": "In zona abitabile",
     "schematicOrbit": "Orbita schematica (inclinazione n/d)",
     "type": "Tipo",
-    "planetTypes": "Tipi di pianeta"
+    "planetTypes": "Tipi di pianeta",
+    "orbitStyle": "Stile orbite"
   },
   "music": {
     "play": "Riproduci musica",
@@ -120,5 +121,10 @@
     "subNeptune": "Sub-nettuniano",
     "giant": "Gigante",
     "unknown": "Sconosciuto"
+  },
+  "orbitStyle": {
+    "trail": "Scia",
+    "thick": "Spessa",
+    "simple": "Semplice"
   }
 }

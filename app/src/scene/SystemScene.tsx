@@ -1,21 +1,36 @@
-import { OrbitControls } from '@react-three/drei';
+import { Line, OrbitControls } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
 import { hzBoundsAU } from '../lib/habitableZone';
-import { classifyPlanet } from '../lib/planetType';
+import {
+  nameSeed,
+  ORBIT_TINT,
+  PLANET_PALETTE,
+  PLANET_TYPE_INDEX,
+  planeAngle,
+  TRAIL_BASE_OPACITY,
+  TRAIL_LENGTH_RAD,
+} from '../lib/planetStyle';
+import { classifyPlanet, type PlanetType } from '../lib/planetType';
 import { orbitAngleDeg, orbitPathPoints, orbitPlanePosition, toSceneCoords } from '../lib/orbit';
 import { teffToColor } from '../lib/starColor';
+import orbitTrailFrag from '../shaders/orbit-trail.frag?raw';
+import orbitTrailVert from '../shaders/orbit-trail.vert?raw';
+import planetFrag from '../shaders/planet.frag?raw';
+import planetVert from '../shaders/planet.vert?raw';
+import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
 
 const SUN_RADIUS_AU = 0.00465;
-// Presentational palette for planet spheres (orbits are real-scale, BODY
-// sizes/colors are not — pscomppars has no planet colors).
-const PLANET_COLORS = [
-  0x9bb5d4, 0xd4b08c, 0x8cd4a8, 0xd48c9b, 0xb59bd4, 0xd4cf8c, 0x8cc7d4, 0xc4c4c4,
-];
-const ORBIT_COLOR = 0x5a7aa8;
+// Orbits are real-scale; BODY sizes and looks are not (pscomppars has no
+// planet colors): procedural per size class, see lib/planetStyle.ts.
+const ORBIT_OPACITY = 0.7;
+const THICK_ORBIT_PX = 2.5;
+const ORBIT_SEGMENTS = 128;
+// Hue jitter (fraction of the color wheel, ±) from the per-planet seed.
+const HUE_JITTER = 0.04;
 const HZ_COLOR = 0x2faf64;
 
 const urlParams = new URLSearchParams(globalThis.location?.search ?? '');
@@ -28,14 +43,15 @@ interface RenderablePlanet {
   inclinationDeg: number | null;
   schematic: boolean;
   radiusAU: number;
-  color: number;
+  type: PlanetType;
+  seed: number;
 }
 
 /** Planets with a semi-major axis (the only hard requirement to draw an orbit). */
 function renderablePlanets(host: ExoHost, maxA: number): RenderablePlanet[] {
   return host.planets
     .filter((p) => p.pl_orbsmax !== null)
-    .map((p, i) => ({
+    .map((p) => ({
       record: p,
       semiMajorAxisAU: p.pl_orbsmax!,
       // SPEC §6.7: schematic (flat, dashed) when the inclination is missing;
@@ -44,38 +60,141 @@ function renderablePlanets(host: ExoHost, maxA: number): RenderablePlanet[] {
       inclinationDeg: p.pl_orbincl,
       schematic: p.pl_orbincl === null,
       radiusAU: maxA * 0.02 * Math.min(Math.max(Math.cbrt(p.pl_rade ?? 1), 0.6), 2.5),
-      color: PLANET_COLORS[i % PLANET_COLORS.length]!,
+      type: classifyPlanet(p),
+      seed: nameSeed(p.pl_name),
     }));
 }
 
-function OrbitLine({ planet, maxA }: { planet: RenderablePlanet; maxA: number }) {
+function orbitShape(planet: RenderablePlanet) {
+  return {
+    semiMajorAxisAU: planet.semiMajorAxisAU,
+    eccentricity: planet.eccentricity,
+    inclinationDeg: planet.inclinationDeg,
+  };
+}
+
+function dashFor(planet: RenderablePlanet, maxA: number): [number, number] {
+  // SPEC §6.7: schematic orbits (no inclination) stay dashed in every style.
+  return planet.schematic ? [maxA * 0.03, maxA * 0.018] : [0, 0];
+}
+
+/** Plain 1 px line (the original look), tinted by planet class. */
+function SimpleOrbit({ planet, maxA }: { planet: RenderablePlanet; maxA: number }) {
   const line = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
       'position',
-      new THREE.BufferAttribute(
-        orbitPathPoints({
-          semiMajorAxisAU: planet.semiMajorAxisAU,
-          eccentricity: planet.eccentricity,
-          inclinationDeg: planet.inclinationDeg,
-        }),
-        3,
-      ),
+      new THREE.BufferAttribute(orbitPathPoints(orbitShape(planet), ORBIT_SEGMENTS), 3),
     );
+    const color = ORBIT_TINT[planet.type];
+    const [dashSize, gapSize] = dashFor(planet, maxA);
     const material = planet.schematic
       ? new THREE.LineDashedMaterial({
-          color: ORBIT_COLOR,
-          dashSize: maxA * 0.03,
-          gapSize: maxA * 0.018,
+          color,
+          dashSize,
+          gapSize,
           transparent: true,
-          opacity: 0.7,
+          opacity: ORBIT_OPACITY,
         })
-      : new THREE.LineBasicMaterial({ color: ORBIT_COLOR, transparent: true, opacity: 0.7 });
+      : new THREE.LineBasicMaterial({ color, transparent: true, opacity: ORBIT_OPACITY });
     const obj = new THREE.Line(geometry, material);
     if (planet.schematic) obj.computeLineDistances();
     return obj;
   }, [planet, maxA]);
   return <primitive object={line} />;
+}
+
+/** Screen-space thick line (drei Line2). */
+function ThickOrbit({ planet, maxA }: { planet: RenderablePlanet; maxA: number }) {
+  const points = useMemo(() => {
+    const flat = orbitPathPoints(orbitShape(planet), ORBIT_SEGMENTS);
+    const out: [number, number, number][] = [];
+    for (let i = 0; i < flat.length; i += 3) out.push([flat[i]!, flat[i + 1]!, flat[i + 2]!]);
+    return out;
+  }, [planet]);
+  const [dashSize, gapSize] = dashFor(planet, maxA);
+  return (
+    <Line
+      points={points}
+      color={ORBIT_TINT[planet.type]}
+      lineWidth={THICK_ORBIT_PX}
+      transparent
+      opacity={ORBIT_OPACITY}
+      dashed={planet.schematic}
+      dashSize={dashSize}
+      gapSize={gapSize}
+    />
+  );
+}
+
+/** Faint full orbit + bright trail fading behind the planet. */
+function TrailOrbit({
+  planet,
+  maxA,
+  angle,
+}: {
+  planet: RenderablePlanet;
+  maxA: number;
+  angle: () => number;
+}) {
+  const line = useMemo(() => {
+    const flat = orbitPathPoints(orbitShape(planet), ORBIT_SEGMENTS);
+    // Angle per vertex in the orbit plane, monotonic 0 → 2π along the path
+    // (the path is sampled by eccentric anomaly from periapsis).
+    const e = Math.min(Math.max(planet.eccentricity, 0), 0.99);
+    const angles = new Float32Array(ORBIT_SEGMENTS + 1);
+    for (let s = 0; s <= ORBIT_SEGMENTS; s++) {
+      const E = (s / ORBIT_SEGMENTS) * 2 * Math.PI;
+      angles[s] =
+        s === ORBIT_SEGMENTS
+          ? 2 * Math.PI
+          : planeAngle(Math.cos(E) - e, Math.sqrt(1 - e * e) * Math.sin(E));
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(flat, 3));
+    geometry.setAttribute('aAngle', new THREE.BufferAttribute(angles, 1));
+    const material = new THREE.ShaderMaterial({
+      vertexShader: orbitTrailVert,
+      fragmentShader: orbitTrailFrag,
+      uniforms: {
+        uColor: { value: new THREE.Color(ORBIT_TINT[planet.type]) },
+        uPlanetAngle: { value: 0 },
+        uTrailLength: { value: TRAIL_LENGTH_RAD },
+        uBaseOpacity: { value: TRAIL_BASE_OPACITY },
+        uDash: { value: new THREE.Vector2(...dashFor(planet, maxA)) },
+      },
+      transparent: true,
+      depthWrite: false,
+    });
+    const obj = new THREE.Line(geometry, material);
+    obj.computeLineDistances(); // lineDistance attribute, used for dashes
+    return obj;
+  }, [planet, maxA]);
+
+  const ref = useRef<THREE.Line<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
+  useFrame(() => {
+    const uniforms = ref.current?.material.uniforms;
+    if (uniforms) uniforms.uPlanetAngle!.value = angle();
+  });
+  return <primitive ref={ref} object={line} />;
+}
+
+/** Procedural lit sphere per planet class (planet.vert/.frag). */
+function planetMaterial(planet: RenderablePlanet): THREE.ShaderMaterial {
+  const [a, b, c] = PLANET_PALETTE[planet.type].map((hex) =>
+    new THREE.Color(hex).offsetHSL((planet.seed - 0.5) * 2 * HUE_JITTER, 0, 0),
+  );
+  return new THREE.ShaderMaterial({
+    vertexShader: planetVert,
+    fragmentShader: planetFrag,
+    uniforms: {
+      uType: { value: PLANET_TYPE_INDEX[planet.type] },
+      uSeed: { value: planet.seed },
+      uColorA: { value: a },
+      uColorB: { value: b },
+      uColorC: { value: c },
+    },
+  });
 }
 
 /**
@@ -86,10 +205,13 @@ function OrbitLine({ planet, maxA }: { planet: RenderablePlanet; maxA: number })
 function PlanetAnimator({
   planets,
   meshes,
+  angles,
   hz,
 }: {
   planets: RenderablePlanet[];
   meshes: React.RefObject<(THREE.Mesh | null)[]>;
+  /** Current orbit-plane angle per planet name (read by the trail orbits). */
+  angles: React.RefObject<Map<string, number>>;
   hz: { innerAU: number; outerAU: number } | null;
 }) {
   const tDays = useRef(0);
@@ -110,6 +232,7 @@ function PlanetAnimator({
         t,
       );
       mesh.position.set(...toSceneCoords(x, y, p.inclinationDeg));
+      angles.current.set(p.record.pl_name, planeAngle(x, y));
     }
     if (exposeBridge) {
       (globalThis as Record<string, unknown>).__system = {
@@ -143,7 +266,9 @@ export function SystemScene() {
   const showHz = useGalaxyMapStore((s) => s.showHabitableZone);
   const selectPlanet = useGalaxyMapStore((s) => s.selectPlanet);
   const visibleTypes = useGalaxyMapStore((s) => s.visiblePlanetTypes);
+  const orbitStyle = useSettingsStore((s) => s.orbitStyle);
   const meshes = useRef<(THREE.Mesh | null)[]>([]);
+  const angles = useRef(new Map<string, number>());
 
   // Host data is a module holder read (already loaded by the entry panel).
   const host = hostname ? getHost(hostname) : null;
@@ -155,9 +280,14 @@ export function SystemScene() {
   // Type filter hides planet + orbit; the scene scale (maxA) stays that of the
   // whole system so toggling doesn't rescale the view.
   const planets = useMemo(
-    () => allPlanets.filter((p) => visibleTypes[classifyPlanet(p.record)]),
+    () => allPlanets.filter((p) => visibleTypes[p.type]),
     [allPlanets, visibleTypes],
   );
+  const materials = useMemo(
+    () => new Map(allPlanets.map((p) => [p.record.pl_name, planetMaterial(p)])),
+    [allPlanets],
+  );
+  useEffect(() => () => materials.forEach((m) => m.dispose()), [materials]);
 
   if (!host) return null;
   const maxA = Math.max(...allPlanets.map((p) => p.semiMajorAxisAU), 0.01);
@@ -194,7 +324,15 @@ export function SystemScene() {
       )}
       {planets.map((p, i) => (
         <group key={p.record.pl_name}>
-          <OrbitLine planet={p} maxA={maxA} />
+          {orbitStyle === 'trail' && (
+            <TrailOrbit
+              planet={p}
+              maxA={maxA}
+              angle={() => angles.current.get(p.record.pl_name) ?? 0}
+            />
+          )}
+          {orbitStyle === 'thick' && <ThickOrbit planet={p} maxA={maxA} />}
+          {orbitStyle === 'simple' && <SimpleOrbit planet={p} maxA={maxA} />}
           <mesh
             ref={(m) => {
               meshes.current[i] = m;
@@ -206,12 +344,12 @@ export function SystemScene() {
             onPointerOver={() => (document.body.style.cursor = 'pointer')}
             onPointerOut={() => (document.body.style.cursor = '')}
           >
-            <sphereGeometry args={[p.radiusAU, 24, 12]} />
-            <meshBasicMaterial color={p.color} />
+            <sphereGeometry args={[p.radiusAU, 48, 24]} />
+            <primitive object={materials.get(p.record.pl_name)!} attach="material" />
           </mesh>
         </group>
       ))}
-      <PlanetAnimator planets={planets} meshes={meshes} hz={hz} />
+      <PlanetAnimator planets={planets} meshes={meshes} angles={angles} hz={hz} />
       <OrbitControls
         makeDefault
         enablePan={false}

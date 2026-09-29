@@ -10,6 +10,7 @@ describe('settings store', () => {
       twinkleSpeed: 2 / 3,
       twinkleAmplitude: 0.5,
       sizeGamma: 1.2,
+      orbitStyle: 'trail',
     });
     expect(isDefaultSettings(useSettingsStore.getState())).toBe(true);
   });

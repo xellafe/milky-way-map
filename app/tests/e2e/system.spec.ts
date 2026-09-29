@@ -197,3 +197,25 @@ test('planet type filter hides planets and their chips (TRAPPIST-1: all rocky)',
   await page.getByTestId('planet-chip').first().click();
   await expect(page.getByTestId('planet-panel')).toContainText('Rocky');
 });
+
+test('orbit style: each style renders and the choice persists', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+
+  const select = page.getByTestId('orbit-style');
+  await expect(select).toHaveValue('trail');
+  for (const style of ['thick', 'simple', 'trail']) {
+    await select.selectOption(style);
+    await page.waitForTimeout(300);
+    await expect(page.locator('canvas')).toBeVisible();
+  }
+  await select.selectOption('thick');
+  await page.reload();
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  await expect(page.getByTestId('orbit-style')).toHaveValue('thick');
+  expect(errors.filter((e) => /shader|WebGL|THREE/i.test(e))).toEqual([]);
+});

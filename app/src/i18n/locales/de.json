@@ -98,7 +98,8 @@
     "inHz": "In habitabler Zone",
     "schematicOrbit": "Schematische Bahn (Neigung n. v.)",
     "type": "Typ",
-    "planetTypes": "Planetentypen"
+    "planetTypes": "Planetentypen",
+    "orbitStyle": "Orbit-Stil"
   },
   "music": {
     "play": "Musik abspielen",
@@ -120,5 +121,10 @@
     "subNeptune": "Sub-Neptun",
     "giant": "Riese",
     "unknown": "Unbekannt"
+  },
+  "orbitStyle": {
+    "trail": "Schweif",
+    "thick": "Dick",
+    "simple": "Einfach"
   }
 }
