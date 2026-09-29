@@ -2,7 +2,7 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { Stats } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
-import { getStarCore, setStarGeometry } from '../data/starCoreStore';
+import { ensureStarGeometry, getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import { useGalaxyMapStore } from '../state/store';
 import { CameraControls } from './CameraControls';
@@ -49,11 +49,9 @@ export function GalaxyScene() {
 
   const geometry = useMemo(() => {
     const core = dataReady ? getStarCore() : null;
-    const g = core ? buildStarGeometry(core) : null;
     // Registered during render on purpose: StarCloud/StarPicking children read
     // it in this same render pass (module holder, not reactive state).
-    setStarGeometry(g);
-    return g;
+    return core ? ensureStarGeometry(core, buildStarGeometry) : null;
   }, [dataReady]);
 
   useEffect(() => {
