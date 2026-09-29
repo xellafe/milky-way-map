@@ -19,7 +19,12 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 - Search (proper names, HD/HIP/Gl, Gaia/TYC ids, exoplanet hosts) and runtime
   filters via a GPU visibility mask.
 - System View: fly into an exoplanet system, real-scale orbits (Kepler solver),
-  shared time-scale slider, habitable-zone overlay (approximate √L model).
+  shared time-scale slider, habitable-zone overlay (approximate √L model),
+  planet type filter and selectable orbit style (trail / thick / simple).
+  Planet sizes and looks are **presentational, not data**: the catalog has no
+  planet colors or surfaces, so each planet gets a procedural look from its
+  size class (rocky / sub-Neptune / giant / unknown, from radius or mass) plus
+  a per-planet variation derived from its name.
 - i18n (EN/IT/ES/FR/DE) and a keyboard-accessible 2D overlay (axe-clean).
 
 ## Structure
