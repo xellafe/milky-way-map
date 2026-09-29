@@ -14,6 +14,7 @@ import type { StarCoreData } from './starData';
  */
 let starCore: StarCoreData | null = null;
 let starGeometry: THREE.BufferGeometry | null = null;
+let geometryCore: StarCoreData | null = null;
 
 export function setStarCore(core: StarCoreData): void {
   starCore = core;
@@ -23,8 +24,20 @@ export function getStarCore(): StarCoreData | null {
   return starCore;
 }
 
-export function setStarGeometry(geometry: THREE.BufferGeometry | null): void {
-  starGeometry = geometry;
+/**
+ * The shared geometry for `core`, built at most once per core. Idempotent on
+ * purpose: React StrictMode runs the caller's useMemo twice in dev, and two
+ * builds meant the filter mask landed on a geometry nobody rendered.
+ */
+export function ensureStarGeometry(
+  core: StarCoreData,
+  build: (core: StarCoreData) => THREE.BufferGeometry,
+): THREE.BufferGeometry {
+  if (!starGeometry || geometryCore !== core) {
+    starGeometry = build(core);
+    geometryCore = core;
+  }
+  return starGeometry;
 }
 
 export function getStarGeometry(): THREE.BufferGeometry | null {
