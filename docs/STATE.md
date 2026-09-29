@@ -4,7 +4,7 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-09-28 (modifiche post-M9 richieste dall'umano: resa stelle + musica; remoto GitHub creato)
+- **Data ultimo aggiornamento:** 2026-09-29 (issue #1: pannello Opzioni + filtro pianeti per tipo)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
@@ -18,6 +18,14 @@
 - **Fonti cataloghi fissate su commit** (`data-pipeline/fetch_athyg.py`): il primo deploy Pages è fallito con 404 perché upstream ha sostituito AT-HYG v3.3 con **v4.0** (2026-07-25) e spostato HYG v4.2 in `OLDER/` per la **v4.3** (2026-07-05). URL ora su `media/commit/<sha>` (AT-HYG `e2d25eb`, HYG `b457d51`): file byte-identici ai download M1 (sha256 verificati). **Assunzione aperta:** passare a AT-HYG v4.0 / HYG v4.3 richiede approvazione umana (cambio versione dati, AGENTS §6) + verifica schema colonne e rivalidazione.
 - **Musica di sottofondo** (`app/src/ui/MusicControl.tsx`, asset `app/src/assets/background-music.mp3` ~7 MB committato): `<audio loop>` fuori dallo switch galassia/System View; parte al mount o al primo gesto utente (policy autoplay), non se il gesto è sul controllo stesso. Pulsante play/pausa + slider volume (default 0.4), stringhe `music.*` in 5 lingue. Brano dell'autore (Federico Xella), tutti i diritti riservati → `NOTICE.md` §4.
 - **Verifiche:** typecheck ok; 106 unit verdi; e2e `music.spec.ts` + `a11y.spec.ts` verdi (6/6); resa stelle ispezionata a video su dati completi; riproduzione verificata anche su Opera GX (autoplay bloccato → parte al primo click). Suite e2e completa rieseguita: **39/39 verdi**. FPS con `STAR_MAX_PX = 24` su dati completi (2.49M, 1920×1080, RTX 3080): run 1 33.3 (warmup) → **60.0 / 60.0** a regime → budget rispettato.
+
+## Issue GitHub (2026-09-29)
+
+- **#1 Add options** (branch `feat/options-panel`; #4 "orbit speed" chiusa come duplicata: la velocità orbitale è lo slider esistente della System View, non duplicato).
+  - **Pannello Opzioni** (`ui/OptionsPanel.tsx`, solo Galaxy View, in alto a destra): velocità di movimento (5–200 ly/s), auto-orbit on/off, modalità **Realismo** (niente esagerazione colori `uColorGamma = 1`, niente luccichio, niente core/corona — nuova uniform `uFireball` in `star.frag`), frequenza e intensità del luccichio, contrasto dimensioni (`sizeGamma` 0.8–1.6, allineato anche nel picking), reset.
+  - **Store `state/settings.ts`** separato, persistito in `localStorage` (`galaxy-map-settings`, zustand `persist`); default = costanti precedenti (nessun cambio visivo senza interazione). Le ex-costanti `STAR_SIZE_GAMMA`, `STAR_TWINKLE_*` (ampiezza/velocità), `MOVE_SPEED_LY_PER_S` ora vivono lì. `uTime` del luccichio ora è accumulato (delta·speed) per evitare salti di fase quando cambia la velocità.
+  - **Filtro pianeti per tipo** nella System View (`lib/planetType.ts`, checkbox nella lista pianeti, stato di sessione `visiblePlanetTypes` nello store, non persistito): nasconde pianeta + orbita; la scala della scena resta quella dell'intero sistema. Tipo mostrato anche nel dettaglio pianeta.
+  - **Assunzione dati:** raggio prima (roccioso < 1,6 R⊕, sub-nettuniano 1,6–4, gigante ≥ 4); se manca, massa con le stesse soglie via Chen & Kipping 2017 (≈3 e ≈15 M⊕) — per pianeti RV `pl_bmasse` è spesso massa minima → classe possibilmente sottostimata; nessuno dei due → `unknown`.
 
 ## Cosa esiste (M9, in aggiunta a M0–M8)
 

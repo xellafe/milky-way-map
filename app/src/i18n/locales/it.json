@@ -96,11 +96,29 @@
     "discYear": "Anno di scoperta",
     "eqTemp": "Temperatura di equilibrio",
     "inHz": "In zona abitabile",
-    "schematicOrbit": "Orbita schematica (inclinazione n/d)"
+    "schematicOrbit": "Orbita schematica (inclinazione n/d)",
+    "type": "Tipo",
+    "planetTypes": "Tipi di pianeta"
   },
   "music": {
     "play": "Riproduci musica",
     "pause": "Metti in pausa la musica",
     "volume": "Volume musica"
+  },
+  "options": {
+    "title": "Opzioni",
+    "moveSpeed": "Velocità di movimento",
+    "autoOrbit": "Auto-orbit della camera attorno alla stella selezionata",
+    "realism": "Aspetto realistico (colori non esagerati, niente luccichio)",
+    "twinkleSpeed": "Frequenza del luccichio",
+    "twinkleAmplitude": "Intensità del luccichio",
+    "sizeGamma": "Contrasto dimensioni stelle",
+    "reset": "Ripristina opzioni"
+  },
+  "planetType": {
+    "rocky": "Roccioso",
+    "subNeptune": "Sub-nettuniano",
+    "giant": "Gigante",
+    "unknown": "Sconosciuto"
   }
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { DEFAULT_FILTERS, type DataBounds, type Filters } from '../lib/filterMask';
 import { prefersReducedMotion } from '../lib/motion';
+import type { PlanetType } from '../lib/planetType';
 
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
@@ -35,6 +36,8 @@ export interface GalaxyMapState {
   showHabitableZone: boolean;
   /** Simulated days per real second; 0 = paused. */
   timeScaleDaysPerSecond: number;
+  /** System View planet type filter (session only, not persisted). */
+  visiblePlanetTypes: Record<PlanetType, boolean>;
   /** Star catalog loading lifecycle (big typed arrays live OUTSIDE the store). */
   dataStatus: DataStatus;
   dataProgress: number;
@@ -71,6 +74,7 @@ export interface GalaxyMapState {
   toggleConstellations: () => void;
   toggleHabitableZone: () => void;
   setTimeScale: (daysPerSecond: number) => void;
+  togglePlanetType: (type: PlanetType) => void;
 }
 
 export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
@@ -85,6 +89,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   showConstellations: false,
   showHabitableZone: false,
   timeScaleDaysPerSecond: DEFAULT_TIME_SCALE_DAYS_PER_SECOND,
+  visiblePlanetTypes: { rocky: true, subNeptune: true, giant: true, unknown: true },
   dataStatus: 'idle',
   dataProgress: 0,
   filters: DEFAULT_FILTERS,
@@ -132,4 +137,8 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   toggleConstellations: () => set((s) => ({ showConstellations: !s.showConstellations })),
   toggleHabitableZone: () => set((s) => ({ showHabitableZone: !s.showHabitableZone })),
   setTimeScale: (daysPerSecond) => set({ timeScaleDaysPerSecond: daysPerSecond }),
+  togglePlanetType: (type) =>
+    set((s) => ({
+      visiblePlanetTypes: { ...s.visiblePlanetTypes, [type]: !s.visiblePlanetTypes[type] },
+    })),
 }));

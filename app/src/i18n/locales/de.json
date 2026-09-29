@@ -96,11 +96,29 @@
     "discYear": "Entdeckungsjahr",
     "eqTemp": "Gleichgewichtstemperatur",
     "inHz": "In habitabler Zone",
-    "schematicOrbit": "Schematische Bahn (Neigung n. v.)"
+    "schematicOrbit": "Schematische Bahn (Neigung n. v.)",
+    "type": "Typ",
+    "planetTypes": "Planetentypen"
   },
   "music": {
     "play": "Musik abspielen",
     "pause": "Musik pausieren",
     "volume": "Musiklautstärke"
+  },
+  "options": {
+    "title": "Optionen",
+    "moveSpeed": "Bewegungsgeschwindigkeit",
+    "autoOrbit": "Automatischer Kamera-Orbit um den ausgewählten Stern",
+    "realism": "Realistische Darstellung (keine übertriebenen Farben, kein Funkeln)",
+    "twinkleSpeed": "Funkelfrequenz",
+    "twinkleAmplitude": "Funkelintensität",
+    "sizeGamma": "Größenkontrast der Sterne",
+    "reset": "Optionen zurücksetzen"
+  },
+  "planetType": {
+    "rocky": "Gesteinsplanet",
+    "subNeptune": "Sub-Neptun",
+    "giant": "Riese",
+    "unknown": "Unbekannt"
   }
 }

@@ -96,11 +96,29 @@
     "discYear": "Année de découverte",
     "eqTemp": "Température d'équilibre",
     "inHz": "Dans la zone habitable",
-    "schematicOrbit": "Orbite schématique (inclinaison n/d)"
+    "schematicOrbit": "Orbite schématique (inclinaison n/d)",
+    "type": "Type",
+    "planetTypes": "Types de planète"
   },
   "music": {
     "play": "Lire la musique",
     "pause": "Mettre la musique en pause",
     "volume": "Volume de la musique"
+  },
+  "options": {
+    "title": "Options",
+    "moveSpeed": "Vitesse de déplacement",
+    "autoOrbit": "Orbite automatique de la caméra autour de l'étoile sélectionnée",
+    "realism": "Aspect réaliste (sans couleurs exagérées ni scintillement)",
+    "twinkleSpeed": "Fréquence du scintillement",
+    "twinkleAmplitude": "Intensité du scintillement",
+    "sizeGamma": "Contraste de taille des étoiles",
+    "reset": "Réinitialiser les options"
+  },
+  "planetType": {
+    "rocky": "Rocheuse",
+    "subNeptune": "Sous-Neptune",
+    "giant": "Géante",
+    "unknown": "Inconnu"
   }
 }

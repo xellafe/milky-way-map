@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getHost, type ExoplanetRecord } from '../data/exoplanets';
 import { formatNumber } from '../lib/format';
+import { classifyPlanet, PLANET_TYPES } from '../lib/planetType';
 import {
   TIME_SCALE_MAX_DAYS_PER_SECOND,
   TIME_SCALE_MIN_DAYS_PER_SECOND,
@@ -42,6 +43,7 @@ function PlanetDetails({ planet }: { planet: ExoplanetRecord }) {
   const rows: [string, string][] = [
     [t('system.period'), num(planet.pl_orbper, 5, ` ${t('units.days')}`)],
     [t('system.semiMajorAxis'), num(planet.pl_orbsmax, 4, ` ${t('units.au')}`)],
+    [t('system.type'), t(`planetType.${classifyPlanet(planet)}`)],
     [t('system.radius'), num(planet.pl_rade, 3, ` ${t('units.rearth')}`)],
     [t('system.mass'), num(planet.pl_bmasse, 3, ` ${t('units.mearth')}`)],
     [t('system.eccentricity'), num(planet.pl_orbeccen, 3)],
@@ -89,12 +91,15 @@ export function SystemOverlay() {
   const setTimeScale = useGalaxyMapStore((s) => s.setTimeScale);
   const showHz = useGalaxyMapStore((s) => s.showHabitableZone);
   const toggleHz = useGalaxyMapStore((s) => s.toggleHabitableZone);
+  const visibleTypes = useGalaxyMapStore((s) => s.visiblePlanetTypes);
+  const togglePlanetType = useGalaxyMapStore((s) => s.togglePlanetType);
   const [logMode, setLogMode] = useState(false);
   const [pausedFrom, setPausedFrom] = useState<number | null>(null);
 
   const host = hostname ? getHost(hostname) : null;
   if (!hostname || !host) return null;
-  const planet = host.planets.find((p) => p.pl_name === selectedPlanet) ?? null;
+  const shownPlanets = host.planets.filter((p) => visibleTypes[classifyPlanet(p)]);
+  const planet = shownPlanets.find((p) => p.pl_name === selectedPlanet) ?? null;
   const paused = timeScale === 0;
 
   return (
@@ -118,8 +123,24 @@ export function SystemOverlay() {
         className="absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg bg-zinc-900/90 p-4 shadow-xl backdrop-blur"
       >
         <p className="mb-2 text-sm text-white/60">{t('system.planets')}</p>
+        <fieldset className="mb-2" data-testid="planet-type-filter">
+          <legend className="text-xs text-white/60">{t('system.planetTypes')}</legend>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-white">
+            {PLANET_TYPES.map((type) => (
+              <label key={type} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={visibleTypes[type]}
+                  data-testid={`planet-type-${type}`}
+                  onChange={() => togglePlanetType(type)}
+                />
+                {t(`planetType.${type}`)}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <div className="flex flex-wrap gap-1">
-          {host.planets.map((p) => (
+          {shownPlanets.map((p) => (
             <button
               key={p.pl_name}
               type="button"

@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarCore } from '../data/starCoreStore';
 import { prefersReducedMotion } from '../lib/motion';
+import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
 import { getSavedCameraPose, saveCameraPose } from './cameraPoseStore';
 import {
@@ -13,16 +14,17 @@ import {
   tweenPose,
 } from './cameraTween';
 
-// Tuning: radians per pixel of mouse drag, movement speed in ly/s.
+// Tuning: radians per pixel of mouse drag. Movement speed and auto-orbit on/off
+// are user settings (state/settings.ts).
 const LOOK_SENSITIVITY = 0.0025;
 const ORBIT_SENSITIVITY = 0.005;
-const MOVE_SPEED_LY_PER_S = 25;
 const ROLL_SPEED_RAD_PER_S = 1.0;
 // Wheel zoom in orbit: distance factor e^(deltaY·k) — ~×1.1 per 100 px notch.
 const ZOOM_PER_WHEEL_DELTA = 0.001;
 // Ambient auto-orbit: the camera keeps revolving slowly around a freshly
 // locked star until the user orbits manually (drag) or releases the lock.
-// ~63 s per full revolution; disabled under prefers-reduced-motion.
+// ~63 s per full revolution; disabled under prefers-reduced-motion or by the
+// user setting.
 const AUTO_ORBIT_RAD_PER_S = 0.1;
 // Translation keys release the orbit lock (they break the fixed-radius orbit);
 // Q/E roll stays available in orbit (it keeps the target centered).
@@ -184,7 +186,7 @@ export function CameraControls() {
     // prefers-reduced-motion.
     if (autoOrbit.current && lockedStar !== null && store.cameraMode === 'orbit') {
       const target = starPosition(lockedStar);
-      if (target && !prefersReducedMotion()) {
+      if (target && !prefersReducedMotion() && useSettingsStore.getState().autoOrbit) {
         orbitAroundTarget(
           camera.position,
           camera.quaternion,
@@ -202,7 +204,7 @@ export function CameraControls() {
     if (store.cameraMode === 'orbit' && MOVE_KEYS.some((code) => k.has(code))) {
       store.setCameraMode('free-fly');
     }
-    const move = MOVE_SPEED_LY_PER_S * delta;
+    const move = useSettingsStore.getState().moveSpeedLyPerS * delta;
     if (k.has('KeyW')) camera.translateZ(-move);
     if (k.has('KeyS')) camera.translateZ(move);
     if (k.has('KeyA')) camera.translateX(-move);

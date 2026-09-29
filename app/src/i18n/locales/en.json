@@ -96,11 +96,29 @@
     "discYear": "Discovery year",
     "eqTemp": "Equilibrium temperature",
     "inHz": "In habitable zone",
-    "schematicOrbit": "Schematic orbit (inclination n/a)"
+    "schematicOrbit": "Schematic orbit (inclination n/a)",
+    "type": "Type",
+    "planetTypes": "Planet types"
   },
   "music": {
     "play": "Play music",
     "pause": "Pause music",
     "volume": "Music volume"
+  },
+  "options": {
+    "title": "Options",
+    "moveSpeed": "Movement speed",
+    "autoOrbit": "Camera auto-orbit around the selected star",
+    "realism": "Realistic look (no exaggerated colors, no twinkle)",
+    "twinkleSpeed": "Twinkle frequency",
+    "twinkleAmplitude": "Twinkle intensity",
+    "sizeGamma": "Star size contrast",
+    "reset": "Reset options"
+  },
+  "planetType": {
+    "rocky": "Rocky",
+    "subNeptune": "Sub-Neptune",
+    "giant": "Giant",
+    "unknown": "Unknown"
   }
 }
