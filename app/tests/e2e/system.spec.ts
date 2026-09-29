@@ -180,3 +180,20 @@ test('back button returns to the galaxy with the selection intact', async ({ pag
   await expect(page.getByTestId('panel-title')).toHaveText('TRAPPIST-1');
   await expect(page.getByTestId('system-title')).toHaveCount(0);
 });
+
+test('planet type filter hides planets and their chips (TRAPPIST-1: all rocky)', async ({
+  page,
+}) => {
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+
+  await expect(page.getByTestId('planet-chip')).toHaveCount(7);
+  await page.getByTestId('planet-type-rocky').uncheck();
+  await expect(page.getByTestId('planet-chip')).toHaveCount(0);
+  await expect.poll(async () => (await bridge(page)).planets.length).toBe(0);
+
+  await page.getByTestId('planet-type-rocky').check();
+  await expect.poll(async () => (await bridge(page)).planets.length).toBe(7);
+  await page.getByTestId('planet-chip').first().click();
+  await expect(page.getByTestId('planet-panel')).toContainText('Rocky');
+});

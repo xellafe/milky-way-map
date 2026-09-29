@@ -4,6 +4,7 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
 import { hzBoundsAU } from '../lib/habitableZone';
+import { classifyPlanet } from '../lib/planetType';
 import { orbitAngleDeg, orbitPathPoints, orbitPlanePosition, toSceneCoords } from '../lib/orbit';
 import { teffToColor } from '../lib/starColor';
 import { useGalaxyMapStore } from '../state/store';
@@ -141,18 +142,25 @@ export function SystemScene() {
   const hostname = useGalaxyMapStore((s) => s.systemHostname);
   const showHz = useGalaxyMapStore((s) => s.showHabitableZone);
   const selectPlanet = useGalaxyMapStore((s) => s.selectPlanet);
+  const visibleTypes = useGalaxyMapStore((s) => s.visiblePlanetTypes);
   const meshes = useRef<(THREE.Mesh | null)[]>([]);
 
   // Host data is a module holder read (already loaded by the entry panel).
   const host = hostname ? getHost(hostname) : null;
-  const planets = useMemo(() => {
+  const allPlanets = useMemo(() => {
     if (!host) return [];
     const maxA = Math.max(...host.planets.map((p) => p.pl_orbsmax ?? 0), 0.01);
     return renderablePlanets(host, maxA);
   }, [host]);
+  // Type filter hides planet + orbit; the scene scale (maxA) stays that of the
+  // whole system so toggling doesn't rescale the view.
+  const planets = useMemo(
+    () => allPlanets.filter((p) => visibleTypes[classifyPlanet(p.record)]),
+    [allPlanets, visibleTypes],
+  );
 
   if (!host) return null;
-  const maxA = Math.max(...planets.map((p) => p.semiMajorAxisAU), 0.01);
+  const maxA = Math.max(...allPlanets.map((p) => p.semiMajorAxisAU), 0.01);
   const starRadius = Math.max((host.st_rad ?? 0) * SUN_RADIUS_AU, maxA * 0.045);
   const hz = hzBoundsAU(host.st_lum);
 

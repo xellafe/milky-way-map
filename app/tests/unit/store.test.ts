@@ -100,4 +100,16 @@ describe('galaxy map store', () => {
     useGalaxyMapStore.getState().bumpLabelsVersion();
     expect(useGalaxyMapStore.getState().labelsVersion).toBe(before + 2);
   });
+
+  it('shows every planet type by default and toggles one', () => {
+    expect(Object.values(useGalaxyMapStore.getState().visiblePlanetTypes)).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ]);
+    useGalaxyMapStore.getState().togglePlanetType('giant');
+    expect(useGalaxyMapStore.getState().visiblePlanetTypes.giant).toBe(false);
+    expect(useGalaxyMapStore.getState().visiblePlanetTypes.rocky).toBe(true);
+  });
 });

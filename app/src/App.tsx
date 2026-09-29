@@ -14,6 +14,7 @@ import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
 import { LoadingOverlay } from './ui/LoadingOverlay';
 import { MusicControl } from './ui/MusicControl';
+import { OptionsPanel } from './ui/OptionsPanel';
 import { SearchBox } from './ui/SearchBox';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
 import { StarPanel } from './ui/StarPanel';
@@ -91,6 +92,7 @@ export default function App() {
           <SearchBox />
           <FiltersPanel />
           <ViewTogglesPanel />
+          <OptionsPanel />
           <StarPanel />
           <HoverLabel />
         </>

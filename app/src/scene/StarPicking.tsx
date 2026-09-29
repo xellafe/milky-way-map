@@ -8,8 +8,9 @@ import * as THREE from 'three';
 import { getStarCore, getStarGeometry } from '../data/starCoreStore';
 import starPickFrag from '../shaders/star-pick.frag?raw';
 import starPickVert from '../shaders/star-pick.vert?raw';
+import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
-import { STAR_DIST_EXP, STAR_MAX_PX, STAR_PIXEL_SCALE, STAR_SIZE_GAMMA } from './StarCloud';
+import { STAR_DIST_EXP, STAR_MAX_PX, STAR_PIXEL_SCALE } from './StarCloud';
 
 const PICK_MIN_PX = 7.0; // hover comfort: tiny stars get a larger hit target
 const CLICK_MAX_DRAG_PX = 5; // pointerdown→up movement below this = click, not a look-drag
@@ -60,7 +61,7 @@ export function StarPicking() {
           value: STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, 2),
         },
         uMaxPx: { value: STAR_MAX_PX },
-        uSizeGamma: { value: STAR_SIZE_GAMMA },
+        uSizeGamma: { value: useSettingsStore.getState().sizeGamma },
         uDistExp: { value: STAR_DIST_EXP },
         uPickMinPx: { value: PICK_MIN_PX },
       },
@@ -115,6 +116,8 @@ export function StarPicking() {
 
   const readStarAt = (x: number, y: number): number | null => {
     if (!geometry || !pickScene) return null;
+    // Same size law as the visible cloud (user-tunable gamma).
+    pickScene.material.uniforms.uSizeGamma!.value = useSettingsStore.getState().sizeGamma;
     const dpr = gl.getPixelRatio();
     const cam = camera as THREE.PerspectiveCamera;
     cam.setViewOffset(size.width * dpr, size.height * dpr, x * dpr, y * dpr, 1, 1);

@@ -8,6 +8,7 @@
 precision highp float;
 
 uniform float uColorGamma; // per-channel power: >1 deepens hue, keeps max channel & white
+uniform float uFireball;   // 1 = white core + corona, 0 = plain colored disc (realism)
 
 varying vec3 vColor;
 varying float vAlpha;
@@ -22,7 +23,7 @@ void main() {
   // curve pulls the weaker channels down so the hue reads clearly.
   vec3 hue = pow(vColor, vec3(uColorGamma));
 
-  float resolved = smoothstep(3.0, 9.0, vPx);
+  float resolved = smoothstep(3.0, 9.0, vPx) * uFireball;
   float core = exp(-d * d * 30.0) * resolved;
   float body = exp(-d * d * 6.0);
   float corona = exp(-d * 3.5) * 0.35 * resolved;
