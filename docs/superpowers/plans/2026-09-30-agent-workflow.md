@@ -170,6 +170,6 @@ Expected: nessun output.
 
 Da spec §6.2–6.3, nell'ordine:
 1. Revisione del branch `chore/agent-workflow`, poi push/PR/merge a cura dell'umano.
-2. Su `feat/sci-fi-ui`: chiudere il Task 2.2 correggendo i 4 commenti (spec §6.2), poi merge di `main`.
+2. Su `feat/sci-fi-ui`: chiudere il Task 2.2 correggendo i 4 commenti (spec §6.2), poi merge di `main` e `cd app && npm run format` (`store.ts` non conforme su quel branch).
 3. A working tree pulito in `F:\galaxy-map`, rilettura LF (`git rm -rq --cached . && git reset --hard`) **solo dopo conferma umana**.
 4. Sessione nuova (gli agenti si caricano all'avvio) → pilota sul Task 3.1 del piano sci-fi con la pipeline.

@@ -23,6 +23,7 @@ You write and run the tests for one Galaxy Map task. You never change production
 2. Pure logic (`lib/`, `state/`) gets Vitest tests; components get Playwright tests (Vitest runs without a DOM). Layout changes are asserted with bounding boxes, not DOM presence alone.
 3. Test data comes from the golden fixtures (SPEC §5.4) or `app/tests/e2e/fixtures.ts`. Never invent astronomical values.
 4. Run only the new tests. Each must fail **because the feature is missing** (missing export, wrong value, absent element), not because of a typo, syntax error or wrong import path in the test. Fix the test until it fails for the right reason.
+5. From `app/`, run `npx prettier --write <new test files>` and `npx eslint <new test files>`, and fix any lint error. The coder may not touch tests, so they must already pass the format and lint checks of the fast gate.
 
 ## Procedure — `mode: verify`
 

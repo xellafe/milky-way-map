@@ -20,3 +20,4 @@ venv/
 .env
 .env.local
 .DS_Store
+.superpowers/

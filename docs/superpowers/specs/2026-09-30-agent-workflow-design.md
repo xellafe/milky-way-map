@@ -78,6 +78,8 @@ Il reviewer aggiunge `VERDICT` e `FINDINGS`; il committer aggiunge `COMMIT`.
   `app/tests/unit/*.test.ts`, e2e `app/tests/e2e/*.spec.ts`, pytest
   `data-pipeline/tests/`); li esegue e verifica che falliscano **perché la
   feature manca**, non per errori nel test. Non tocca il codice di produzione.
+  Prima del report passa Prettier ed ESLint sui test nuovi: il coder non può
+  toccarli, quindi devono già superare format e lint del gate veloce.
 - **`mode: verify`**: esegue il gate completo (§5.5) e, se la pipeline è
   toccata, il gate pipeline; esegue le verifiche a runtime richieste dal brief
   (bounding box, `axe`).
@@ -126,11 +128,13 @@ rinviati.
 
 1. **Gate** (tutti obbligatori, altrimenti `BLOCKED`):
    - branch corrente ≠ `main`;
-   - verdetto reviewer `APPROVED` e report tester `verify` con `STATUS: DONE`, passati dal controller;
+   - verdetto reviewer `APPROVED` e report tester `verify` con `STATUS: DONE`, passati dal controller
+     (per il commit `docs(state)` di fine issue basta il report del documenter con `STATUS: DONE`);
    - riesegue il gate veloce (§5.5); gli e2e no, fa fede il report `verify`.
 2. **Staging**: solo i file elencati nei report (`git add <path>…`, mai `-A` o
-   `.`); se `git status` mostra file inattesi → `BLOCKED`; mai `data/*`,
-   `.superpowers/`, `app/test-results/`.
+   `.`); se `git status` mostra file tracciati modificati fuori dai report →
+   `BLOCKED`; i file non tracciati fuori dai report restano fuori dal commit e
+   si elencano nel report; mai `data/*`, `.superpowers/`, `app/test-results/`.
 3. **Messaggio**: formato di §5.4, scritto in un file non tracciato
    (`.superpowers/commit-msg.txt`, gitignored) e committato con
    `git commit -F .superpowers/commit-msg.txt`.
@@ -283,7 +287,9 @@ Il commit 2 è fattibile senza conflitti: `format:check` fallisce su 27 file ma
 1. Su `feat/sci-fi-ui`: chiudere il Task 2.2 con il flusso attuale, correggendo
    i commenti che violano §5.3 (`app/tests/e2e/smoke.spec.ts:20`, `:42`,
    `app/tests/e2e/view.spec.ts:13`, `app/src/ui/ControlDock.tsx:127`); poi
-   merge di `main` in `feat/sci-fi-ui`.
+   merge di `main` in `feat/sci-fi-ui` e `cd app && npm run format` (su quel
+   branch `app/src/state/store.ts` non rispetta Prettier: senza questo passo
+   il nuovo step `format:check` della CI fallisce).
 2. A working tree pulito, rilettura una tantum dei file per passare a LF:
    `git rm -rq --cached . && git reset --hard`. Sicuro **solo** su working
    tree pulito: da confermare con l'umano prima di eseguirlo.

@@ -23,7 +23,7 @@ agenti in `.claude/agents/`.
 
 1. Issue → spec in `docs/superpowers/specs/` → piano in `docs/superpowers/plans/` → pipeline per task (sotto).
 2. Un branch per issue; un commit per task del piano.
-3. A fine issue il `documenter` aggiorna `STATE.md` (commit a parte, `docs(state): …`); poi il controller chiede all'umano push e PR.
+3. A fine issue il `documenter` aggiorna `STATE.md` e il `committer` ne fa un commit a parte (`docs(state): …`); poi il controller chiede all'umano push e PR.
 
 Il controller è la sessione principale: fa i dispatch degli agenti e non scrive
 codice. Pipeline per ogni task:
@@ -106,7 +106,7 @@ tester (red) → coder → code-reviewer ⟲ coder (max 3 giri) → tester (veri
 | budget misurato (FPS, bundle) | tabella in `README.md` + `STATE.md` |
 | pipeline o fonti dati | `data-pipeline/README.md`; `NOTICE.md` se la fonte è nuova |
 | asset o dato con licenza | `NOTICE.md` |
-| decisione, assunzione sui dati, esito AC | `STATE.md` (fine issue o checkpoint): una sezione per issue, bullet ≤ 3 righe, i dettagli di debug si rimandano allo SHA del commit |
+| decisione, assunzione sui dati, esito AC | `STATE.md` (fine issue o checkpoint): una sezione per issue, bullet ≤ 3 righe, per i dettagli di debug si rimanda allo SHA del commit |
 | requisito o vincolo di prodotto | `SPEC.md`, **solo con approvazione umana** |
 | regola di workflow | `AGENTS.md`, **solo con approvazione umana** |
 
