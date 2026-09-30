@@ -7,7 +7,7 @@ import { HudPanel } from './hud/HudPanel';
  * View toggles (SPEC §6.2): always-on star names and constellation lines.
  * Both default OFF (no clutter in the default configuration — M6 AC).
  * Content only: the dock owns the toggle icon, positioning and open/close
- * state (Task 2.2).
+ * state (issue #3).
  */
 export function ViewTogglesPanel() {
   const { t } = useTranslation();

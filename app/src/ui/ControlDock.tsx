@@ -73,7 +73,7 @@ export function ControlDock() {
   const { t, i18n } = useTranslation();
   const view = useGalaxyMapStore((s) => s.view);
   const visibleCount = useGalaxyMapStore((s) => s.visibleCount);
-  const { audioRef, excludeRef, playing, volume, toggle, setVolume, onPlay, onPause } = useMusic();
+  const { audioRef, playing, volume, toggle, setVolume, onPlay, onPause } = useMusic();
 
   const musicItem: DockItem = {
     id: 'music',
@@ -124,11 +124,7 @@ export function ControlDock() {
       : [musicItem, optionsItem];
 
   return (
-    // Deliberate simplification: excludeRef covers the whole dock (all icons + open panel),
-    // not just the music icon/panel, because DockItem has no per-item ref slot;
-    // upgrade when a first gesture on another icon must still trigger the music
-    // autoplay fallback.
-    <div ref={excludeRef as React.RefObject<HTMLDivElement | null>}>
+    <div>
       <audio
         ref={audioRef}
         src={musicUrl}

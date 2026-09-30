@@ -181,80 +181,79 @@ export function SystemOverlay() {
 
       {/*
        * Sits above the dock (SPEC §4.1: the dock shows Music/Options in the
-       * System View). The dock icon row is at bottom-4; bottom-20 clears it
-       * with a small gap. When a dock panel is open it renders in that same
-       * band (Dock.tsx), so the time bar shifts further up — it may still
-       * overlap a tall Options panel content on short viewports, which is an
-       * accepted trade-off (prefer shifting, not guaranteed non-overlap).
+       * System View). The dock icon row is at bottom-4; bottom-20 clears it.
+       * An open dock panel renders in that same band (Dock.tsx) and its
+       * height varies (Options is tall), so the bar is hidden while a panel
+       * is open instead of guessing an offset that can still overlap.
        */}
-      <HudPanel
-        aria-label={t('system.timeScale')}
-        className={`absolute left-1/2 z-10 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm ${
-          dockPanel ? 'bottom-72' : 'bottom-20'
-        }`}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span>{t('system.timeScale')}</span>
-          <span className="font-hud-mono text-hud-bright" data-testid="time-scale-value">
-            {t('system.daysPerSecond', {
-              value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
-            })}
-          </span>
-        </div>
-        <div className="mt-2 flex items-center gap-3">
-          <HudButton
-            variant="secondary"
-            data-testid="time-pause"
-            onClick={() => {
-              if (paused) {
-                setTimeScale(pausedFrom ?? 2);
-                setPausedFrom(null);
-              } else {
-                setPausedFrom(timeScale);
-                setTimeScale(0);
+      {!dockPanel && (
+        <HudPanel
+          aria-label={t('system.timeScale')}
+          className="absolute bottom-20 left-1/2 z-10 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span>{t('system.timeScale')}</span>
+            <span className="font-hud-mono text-hud-bright" data-testid="time-scale-value">
+              {t('system.daysPerSecond', {
+                value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
+              })}
+            </span>
+          </div>
+          <div className="mt-2 flex items-center gap-3">
+            <HudButton
+              variant="secondary"
+              data-testid="time-pause"
+              onClick={() => {
+                if (paused) {
+                  setTimeScale(pausedFrom ?? 2);
+                  setPausedFrom(null);
+                } else {
+                  setPausedFrom(timeScale);
+                  setTimeScale(0);
+                }
+              }}
+            >
+              {paused ? '▶' : '⏸'}
+              <span className="sr-only">{t(paused ? 'system.resume' : 'system.pause')}</span>
+            </HudButton>
+            <HudSlider
+              min={0}
+              max={SLIDER_STEPS}
+              step={1}
+              value={toSlider(paused ? (pausedFrom ?? 2) : timeScale, logMode)}
+              disabled={paused}
+              data-testid="time-slider"
+              aria-label={t('system.timeScale')}
+              onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
+              className="flex-1"
+            />
+            <HudCheckbox
+              // The wrapping label bakes in text-sm; a same-specificity text-xs in
+              // className would conflict with it by stylesheet order, not intent, so
+              // the smaller size is set on the label text itself instead.
+              label={<span className="text-xs">{t('system.logScale')}</span>}
+              checked={logMode}
+              data-testid="time-log-mode"
+              onChange={(e) => setLogMode(e.target.checked)}
+              className="whitespace-nowrap"
+            />
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <HudCheckbox
+              label={
+                <>
+                  {t('system.habitableZone')}{' '}
+                  <span className="text-xs text-hud-warn">{t('system.hzApprox')}</span>
+                </>
               }
-            }}
-          >
-            {paused ? '▶' : '⏸'}
-            <span className="sr-only">{t(paused ? 'system.resume' : 'system.pause')}</span>
-          </HudButton>
-          <HudSlider
-            min={0}
-            max={SLIDER_STEPS}
-            step={1}
-            value={toSlider(paused ? (pausedFrom ?? 2) : timeScale, logMode)}
-            disabled={paused}
-            data-testid="time-slider"
-            aria-label={t('system.timeScale')}
-            onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
-            className="flex-1"
-          />
-          <HudCheckbox
-            // The wrapping label bakes in text-sm; a same-specificity text-xs in
-            // className would conflict with it by stylesheet order, not intent, so
-            // the smaller size is set on the label text itself instead.
-            label={<span className="text-xs">{t('system.logScale')}</span>}
-            checked={logMode}
-            data-testid="time-log-mode"
-            onChange={(e) => setLogMode(e.target.checked)}
-            className="whitespace-nowrap"
-          />
-        </div>
-        <div className="mt-2 flex items-center gap-2">
-          <HudCheckbox
-            label={
-              <>
-                {t('system.habitableZone')}{' '}
-                <span className="text-xs text-hud-warn">{t('system.hzApprox')}</span>
-              </>
-            }
-            checked={showHz}
-            disabled={host.st_lum === null}
-            data-testid="toggle-hz"
-            onChange={toggleHz}
-          />
-        </div>
-      </HudPanel>
+              checked={showHz}
+              disabled={host.st_lum === null}
+              data-testid="toggle-hz"
+              onChange={toggleHz}
+            />
+          </div>
+        </HudPanel>
+      )}
     </>
   );
 }

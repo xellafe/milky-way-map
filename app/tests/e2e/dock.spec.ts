@@ -30,6 +30,11 @@ test('dock: one panel open at a time, Esc closes and restores focus', async ({ p
   await expect(page.getByTestId('filters-panel')).toHaveCount(0);
   await expect(optionsToggle).toHaveAttribute('aria-expanded', 'true');
 
+  // Clicking the icon already focuses it: move focus into the panel so the
+  // assertion below proves Esc restores it.
+  await page.getByTestId('option-moveSpeedLyPerS').focus();
+  await expect(optionsToggle).not.toBeFocused();
+
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('options-panel')).toHaveCount(0);
   await expect(page.getByTestId('filters-panel')).toHaveCount(0);
@@ -68,4 +73,13 @@ test('dock: first gesture on the music icon does not race the autoplay fallback'
 
   await page.getByTestId('music-toggle-panel').click();
   expect(await paused()).toBe(true);
+});
+
+test('dock: first gesture on another dock icon still starts the music', async ({ page }) => {
+  await openApp(page);
+  const audio = page.getByTestId('music-audio');
+  const paused = () => audio.evaluate((el: HTMLAudioElement) => el.paused);
+
+  await page.getByTestId('filters-toggle').click();
+  await expect.poll(paused).toBe(false);
 });

@@ -57,7 +57,7 @@ function SliderSetting({
 /**
  * User customizations (issue #1): camera, star look. Persisted locally.
  * Content only: the dock owns the toggle icon, positioning and open/close
- * state (Task 2.2).
+ * state (issue #3).
  */
 export function OptionsPanel() {
   const { t } = useTranslation();

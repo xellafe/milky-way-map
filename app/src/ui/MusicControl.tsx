@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components --
-   Task 2.2 (SPEC §4.1) requires useMusic() and MusicPanel to live together in
+   SPEC §4.1: useMusic() and MusicPanel live together in
    this file: the hook owns the <audio> ref/state (mounted once in
    ControlDock, outside any panel) and MusicPanel is its dock panel content.
    Splitting them into separate files for fast-refresh purity would scatter
@@ -10,6 +10,7 @@ import { HudSlider } from './hud/HudInputs';
 import { HudPanel } from './hud/HudPanel';
 
 const DEFAULT_VOLUME = 0.4;
+const MUSIC_SELECTOR = '[data-testid="music-toggle-panel"], [data-testid="music-control"]';
 
 /**
  * Looping background music: play/pause + volume state, and the
@@ -17,13 +18,13 @@ const DEFAULT_VOLUME = 0.4;
  * until a user gesture — we try to start on mount and otherwise on the first
  * pointer/key event). `audioRef` is attached to the `<audio>` element, which
  * ControlDock mounts outside any panel so playback survives panel open/close
- * and view changes. `excludeRef` marks the container (dock icon + panel)
- * whose own gestures must not trigger the fallback — otherwise a deliberate
- * first click on the music icon/controls could race an unwanted autoplay.
+ * and view changes. Gestures on the music
+ * icon or its panel (MUSIC_SELECTOR) do not trigger the fallback, otherwise a
+ * deliberate first click there could race an unwanted autoplay; gestures on
+ * any other dock icon still start the music.
  */
 export function useMusic(): {
   audioRef: RefObject<HTMLAudioElement | null>;
-  excludeRef: RefObject<HTMLElement | null>;
   playing: boolean;
   volume: number;
   toggle: () => void;
@@ -32,7 +33,6 @@ export function useMusic(): {
   onPause: () => void;
 } {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const excludeRef = useRef<HTMLElement>(null);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolumeState] = useState(DEFAULT_VOLUME);
 
@@ -42,7 +42,7 @@ export function useMusic(): {
     audio.volume = DEFAULT_VOLUME;
     const onGesture = (event: Event) => {
       removeListeners();
-      if (excludeRef.current?.contains(event.target as Node)) return;
+      if ((event.target as Element | null)?.closest?.(MUSIC_SELECTOR)) return;
       audio.play().catch(() => {});
     };
     const removeListeners = () => {
@@ -70,7 +70,6 @@ export function useMusic(): {
 
   return {
     audioRef,
-    excludeRef,
     playing,
     volume,
     toggle,
@@ -80,7 +79,7 @@ export function useMusic(): {
   };
 }
 
-/** Music dock panel content: play/pause + volume (Task 2.2). */
+/** Music dock panel content: play/pause + volume. */
 export function MusicPanel({
   playing,
   volume,

@@ -78,7 +78,7 @@ function RangeFilter({
 /**
  * Runtime filters panel (SPEC §6.5) — GPU mask only, no data reload.
  * Content only: the dock (ControlDock/Dock) owns the toggle icon,
- * positioning and open/close state (Task 2.2).
+ * positioning and open/close state (issue #3).
  */
 export function FiltersPanel() {
   const { t } = useTranslation();
