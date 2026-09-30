@@ -103,6 +103,7 @@ export function SystemOverlay() {
   const togglePlanetType = useGalaxyMapStore((s) => s.togglePlanetType);
   const orbitStyle = useSettingsStore((s) => s.orbitStyle);
   const setSettings = useSettingsStore((s) => s.setSettings);
+  const dockPanel = useGalaxyMapStore((s) => s.dockPanel);
   const [logMode, setLogMode] = useState(false);
   const [pausedFrom, setPausedFrom] = useState<number | null>(null);
 
@@ -178,9 +179,19 @@ export function SystemOverlay() {
         <p className="mt-3 text-xs text-hud-muted">{t('system.scaleNote')}</p>
       </aside>
 
+      {/*
+       * Sits above the dock (SPEC §4.1: the dock shows Music/Options in the
+       * System View). The dock icon row is at bottom-4; bottom-20 clears it
+       * with a small gap. When a dock panel is open it renders in that same
+       * band (Dock.tsx), so the time bar shifts further up — it may still
+       * overlap a tall Options panel content on short viewports, which is an
+       * accepted trade-off (prefer shifting, not guaranteed non-overlap).
+       */}
       <HudPanel
         aria-label={t('system.timeScale')}
-        className="absolute bottom-4 left-1/2 z-10 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm"
+        className={`absolute left-1/2 z-10 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm ${
+          dockPanel ? 'bottom-72' : 'bottom-20'
+        }`}
       >
         <div className="flex items-center justify-between gap-2">
           <span>{t('system.timeScale')}</span>

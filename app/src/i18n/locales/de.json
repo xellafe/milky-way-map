@@ -47,6 +47,13 @@
     "showNames": "Sternnamen immer anzeigen",
     "showConstellations": "Sternbildlinien"
   },
+  "dock": {
+    "label": "Bedienelemente",
+    "filters": "Filter",
+    "view": "Ansicht",
+    "options": "Optionen",
+    "music": "Musik"
+  },
   "filters": {
     "title": "Filter",
     "spectralClass": "Spektraltyp",

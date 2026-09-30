@@ -114,6 +114,8 @@ export function SearchBox() {
       e.preventDefault();
       choose(results[activeIndex]);
     } else if (e.key === 'Escape') {
+      // Mark handled so the dock's document-level Esc listener ignores it.
+      e.preventDefault();
       setOpen(false);
       inputRef.current?.blur();
     }

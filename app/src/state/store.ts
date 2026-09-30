@@ -138,7 +138,8 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
     }),
   // The galaxy selection survives: leaving the system brings back the same
   // star panel (and the galaxy camera pose is restored from its holder).
-  exitSystemView: () => set({ view: 'galaxy', systemHostname: null, selectedPlanet: null, dockPanel: null }),
+  exitSystemView: () =>
+    set({ view: 'galaxy', systemHostname: null, selectedPlanet: null, dockPanel: null }),
   selectPlanet: (planetName) => set({ selectedPlanet: planetName }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),
   toggleConstellations: () => set((s) => ({ showConstellations: !s.showConstellations })),

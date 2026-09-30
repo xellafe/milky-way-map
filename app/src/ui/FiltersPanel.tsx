@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isDefaultFilters, type Filters, type Range } from '../lib/filterMask';
 import { formatNumber } from '../lib/format';
@@ -76,15 +75,17 @@ function RangeFilter({
   );
 }
 
-/** Runtime filters panel (SPEC §6.5) — GPU mask only, no data reload. */
+/**
+ * Runtime filters panel (SPEC §6.5) — GPU mask only, no data reload.
+ * Content only: the dock (ControlDock/Dock) owns the toggle icon,
+ * positioning and open/close state (Task 2.2).
+ */
 export function FiltersPanel() {
-  const { t, i18n } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
   const filters = useGalaxyMapStore((s) => s.filters);
   const setFilters = useGalaxyMapStore((s) => s.setFilters);
   const resetFilters = useGalaxyMapStore((s) => s.resetFilters);
   const bounds = useGalaxyMapStore((s) => s.dataBounds);
-  const visibleCount = useGalaxyMapStore((s) => s.visibleCount);
 
   const toggleClass = (code: number) => {
     // Read the LATEST filters from the store, not the render closure: rapid
@@ -99,109 +100,88 @@ export function FiltersPanel() {
     setFilters({ [key]: e.target.checked });
 
   return (
-    <div className="absolute bottom-4 left-4 z-10 w-80">
+    <HudPanel
+      id="dock-panel-filters"
+      aria-label={t('filters.title')}
+      data-testid="filters-panel"
+      className="max-h-[60vh] w-80 overflow-x-hidden overflow-y-auto"
+    >
+      <fieldset>
+        <legend className="font-hud text-xs text-hud-muted">{t('filters.spectralClass')}</legend>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {SPECTRAL_LABELS.map((letter, code) => (
+            <HudCheckbox
+              key={letter}
+              label={letter}
+              checked={filters.spectralClasses[code] === true}
+              data-testid={`filter-class-${letter}`}
+              onChange={() => toggleClass(code)}
+            />
+          ))}
+          <HudCheckbox
+            label={t('filters.unknown')}
+            checked={filters.spectralClasses[7] === true}
+            data-testid="filter-class-unknown"
+            onChange={() => toggleClass(7)}
+          />
+        </div>
+      </fieldset>
+
+      <RangeFilter
+        id="distance"
+        label={`${t('filters.distance')} (${t('units.ly')})`}
+        bounds={bounds?.distanceLy ?? null}
+        value={filters.distanceLy}
+        decimals={0}
+        onChange={(range) => setFilters({ distanceLy: range })}
+      />
+      <RangeFilter
+        id="appmag"
+        label={t('filters.appMag')}
+        bounds={bounds?.appMag ?? null}
+        value={filters.appMag}
+        decimals={1}
+        onChange={(range) => setFilters({ appMag: range })}
+      />
+      <RangeFilter
+        id="absmag"
+        label={t('filters.absMag')}
+        bounds={bounds?.absMag ?? null}
+        value={filters.absMag}
+        decimals={1}
+        onChange={(range) => setFilters({ absMag: range })}
+      />
+
+      <div className="mt-3 flex flex-col gap-1">
+        <HudCheckbox
+          label={t('filters.onlyExoplanets')}
+          checked={filters.onlyExoplanets}
+          data-testid="filter-exoplanets"
+          onChange={setToggle('onlyExoplanets')}
+        />
+        <HudCheckbox
+          label={t('filters.onlyMultiple')}
+          checked={filters.onlyMultiple}
+          data-testid="filter-multiple"
+          onChange={setToggle('onlyMultiple')}
+        />
+        <HudCheckbox
+          label={t('filters.onlyVariable')}
+          checked={filters.onlyVariable}
+          data-testid="filter-variable"
+          onChange={setToggle('onlyVariable')}
+        />
+      </div>
+
       <HudButton
         variant="secondary"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-controls="filters-panel"
-        data-testid="filters-toggle"
+        onClick={resetFilters}
+        disabled={isDefaultFilters(filters)}
+        data-testid="filters-reset"
+        className="mt-3 w-full"
       >
-        {t('filters.title')}
-        {visibleCount !== null && (
-          <span className="ml-2 font-hud-mono text-hud-muted" data-testid="visible-count">
-            {formatNumber(visibleCount, i18n.language)}
-          </span>
-        )}
+        {t('filters.reset')}
       </HudButton>
-
-      {open && (
-        <HudPanel
-          id="filters-panel"
-          aria-label={t('filters.title')}
-          data-testid="filters-panel"
-          className="mt-1 max-h-[60vh] overflow-x-hidden overflow-y-auto"
-        >
-          <fieldset>
-            <legend className="font-hud text-xs text-hud-muted">
-              {t('filters.spectralClass')}
-            </legend>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {SPECTRAL_LABELS.map((letter, code) => (
-                <HudCheckbox
-                  key={letter}
-                  label={letter}
-                  checked={filters.spectralClasses[code] === true}
-                  data-testid={`filter-class-${letter}`}
-                  onChange={() => toggleClass(code)}
-                />
-              ))}
-              <HudCheckbox
-                label={t('filters.unknown')}
-                checked={filters.spectralClasses[7] === true}
-                data-testid="filter-class-unknown"
-                onChange={() => toggleClass(7)}
-              />
-            </div>
-          </fieldset>
-
-          <RangeFilter
-            id="distance"
-            label={`${t('filters.distance')} (${t('units.ly')})`}
-            bounds={bounds?.distanceLy ?? null}
-            value={filters.distanceLy}
-            decimals={0}
-            onChange={(range) => setFilters({ distanceLy: range })}
-          />
-          <RangeFilter
-            id="appmag"
-            label={t('filters.appMag')}
-            bounds={bounds?.appMag ?? null}
-            value={filters.appMag}
-            decimals={1}
-            onChange={(range) => setFilters({ appMag: range })}
-          />
-          <RangeFilter
-            id="absmag"
-            label={t('filters.absMag')}
-            bounds={bounds?.absMag ?? null}
-            value={filters.absMag}
-            decimals={1}
-            onChange={(range) => setFilters({ absMag: range })}
-          />
-
-          <div className="mt-3 flex flex-col gap-1">
-            <HudCheckbox
-              label={t('filters.onlyExoplanets')}
-              checked={filters.onlyExoplanets}
-              data-testid="filter-exoplanets"
-              onChange={setToggle('onlyExoplanets')}
-            />
-            <HudCheckbox
-              label={t('filters.onlyMultiple')}
-              checked={filters.onlyMultiple}
-              data-testid="filter-multiple"
-              onChange={setToggle('onlyMultiple')}
-            />
-            <HudCheckbox
-              label={t('filters.onlyVariable')}
-              checked={filters.onlyVariable}
-              data-testid="filter-variable"
-              onChange={setToggle('onlyVariable')}
-            />
-          </div>
-
-          <HudButton
-            variant="secondary"
-            onClick={resetFilters}
-            disabled={isDefaultFilters(filters)}
-            data-testid="filters-reset"
-            className="mt-3 w-full"
-          >
-            {t('filters.reset')}
-          </HudButton>
-        </HudPanel>
-      )}
-    </div>
+    </HudPanel>
   );
 }

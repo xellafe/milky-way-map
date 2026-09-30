@@ -47,6 +47,13 @@
     "showNames": "Mostrar siempre los nombres de las estrellas",
     "showConstellations": "Líneas de las constelaciones"
   },
+  "dock": {
+    "label": "Controles",
+    "filters": "Filtros",
+    "view": "Vista",
+    "options": "Opciones",
+    "music": "Música"
+  },
   "filters": {
     "title": "Filtros",
     "spectralClass": "Tipo espectral",

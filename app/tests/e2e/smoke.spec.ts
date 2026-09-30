@@ -17,7 +17,7 @@ test('renders the scene without errors', async ({ page }) => {
   expect(pageErrors).toEqual([]);
 });
 
-// Regression guard (Task 1.2 fix round 1): .hud-panel was unlayered CSS and its
+// Regression guard: .hud-panel was unlayered CSS and its
 // `position: relative` beat Tailwind's `absolute` utility (utilities live in
 // @layer utilities, and any unlayered rule wins over @layer regardless of source
 // order), pushing every HUD panel off-screen while still existing in the DOM —
@@ -39,11 +39,16 @@ test('HUD panels stay positioned inside the viewport', async ({ page }) => {
     expect(box!.y).toBeLessThan(viewport.height);
   };
 
-  await expectInsideViewport('view-toggles');
-  await expectInsideViewport('music-control');
-  await expectInsideViewport('options-toggle');
-  await expectInsideViewport('language-button');
+  // view-toggles/music-control only exist while their dock
+  // panel is open, so check the dock icons plus one open panel.
   await expectInsideViewport('filters-toggle');
+  await expectInsideViewport('view-toggle');
+  await expectInsideViewport('options-toggle');
+  await expectInsideViewport('music-toggle-panel');
+  await expectInsideViewport('language-button');
+
+  await page.getByTestId('options-toggle').click();
+  await expectInsideViewport('options-panel');
 
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();

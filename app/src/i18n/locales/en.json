@@ -47,6 +47,13 @@
     "showNames": "Always show star names",
     "showConstellations": "Constellation lines"
   },
+  "dock": {
+    "label": "Controls",
+    "filters": "Filters",
+    "view": "View",
+    "options": "Options",
+    "music": "Music"
+  },
   "filters": {
     "title": "Filters",
     "spectralClass": "Spectral class",
