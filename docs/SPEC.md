@@ -363,6 +363,8 @@ Ogni milestone: **obiettivo → deliverable → acceptance criteria (verificabil
 
 ## 11. Convenzioni agentiche (contenuto di `AGENTS.md`)
 
+> Dopo M9 le convenzioni operative vivono in `AGENTS.md`, che prevale su questa sezione.
+
 **Fai:**
 - Esegui le milestone in ordine; **auto-verifica gli acceptance criteria** prima di proseguire.
 - Un commit/PR per milestone; messaggi chiari.
