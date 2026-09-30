@@ -86,9 +86,19 @@ test('galaxy overlay has no blocking axe violations', async ({ page }) => {
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
   await expect(page.getByTestId('star-panel')).toBeVisible();
 
-  const results = await new AxeBuilder({ page }).exclude('canvas').analyze();
-  const violations = results.violations.filter((v) => blocking(v.impact));
-  expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  const scan = async () => {
+    const results = await new AxeBuilder({ page }).exclude('canvas').analyze();
+    const violations = results.violations.filter((v) => blocking(v.impact));
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  };
+  await scan();
+
+  // Each dock panel is open on its own (one at a time), so scan them in turn.
+  for (const toggle of ['filters-toggle', 'view-toggle', 'options-toggle', 'music-toggle-panel']) {
+    await page.getByTestId(toggle).click();
+    await expect(page.getByTestId(toggle)).toHaveAttribute('aria-expanded', 'true');
+    await scan();
+  }
 });
 
 test('system overlay has no blocking axe violations', async ({ page }) => {

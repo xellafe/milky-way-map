@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components --
-   SPEC §4.1: useMusic() and MusicPanel live together in
-   this file: the hook owns the <audio> ref/state (mounted once in
+   useMusic() and MusicPanel live together in this file: the hook owns the <audio> ref/state (mounted once in
    ControlDock, outside any panel) and MusicPanel is its dock panel content.
    Splitting them into separate files for fast-refresh purity would scatter
    one small, tightly-coupled feature across two files for no reader benefit. */
@@ -10,7 +9,7 @@ import { HudSlider } from './hud/HudInputs';
 import { HudPanel } from './hud/HudPanel';
 
 const DEFAULT_VOLUME = 0.4;
-const MUSIC_SELECTOR = '[data-testid="music-toggle-panel"], [data-testid="music-control"]';
+const MUSIC_SELECTOR = '[data-music-zone]';
 
 /**
  * Looping background music: play/pause + volume state, and the
@@ -97,6 +96,7 @@ export function MusicPanel({
       id="dock-panel-music"
       aria-label={t('dock.music')}
       data-testid="music-control"
+      data-music-zone
       className="flex items-center gap-2"
     >
       <button

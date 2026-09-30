@@ -7,11 +7,13 @@ export interface DockItem {
   icon: ReactNode;
   testId: string;
   badge?: ReactNode;
+  /** Marks the icon as part of the music zone (see MUSIC_SELECTOR). */
+  musicZone?: boolean;
   content: ReactNode;
 }
 
 /**
- * Bottom control dock (SPEC §4.1): one row of icon buttons, at most one
+ * Bottom control dock (#3): one row of icon buttons, at most one
  * panel open at a time (state lives in the store, shared with view changes
  * that must close it — see enterSystemView/exitSystemView).
  *
@@ -43,9 +45,9 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
   return (
     <>
       {activeItem && (
-        // Above the dock, centered, capped so it never reaches the top bar.
+        // Above the dock, centered; each panel caps its own height (max-h).
         <div className="absolute inset-x-0 bottom-20 z-20 flex justify-center px-4">
-          <div className="max-h-[60vh] w-full max-w-md overflow-visible">{activeItem.content}</div>
+          <div className="w-full max-w-md">{activeItem.content}</div>
         </div>
       )}
       <nav
@@ -62,12 +64,21 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
             aria-label={item.label}
             aria-expanded={dockPanel === item.id}
             aria-controls={`dock-panel-${item.id}`}
+            aria-describedby={item.badge ? `dock-badge-${item.id}` : undefined}
             data-testid={item.testId}
+            data-music-zone={item.musicZone ? '' : undefined}
             onClick={() => toggleDockPanel(item.id)}
             className="relative flex h-9 w-9 items-center justify-center rounded border border-hud-accent/30 bg-white/5 text-hud-text hover:bg-white/10"
           >
             {item.icon}
-            {item.badge && <span className="absolute -top-1.5 -right-1.5">{item.badge}</span>}
+            {item.badge && (
+              <span
+                id={`dock-badge-${item.id}`}
+                className="absolute bottom-full left-1/2 mb-0.5 -translate-x-1/2"
+              >
+                {item.badge}
+              </span>
+            )}
           </button>
         ))}
       </nav>

@@ -41,6 +41,17 @@ test('dock: one panel open at a time, Esc closes and restores focus', async ({ p
   await expect(optionsToggle).toBeFocused();
 });
 
+test('dock: visible-count badge does not cover the Filters icon', async ({ page }) => {
+  await openApp(page);
+  const badge = page.getByTestId('visible-count');
+  await expect(badge).toBeVisible();
+  const b = (await badge.boundingBox())!;
+  const i = (await page.getByTestId('filters-toggle').locator('svg').boundingBox())!;
+  const overlap =
+    b.x < i.x + i.width && b.x + b.width > i.x && b.y < i.y + i.height && b.y + b.height > i.y;
+  expect(overlap).toBe(false);
+});
+
 test('dock: music keeps playing across panel close and System View entry', async ({ page }) => {
   await openApp(page);
 

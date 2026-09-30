@@ -63,11 +63,11 @@ function MusicIcon() {
 }
 
 /**
- * Bottom control dock (SPEC §4.1/§4.2): gathers Filters/View/Options/Music
+ * Bottom control dock (#3): gathers Filters/View/Options/Music
  * into one icon row, one panel open at a time. Mounted in App OUTSIDE the
  * galaxy/system view switch so the audio element and its playback state
  * survive view changes; the dock shows Filters/View/Options/Music in the
- * galaxy view and only Options/Music in the System View (SPEC §4.1).
+ * galaxy view and only Options/Music in the System View.
  */
 export function ControlDock() {
   const { t, i18n } = useTranslation();
@@ -80,6 +80,7 @@ export function ControlDock() {
     label: t('dock.music'),
     icon: <MusicIcon />,
     testId: 'music-toggle-panel',
+    musicZone: true,
     content: (
       <MusicPanel playing={playing} volume={volume} onToggle={toggle} onVolume={setVolume} />
     ),
