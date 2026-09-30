@@ -55,6 +55,11 @@ export interface GalaxyMapState {
   labelsVersion: number;
   /** Currently open dock panel, or null if none open (one at a time). */
   dockPanel: DockPanelId | null;
+  /**
+   * Floating star overlay next to the selection (#3). Reopened by every star
+   * selection, even of the same star; closing keeps the selection itself.
+   */
+  selectionOverlayOpen: boolean;
 
   selectStar: (index: number | null) => void;
   selectHost: (hostname: string) => void;
@@ -80,6 +85,7 @@ export interface GalaxyMapState {
   togglePlanetType: (type: PlanetType) => void;
   toggleDockPanel: (id: DockPanelId) => void;
   closeDockPanel: () => void;
+  closeSelectionOverlay: () => void;
 }
 
 export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
@@ -102,6 +108,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   visibleCount: null,
   labelsVersion: 0,
   dockPanel: null,
+  selectionOverlayOpen: false,
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
   // deselecting releases the lock. Hosts (matched:false, e.g. TRAPPIST-1)
@@ -110,7 +117,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
     set(
       index === null
         ? { selection: null, cameraMode: 'free-fly' }
-        : { selection: { kind: 'star', index }, cameraMode: 'orbit' },
+        : { selection: { kind: 'star', index }, cameraMode: 'orbit', selectionOverlayOpen: true },
     ),
   selectHost: (hostname) => set({ selection: { kind: 'host', hostname }, cameraMode: 'free-fly' }),
   setHoveredStar: (index) => set({ hoveredStarIndex: index }),
@@ -154,4 +161,5 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       dockPanel: s.dockPanel === id ? null : id,
     })),
   closeDockPanel: () => set({ dockPanel: null }),
+  closeSelectionOverlay: () => set({ selectionOverlayOpen: false }),
 }));

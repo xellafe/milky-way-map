@@ -133,4 +133,23 @@ describe('galaxy map store', () => {
     s().exitSystemView();
     expect(s().dockPanel).toBeNull();
   });
+
+  it('overlay reopens on every star selection, even the same star', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().selectStar(7);
+    expect(s().selectionOverlayOpen).toBe(true);
+    s().closeSelectionOverlay();
+    expect(s().selectionOverlayOpen).toBe(false);
+    s().selectStar(7);
+    expect(s().selectionOverlayOpen).toBe(true);
+  });
+
+  it('overlay state survives the System View round trip', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().selectStar(7);
+    s().closeSelectionOverlay();
+    s().enterSystemView('X');
+    s().exitSystemView();
+    expect(s().selectionOverlayOpen).toBe(false);
+  });
 });
