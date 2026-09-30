@@ -104,7 +104,7 @@ export function FiltersPanel() {
       id="dock-panel-filters"
       aria-label={t('filters.title')}
       data-testid="filters-panel"
-      className="max-h-[60vh] w-80 overflow-x-hidden overflow-y-auto"
+      className="max-h-[60vh] w-80 overflow-y-auto"
     >
       <fieldset>
         <legend className="font-hud text-xs text-hud-muted">{t('filters.spectralClass')}</legend>

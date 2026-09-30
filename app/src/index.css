@@ -49,8 +49,9 @@
   }
 
   .hud-panel::after {
-    bottom: -1px;
-    right: -1px;
+    /* 0, not -1px: a negative offset is scrollable overflow in overflow-y-auto panels. */
+    bottom: 0;
+    right: 0;
     border-width: 0 2px 2px 0;
   }
 }

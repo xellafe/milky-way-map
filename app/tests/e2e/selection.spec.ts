@@ -16,6 +16,7 @@ interface FixtureStar {
   distanceLy: number;
   appMag: number;
   spectralClass: number;
+  luminosity: number;
 }
 
 function readFixtureStar(properName: string): FixtureStar {
@@ -40,12 +41,15 @@ function readFixtureStar(properName: string): FixtureStar {
     distanceLy: f32('distanceLy')[index]!,
     appMag: f32('appMag')[index]!,
     spectralClass: u8('spectralClass')[index]!,
+    luminosity: f32('luminosity')[index]!,
   };
 }
 
 const SPECTRAL = 'OBAFGKM';
 const enNumber = (v: number, digits: number) =>
   new Intl.NumberFormat('en-US', { maximumFractionDigits: digits }).format(v);
+const enSignificant = (v: number, digits: number) =>
+  new Intl.NumberFormat('en-US', { maximumSignificantDigits: digits }).format(v);
 
 test('Polaris via search shows correct catalog data', async ({ page }) => {
   const polaris = readFixtureStar('Polaris');
@@ -62,6 +66,71 @@ test('Polaris via search shows correct catalog data', async ({ page }) => {
   await expect(panel).toContainText(`${enNumber(polaris.distanceLy, 1)} ly`);
   await expect(panel).toContainText(enNumber(polaris.appMag, 2));
   await expect(panel).toContainText(SPECTRAL[polaris.spectralClass]!);
+});
+
+test('Polaris panel: four stat tiles with gauges, no planets UI', async ({ page }) => {
+  const polaris = readFixtureStar('Polaris');
+  await serveFixtureData(page);
+  await page.goto('/');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+
+  await page.getByTestId('search-input').fill('polaris');
+  await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
+
+  // Scoped to the panel: a later task renders the same tiles elsewhere.
+  const panel = page.getByTestId('star-panel');
+  const tile = (id: string) => panel.getByTestId(id);
+  await expect(tile('stat-distance')).toBeVisible();
+  await expect(tile('stat-distance')).toContainText(`${enNumber(polaris.distanceLy, 1)} ly`);
+  await expect(tile('stat-teff')).toBeVisible();
+  await expect(tile('stat-teff')).toContainText(/≈\s*[\d,]+\s*K/);
+  await expect(tile('stat-teff')).toContainText(/estimate/i);
+  await expect(tile('stat-luminosity')).toBeVisible();
+  await expect(tile('stat-luminosity')).toContainText(enSignificant(polaris.luminosity, 3));
+  await expect(tile('stat-appmag')).toBeVisible();
+  await expect(tile('stat-appmag')).toContainText(enNumber(polaris.appMag, 2));
+
+  // Each tile exposes its gauge as a meter with a text alternative.
+  for (const id of ['stat-distance', 'stat-teff', 'stat-luminosity', 'stat-appmag']) {
+    const meter = tile(id).getByRole('meter');
+    await expect(meter).toHaveAttribute('aria-valuemin', '0');
+    await expect(meter).toHaveAttribute('aria-valuemax', '1');
+    await expect(meter).toHaveAttribute('aria-valuenow', /^\d/);
+    await expect(meter).toHaveAttribute('aria-valuetext', /\S/);
+  }
+
+  // Regression: the HUD bracket corners must not create horizontal overflow
+  // (a 1 px scrollbar) in scrollable panels.
+  const noHScroll = (testId: string) =>
+    page.getByTestId(testId).evaluate((el) => el.scrollWidth <= el.clientWidth);
+  expect(await noHScroll('star-panel')).toBe(true);
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
+  expect(await noHScroll('filters-panel')).toBe(true);
+
+  // Polaris has no known planets: no badge, no System View button.
+  await expect(panel.getByTestId('planets-badge')).toHaveCount(0);
+  await expect(panel.getByTestId('view-system-button')).toHaveCount(0);
+});
+
+test('catalog-anchored host (Proxima Cen) shows planets badge and System View button', async ({
+  page,
+}) => {
+  await serveFixtureData(page);
+  await page.goto('/');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+
+  const input = page.getByTestId('search-input');
+  await input.click();
+  await input.fill('proxima cen');
+  await page.getByRole('option').filter({ hasText: 'Proxima Cen' }).first().click();
+
+  const panel = page.getByTestId('star-panel');
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId('stat-distance')).toBeVisible();
+  await expect(panel.getByTestId('planets-badge')).toBeVisible();
+  await expect(panel.getByTestId('planets-badge')).toContainText('2');
+  await expect(panel.getByTestId('view-system-button')).toBeVisible();
 });
 
 test('Polaris via click (after fly-to centers it) shows the same panel', async ({ page }) => {
