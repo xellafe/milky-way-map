@@ -25,7 +25,7 @@ stelle (M9), stringhe in 5 lingue, reduced-motion rispettato.
 
 | Parte | Scelta |
 |---|---|
-| Tema | **HUD olografico**: pannelli scuri semitrasparenti, bordo sottile, alone interno, angoli a staffa, numeri monospace |
+| Tema | **HUD olografico**: pannelli scuri semitrasparenti, bordo sottile, alone interno, numeri monospace |
 | Palette | **Blu ghiaccio** `#9ec8ff` (accento), `#d6e8ff` (valori/titoli), `#8aa0c0` (etichette), `#f4f8ff` (testo); **arancio** `#ff9f5f` solo per stime e avvisi |
 | Layout controlli | **Dock di icone in basso al centro** (Filtri, Vista, Opzioni, Musica); ogni icona apre il suo pannello sopra il dock; al massimo uno aperto |
 | Anello di selezione | **Doppio anello B6**: interno ≈ 40 px a tratto-punto con alone, esterno ≈ 54 px a puntini fini; ruotano in versi opposti (interno ~14 s/giro, esterno ~8 s/giro); animazione di **aggancio** alla selezione (arrivano larghi e si stringono in ~1 s) |
@@ -62,7 +62,7 @@ Senza logica di dominio, tipati, piccoli:
 
 | Componente | Responsabilità |
 |---|---|
-| `HudPanel` | contenitore HUD (bordo, alone, angoli a staffa), titolo opzionale |
+| `HudPanel` | contenitore HUD (bordo, alone), titolo opzionale |
 | `HudButton` | pulsante primario/secondario |
 | `HudCheckbox`, `HudSlider`, `HudSelect` | input **nativi** con stile HUD |
 | `Gauge` | barra con marcatore da una posizione 0–1 (o nessun marcatore se `null`); varianti `track` e `spectral`; tacca di riferimento opzionale |

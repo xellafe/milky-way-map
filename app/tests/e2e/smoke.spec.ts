@@ -17,11 +17,10 @@ test('renders the scene without errors', async ({ page }) => {
   expect(pageErrors).toEqual([]);
 });
 
-// Regression guard: .hud-panel was unlayered CSS and its
-// `position: relative` beat Tailwind's `absolute` utility (utilities live in
-// @layer utilities, and any unlayered rule wins over @layer regardless of source
-// order), pushing every HUD panel off-screen while still existing in the DOM —
-// so a mere .toBeVisible()/testid presence check didn't catch it.
+// Regression guard: component CSS must stay layered so Tailwind position
+// utilities win (any unlayered rule beats @layer utilities regardless of source
+// order). A violation pushes HUD panels off-screen while they still exist in the
+// DOM, so a mere .toBeVisible()/testid presence check doesn't catch it.
 test('HUD panels stay positioned inside the viewport', async ({ page }) => {
   await serveFixtureData(page);
   await page.goto('/');

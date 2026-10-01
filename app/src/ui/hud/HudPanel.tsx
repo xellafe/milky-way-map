@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 
-/** HUD-styled panel: dark translucent card with border, inner glow and bracket corners. */
+/** HUD-styled panel: dark translucent card with border and inner glow. */
 export function HudPanel({
   className = '',
   children,

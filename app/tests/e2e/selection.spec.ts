@@ -99,8 +99,8 @@ test('Polaris panel: four stat tiles with gauges, no planets UI', async ({ page 
     await expect(meter).toHaveAttribute('aria-valuetext', /\S/);
   }
 
-  // Regression: the HUD bracket corners must not create horizontal overflow
-  // (a 1 px scrollbar) in scrollable panels.
+  // Regression: HUD panels must not create horizontal overflow (a 1 px
+  // scrollbar) in scrollable panels.
   const noHScroll = (testId: string) =>
     page.getByTestId(testId).evaluate((el) => el.scrollWidth <= el.clientWidth);
   expect(await noHScroll('star-panel')).toBe(true);
