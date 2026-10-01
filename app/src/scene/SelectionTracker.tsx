@@ -13,7 +13,8 @@ const CARD_GAP_PX = 34;
 // SelectionOverlay (224 px). Human choice (#3).
 const FALLBACK_CARD_WIDTH_PX = 224;
 
-// Card top relative to the star: mirrors `top-[-27px]` in SelectionOverlay.
+// Card top relative to the star, px: mirrors `top-[-27px]` in SelectionOverlay.
+// Human choice (#3).
 const CARD_TOP_OFFSET_PX = -27;
 // Clearance between the card and the search box / dock, px. Human choice (#3).
 const CARD_MARGIN_PX = 8;
@@ -51,18 +52,15 @@ export function SelectionTracker() {
 
     // The card must not sit under the detail panel: measure it, don't hard-code.
     const panelWidth =
-      document.querySelector<HTMLElement>('[data-testid=star-panel]')?.offsetWidth ?? 0;
-    const cardWidth =
-      el.querySelector<HTMLElement>('[data-testid=selection-card]')?.offsetWidth ||
-      FALLBACK_CARD_WIDTH_PX;
+      document.querySelector<HTMLElement>('[data-hud=star-panel]')?.offsetWidth ?? 0;
+    const card = el.querySelector<HTMLElement>('[data-hud=selection-card]');
+    const cardWidth = card?.offsetWidth || FALLBACK_CARD_WIDTH_PX;
     // Keep the card between the search box and the dock: shift it vertically
     // (individual `translate` property, so it never fights `transform`).
-    const card = el.querySelector<HTMLElement>('[data-testid=selection-card]');
     if (card) {
-      const top =
-        document.querySelector('[data-testid=search-input]')?.getBoundingClientRect().bottom ?? 0;
+      const top = document.querySelector('[data-hud=search]')?.getBoundingClientRect().bottom ?? 0;
       const bottom =
-        document.querySelector('[data-testid=dock]')?.getBoundingClientRect().top ?? size.height;
+        document.querySelector('[data-hud=dock]')?.getBoundingClientRect().top ?? size.height;
       const cardTop = y + CARD_TOP_OFFSET_PX;
       const maxShift = bottom - CARD_MARGIN_PX - (cardTop + card.offsetHeight);
       const minShift = top + CARD_MARGIN_PX - cardTop;

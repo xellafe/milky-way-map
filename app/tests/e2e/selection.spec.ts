@@ -77,7 +77,7 @@ test('Polaris panel: four stat tiles with gauges, no planets UI', async ({ page 
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
 
-  // Scoped to the panel: a later task renders the same tiles elsewhere.
+  // Scoped to the panel: the selection overlay (#3) renders the same stat tiles.
   const panel = page.getByTestId('star-panel');
   const tile = (id: string) => panel.getByTestId(id);
   await expect(tile('stat-distance')).toBeVisible();

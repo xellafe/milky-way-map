@@ -135,6 +135,7 @@ export function SearchBox() {
         aria-autocomplete="list"
         placeholder={t('ui.searchPlaceholder')}
         data-testid="search-input"
+        data-hud="search"
         className="hud-panel w-full rounded-lg px-3 py-2 font-hud text-sm text-hud-text placeholder-hud-muted outline-none focus:ring-2 focus:ring-hud-accent"
         onChange={(e) => {
           setQuery(e.target.value);

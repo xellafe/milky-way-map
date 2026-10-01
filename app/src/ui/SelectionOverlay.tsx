@@ -24,8 +24,8 @@ function Overlay({ index }: { index: number }) {
     useGalaxyMapStore.getState().closeSelectionOverlay();
     // Only if focus was lost with the overlay or never left the page body.
     const active = document.activeElement;
-    if (!active || active === document.body || active.closest('[data-testid=selection-overlay]')) {
-      document.querySelector<HTMLElement>('[data-testid=panel-close]')?.focus();
+    if (!active || active === document.body || active.closest('[data-hud=selection-overlay]')) {
+      document.querySelector<HTMLElement>('[data-hud=panel-close]')?.focus();
     }
   };
   const close = () => {
@@ -37,6 +37,7 @@ function Overlay({ index }: { index: number }) {
     <div
       ref={setSelectionAnchor}
       data-testid="selection-overlay"
+      data-hud="selection-overlay"
       className="pointer-events-none invisible absolute top-0 left-0 z-10 h-0 w-0"
     >
       <div
@@ -90,6 +91,7 @@ function Overlay({ index }: { index: number }) {
             and drag reach the canvas (orbit lock); only ✕ is interactive. */}
         <section
           data-testid="selection-card"
+          data-hud="selection-card"
           aria-label={t('overlay.label')}
           className="hud-panel selection-card pointer-events-none absolute top-[-27px] w-56 rounded-lg p-2"
         >

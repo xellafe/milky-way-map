@@ -13,7 +13,8 @@ export interface CatalogIds {
 }
 
 const STRIDE = 16;
-const cache = new Map<number, CatalogIds>();
+// In-flight promises are cached too, so concurrent callers share one request.
+const cache = new Map<number, Promise<CatalogIds>>();
 
 export function parseCatalogIdsRecord(bytes: Uint8Array): CatalogIds {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -27,10 +28,7 @@ export function parseCatalogIdsRecord(bytes: Uint8Array): CatalogIds {
   };
 }
 
-export async function fetchCatalogIds(index: number, baseUrl = DATA_BASE_URL): Promise<CatalogIds> {
-  const cached = cache.get(index);
-  if (cached) return cached;
-
+async function fetchRecord(index: number, baseUrl: string): Promise<CatalogIds> {
   const start = index * STRIDE;
   const resp = await fetch(`${baseUrl}catalog-ids.bin`, {
     headers: { Range: `bytes=${start}-${start + STRIDE - 1}` },
@@ -41,9 +39,17 @@ export async function fetchCatalogIds(index: number, baseUrl = DATA_BASE_URL): P
   const buf = new Uint8Array(await resp.arrayBuffer());
   // Servers without Range support return the whole file (status 200).
   const record = resp.status === 206 ? buf : buf.subarray(start, start + STRIDE);
-  const ids = parseCatalogIdsRecord(record);
-  cache.set(index, ids);
-  return ids;
+  return parseCatalogIdsRecord(record);
+}
+
+export function fetchCatalogIds(index: number, baseUrl = DATA_BASE_URL): Promise<CatalogIds> {
+  const cached = cache.get(index);
+  if (cached) return cached;
+  const pending = fetchRecord(index, baseUrl);
+  cache.set(index, pending);
+  // Dropped on failure so a later call can retry.
+  pending.catch(() => cache.delete(index));
+  return pending;
 }
 
 export function _clearCatalogIdsCacheForTests(): void {

@@ -229,6 +229,7 @@ export function StarPanel() {
       role="region"
       aria-label={t('panel.regionLabel')}
       data-testid="star-panel"
+      data-hud="star-panel"
       className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg p-4"
     >
       <button
@@ -236,6 +237,7 @@ export function StarPanel() {
         onClick={() => selectStar(null)}
         aria-label={t('panel.close')}
         data-testid="panel-close"
+        data-hud="panel-close"
         className="absolute top-2 right-2 rounded px-2 py-0.5 text-hud-muted hover:bg-white/10 hover:text-hud-bright"
       >
         ✕
