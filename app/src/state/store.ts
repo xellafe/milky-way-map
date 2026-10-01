@@ -60,6 +60,9 @@ export interface GalaxyMapState {
    * selection, even of the same star; closing keeps the selection itself.
    */
   selectionOverlayOpen: boolean;
+  /** Bumped by every star selection: remounts the overlay, so a re-click during
+   * its closing flicker reopens it. */
+  selectionEpoch: number;
 
   selectStar: (index: number | null) => void;
   selectHost: (hostname: string) => void;
@@ -109,15 +112,21 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   labelsVersion: 0,
   dockPanel: null,
   selectionOverlayOpen: false,
+  selectionEpoch: 0,
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
   // deselecting releases the lock. Hosts (matched:false, e.g. TRAPPIST-1)
   // have no position in the cloud, so there is nothing to orbit.
   selectStar: (index) =>
-    set(
+    set((s) =>
       index === null
         ? { selection: null, cameraMode: 'free-fly' }
-        : { selection: { kind: 'star', index }, cameraMode: 'orbit', selectionOverlayOpen: true },
+        : {
+            selection: { kind: 'star', index },
+            cameraMode: 'orbit',
+            selectionOverlayOpen: true,
+            selectionEpoch: s.selectionEpoch + 1,
+          },
     ),
   selectHost: (hostname) => set({ selection: { kind: 'host', hostname }, cameraMode: 'free-fly' }),
   setHoveredStar: (index) => set({ hoveredStarIndex: index }),

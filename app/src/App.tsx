@@ -14,6 +14,7 @@ import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
 import { LoadingOverlay } from './ui/LoadingOverlay';
 import { SearchBox } from './ui/SearchBox';
+import { SelectionOverlay } from './ui/SelectionOverlay';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
 import { StarPanel } from './ui/StarPanel';
 import { SystemOverlay } from './ui/SystemOverlay';
@@ -88,6 +89,8 @@ export default function App() {
           <StarLabelsLayer />
           <SearchBox />
           <StarPanel />
+          {/* After the panel: its ✕ is not the first Tab stop after the search box. */}
+          <SelectionOverlay />
           <HoverLabel />
         </>
       ) : (

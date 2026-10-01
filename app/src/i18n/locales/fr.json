@@ -11,6 +11,10 @@
     "searchNoResults": "Aucun résultat",
     "searchUnanchored": "système seul"
   },
+  "overlay": {
+    "close": "Fermer le résumé de l'étoile",
+    "label": "Résumé de l'étoile sélectionnée"
+  },
   "panel": {
     "regionLabel": "Détails de l'étoile",
     "close": "Fermer le panneau",

@@ -8,6 +8,7 @@ import { useGalaxyMapStore } from '../state/store';
 import { CameraControls } from './CameraControls';
 import { ConstellationLines } from './ConstellationLines';
 import { StarCloud } from './StarCloud';
+import { SelectionTracker } from './SelectionTracker';
 import { StarLabels } from './StarLabels';
 import { applyFilterMask, buildStarGeometry } from './starGeometry';
 import { StarPicking } from './StarPicking';
@@ -79,6 +80,9 @@ export function GalaxyScene() {
       {geometry && <ConstellationLines />}
       {geometry && <StarLabels />}
       <CameraControls />
+      {/* After CameraControls: its useFrame runs first, so the projection uses
+          this frame's camera pose. */}
+      {geometry && <SelectionTracker />}
       <EffectComposer>
         <Bloom intensity={1.1} luminanceThreshold={0.05} luminanceSmoothing={0.2} mipmapBlur />
       </EffectComposer>

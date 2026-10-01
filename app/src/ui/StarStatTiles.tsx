@@ -25,7 +25,7 @@ export function StarStatTiles({ index, compact = false }: { index: number; compa
   const fmt = (v: number | null, o: Intl.NumberFormatOptions) => formatNumber(v, lang, o);
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className={compact ? 'flex flex-col gap-1.5' : 'grid grid-cols-2 gap-2'}>
       <StatTile
         testId="stat-distance"
         compact={compact}

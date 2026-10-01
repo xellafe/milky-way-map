@@ -52,6 +52,7 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
       )}
       <nav
         aria-label={label}
+        data-testid="dock"
         className="hud-panel absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-lg px-2 py-2"
       >
         {items.map((item) => (

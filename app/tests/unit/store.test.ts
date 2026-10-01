@@ -144,6 +144,14 @@ describe('galaxy map store', () => {
     expect(s().selectionOverlayOpen).toBe(true);
   });
 
+  it('selecting the same star twice bumps selectionEpoch', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().selectStar(7);
+    const before = s().selectionEpoch;
+    s().selectStar(7);
+    expect(s().selectionEpoch).toBeGreaterThan(before);
+  });
+
   it('overlay state survives the System View round trip', () => {
     const s = () => useGalaxyMapStore.getState();
     s().selectStar(7);

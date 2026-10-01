@@ -11,6 +11,10 @@
     "searchNoResults": "No results",
     "searchUnanchored": "system only"
   },
+  "overlay": {
+    "close": "Close star summary",
+    "label": "Selected star summary"
+  },
   "panel": {
     "regionLabel": "Star details",
     "close": "Close panel",

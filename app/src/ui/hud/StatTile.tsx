@@ -35,13 +35,15 @@ export function StatTile({
       data-testid={testId}
       className={`rounded border border-hud-accent/25 bg-hud-accent/5 ${compact ? 'p-1.5' : 'p-2'}`}
     >
-      <div className="flex items-center justify-between gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-x-1">
         <span id={labelId} className="text-xs text-hud-muted">
           {label}
         </span>
         {estimate && value !== null && <Badge tone="warn">{t('panel.estimate')}</Badge>}
       </div>
-      <div className={`font-hud-mono text-hud-bright ${compact ? 'text-sm' : 'text-base'}`}>
+      <div
+        className={`font-hud-mono whitespace-nowrap text-hud-bright ${compact ? 'text-sm' : 'text-base'}`}
+      >
         {text}
       </div>
       <Gauge

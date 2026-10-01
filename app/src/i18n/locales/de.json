@@ -11,6 +11,10 @@
     "searchNoResults": "Keine Ergebnisse",
     "searchUnanchored": "nur System"
   },
+  "overlay": {
+    "close": "Sternübersicht schließen",
+    "label": "Übersicht des ausgewählten Sterns"
+  },
   "panel": {
     "regionLabel": "Sterndetails",
     "close": "Panel schließen",

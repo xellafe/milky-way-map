@@ -11,6 +11,10 @@
     "searchNoResults": "Sin resultados",
     "searchUnanchored": "solo sistema"
   },
+  "overlay": {
+    "close": "Cerrar resumen de la estrella",
+    "label": "Resumen de la estrella seleccionada"
+  },
   "panel": {
     "regionLabel": "Detalles de la estrella",
     "close": "Cerrar panel",

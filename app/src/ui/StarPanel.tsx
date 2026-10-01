@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchCatalogIds, type CatalogIds } from '../data/catalogIds';
 import { getHost, isExoplanetsReady, loadExoplanets } from '../data/exoplanets';
-import { entryLabel, getNamesEntry } from '../data/namesIndex';
+import { getNamesEntry } from '../data/namesIndex';
 import { getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import {
@@ -18,6 +17,7 @@ import { Badge } from './hud/Badge';
 import { HudButton } from './hud/HudButton';
 import { StarStatTiles } from './StarStatTiles';
 import { useStarHost } from './useStarHost';
+import { useStarTitle } from './useStarTitle';
 
 function Row({
   label,
@@ -51,10 +51,6 @@ function Row({
 function StarDetails({ index }: { index: number }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
-  // Keyed by star index: a stale result for a previously selected star is
-  // ignored at render (no sync setState in effects).
-  const [idsResult, setIdsResult] = useState<{ index: number; ids: CatalogIds } | null>(null);
-
   const core = getStarCore();
   const flags = core?.flags[index] ?? 0;
   const hasExo = hasFlag(flags, FLAG_HAS_EXOPLANETS);
@@ -62,25 +58,7 @@ function StarDetails({ index }: { index: number }) {
   const entry = getNamesEntry(index);
   const { hostname, host } = useStarHost(index);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchCatalogIds(index)
-      .then((ids) => {
-        if (!cancelled) setIdsResult({ index, ids });
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [index]);
-
-  const catalogIds = idsResult?.index === index ? idsResult.ids : null;
-
-  const title =
-    (entry && entryLabel(entry)) ||
-    (catalogIds?.tyc && `TYC ${catalogIds.tyc}`) ||
-    (catalogIds?.gaia && `Gaia DR3 ${catalogIds.gaia}`) ||
-    `#${index}`;
+  const { title, catalogIds } = useStarTitle(index);
 
   const ids: string[] = [];
   if (entry?.hd) ids.push(`HD ${entry.hd}`);

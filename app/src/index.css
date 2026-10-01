@@ -54,6 +54,63 @@
     right: 0;
     border-width: 0 2px 2px 0;
   }
+
+  /* Selection overlay card (#3): right of the star; SelectionTracker flips
+   * data-side to "left" when it would run under the detail panel. 34px = ring
+   * radius + margin (human choice), keep in sync with CARD_GAP_PX. */
+  .selection-card {
+    left: 34px;
+  }
+
+  [data-side='left'] .selection-card {
+    left: auto;
+    right: 34px;
+  }
+
+  /* B6 ring + overlay close animations (#3; durations are human choices). */
+  @keyframes hud-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes hud-spin-reverse {
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+
+  @keyframes hud-lock {
+    from {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes hud-flicker {
+    0% {
+      opacity: 1;
+    }
+    20% {
+      opacity: 0.2;
+    }
+    40% {
+      opacity: 0.9;
+    }
+    60% {
+      opacity: 0.1;
+    }
+    80% {
+      opacity: 0.6;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
 }
 
 /* View transition (SPEC §6.3): black overlay fading out on view change. */

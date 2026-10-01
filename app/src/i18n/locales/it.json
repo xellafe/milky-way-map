@@ -11,6 +11,10 @@
     "searchNoResults": "Nessun risultato",
     "searchUnanchored": "solo sistema"
   },
+  "overlay": {
+    "close": "Chiudi riepilogo stella",
+    "label": "Riepilogo della stella selezionata"
+  },
   "panel": {
     "regionLabel": "Dettagli stella",
     "close": "Chiudi pannello",
