@@ -57,8 +57,7 @@
     "label": "Controles",
     "filters": "Filtros",
     "view": "Vista",
-    "options": "Opciones",
-    "music": "Música"
+    "options": "Opciones"
   },
   "filters": {
     "title": "Filtros",
@@ -115,6 +114,7 @@
     "orbitStyle": "Estilo de órbitas"
   },
   "music": {
+    "label": "Música",
     "play": "Reproducir música",
     "pause": "Pausar música",
     "volume": "Volumen de la música"

@@ -38,12 +38,12 @@ test('HUD panels stay positioned inside the viewport', async ({ page }) => {
     expect(box!.y).toBeLessThan(viewport.height);
   };
 
-  // view-toggles/music-control only exist while their dock
-  // panel is open, so check the dock icons plus one open panel.
+  // view-toggles only exist while their dock panel is open, so check
+  // the dock icons, the always-visible music controls plus one open panel.
   await expectInsideViewport('filters-toggle');
   await expectInsideViewport('view-toggle');
   await expectInsideViewport('options-toggle');
-  await expectInsideViewport('music-toggle-panel');
+  await expectInsideViewport('music-control');
   await expectInsideViewport('language-button');
 
   await page.getByTestId('options-toggle').click();

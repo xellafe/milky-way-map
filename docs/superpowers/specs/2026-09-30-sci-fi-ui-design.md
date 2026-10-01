@@ -27,7 +27,7 @@ stelle (M9), stringhe in 5 lingue, reduced-motion rispettato.
 |---|---|
 | Tema | **HUD olografico**: pannelli scuri semitrasparenti, bordo sottile, alone interno, numeri monospace |
 | Palette | **Blu ghiaccio** `#9ec8ff` (accento), `#d6e8ff` (valori/titoli), `#8aa0c0` (etichette), `#f4f8ff` (testo); **arancio** `#ff9f5f` solo per stime e avvisi |
-| Layout controlli | **Dock di icone in basso al centro** (Filtri, Vista, Opzioni, Musica); ogni icona apre il suo pannello sopra il dock; al massimo uno aperto |
+| Layout controlli | **Dock di icone in basso al centro** (Filtri, Vista, Opzioni); ogni icona apre il suo pannello sopra il dock; al massimo uno aperto. *Modifica approvata dall'umano dopo l'implementazione:* la musica sta nel gruppo in alto a destra, a sinistra del selettore lingua |
 | Anello di selezione | **Doppio anello B6**: interno ≈ 40 px a tratto-punto con alone, esterno ≈ 54 px a puntini fini; ruotano in versi opposti (interno ~14 s/giro, esterno ~8 s/giro); animazione di **aggancio** alla selezione (arrivano larghi e si stringono in ~1 s) |
 | Finestrella overlay | **I 4 valori in verticale** (distanza, temperatura, luminosità, magnitudine apparente), ognuno con la sua mini-scala; badge "N pianeti" solo se presenti. **Sempre visibile** (anche col pannello dettaglio aperto). Chiusura con una **x** in alto a destra e **effetto sfarfallio**; si riapre **cliccando di nuovo la stella** |
 | Dettaglio stella | **4 riquadri con indicatori grafici** (stessi 4 valori), poi elenco (magnitudine assoluta, B–V, età), poi "Altri dati e ID catalogo" richiudibile. Badge pianeti e pulsante "Vedi sistema" **solo** se la stella ha pianeti noti |
@@ -89,7 +89,8 @@ Mappa un valore sulla posizione 0–1 della sua scala; `null` → `null`
 |---|---|
 | `StarPanel` | riscritto con `StatTile` ×4, elenco, "Altri dati" richiudibile, badge/pulsante pianeti condizionali |
 | `SelectionOverlay` (nuovo) | anello B6 + finestrella; proiezione via `SelectionTracker` dentro il `Canvas` |
-| `FiltersPanel`, `ViewTogglesPanel`, `OptionsPanel`, `MusicControl` | diventano contenuti dei pannelli del dock |
+| `FiltersPanel`, `ViewTogglesPanel`, `OptionsPanel` | diventano contenuti dei pannelli del dock |
+| `MusicControl` | fuori dal dock: sempre visibile in alto a destra, a sinistra del selettore lingua (modifica approvata dall'umano) |
 | `SystemOverlay`, `SearchBox`, `LanguageSelector`, `HoverLabel`, `LoadingOverlay` | restyling HUD |
 
 ## 4. Flusso dei dati
@@ -97,9 +98,9 @@ Mappa un valore sulla posizione 0–1 della sua scala; `null` → `null`
 ### 4.1 Dock
 
 - Stato locale "pannello aperto" (uno solo); clic sull'icona apre/chiude, Esc chiude.
-- `<audio>` della musica **sempre montato** fuori dal pannello: la riproduzione
-  prosegue a pannello chiuso; il pannello Musica contiene solo play/pausa e volume.
-- System View: il dock mostra Musica e Opzioni; la barra della scala temporale
+- `<audio>` della musica **sempre montato**; play/pausa e volume sono sempre
+  visibili in alto a destra (nessun pannello Musica nel dock).
+- System View: il dock mostra solo Opzioni; la barra della scala temporale
   si posiziona sopra il dock.
 
 ### 4.2 Overlay di selezione
@@ -147,7 +148,7 @@ Dato `null` → "n/d" e scala vuota. Temperatura stimata → badge arancio "stim
 - **Vitest:** `gaugeScale` (estremi, clamp, `null`, log); store
   `selectionOverlayOpen` (apertura a ogni selezione, chiusura); stato del dock.
 - **E2e per fase:** F1 suite esistente verde (i `data-testid` restano); F2 dock
-  apre/chiude, Esc, musica continua a pannello chiuso; F3 riquadri con i valori
+  apre/chiude, Esc, controlli musica sempre visibili in alto a destra; F3 riquadri con i valori
   della fixture, nessun badge pianeti per stella senza pianeti; F4 overlay segue
   la stella, x chiude, clic riapre.
 - `axe` su Galaxy e System View a ogni fase.

@@ -13,6 +13,7 @@ import { ControlDock } from './ui/ControlDock';
 import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
 import { LoadingOverlay } from './ui/LoadingOverlay';
+import { MusicControl } from './ui/MusicControl';
 import { SearchBox } from './ui/SearchBox';
 import { SelectionOverlay } from './ui/SelectionOverlay';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
@@ -100,7 +101,11 @@ export default function App() {
         </>
       )}
       <ControlDock />
-      <LanguageSelector />
+      {/* Outside the view switch: the <audio> and playback survive view changes. */}
+      <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+        <MusicControl />
+        <LanguageSelector />
+      </div>
       {/* SPEC §6.3: animated transition into/out of the System View — a CSS
           fade keyed by view (motion-safe only: reduced motion = hard cut). */}
       <div

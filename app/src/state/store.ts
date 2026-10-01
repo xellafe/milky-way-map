@@ -6,7 +6,7 @@ import type { PlanetType } from '../lib/planetType';
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
 export type DataStatus = 'idle' | 'loading' | 'ready' | 'error';
-export type DockPanelId = 'filters' | 'view' | 'options' | 'music';
+export type DockPanelId = 'filters' | 'view' | 'options';
 
 /**
  * Current selection: a star of the cloud (by SoA index) or an exoplanet host

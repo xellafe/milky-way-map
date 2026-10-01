@@ -118,9 +118,9 @@ describe('galaxy map store', () => {
     expect(s().dockPanel).toBeNull();
     s().toggleDockPanel('filters');
     expect(s().dockPanel).toBe('filters');
-    s().toggleDockPanel('music');
-    expect(s().dockPanel).toBe('music');
-    s().toggleDockPanel('music');
+    s().toggleDockPanel('view');
+    expect(s().dockPanel).toBe('view');
+    s().toggleDockPanel('view');
     expect(s().dockPanel).toBeNull();
   });
 

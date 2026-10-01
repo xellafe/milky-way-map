@@ -100,7 +100,6 @@ const dockPanels = [
   ['filters', 'filters-toggle'],
   ['view', 'view-toggle'],
   ['options', 'options-toggle'],
-  ['music', 'music-toggle-panel'],
 ] as const;
 
 for (const [id, toggle] of dockPanels) {
@@ -111,6 +110,12 @@ for (const [id, toggle] of dockPanels) {
     await scan(page, `#dock-panel-${id}`);
   });
 }
+
+test('music controls have no blocking axe violations', async ({ page }) => {
+  await openApp(page);
+  await expect(page.getByTestId('music-control')).toBeVisible();
+  await scan(page, '[data-testid="music-control"]');
+});
 
 test('system overlay has no blocking axe violations', async ({ page }) => {
   await openApp(page);

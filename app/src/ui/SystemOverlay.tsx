@@ -180,7 +180,7 @@ export function SystemOverlay() {
       </aside>
 
       {/*
-       * Sits above the dock (#3: the dock shows Music/Options in the
+       * Sits above the dock (#3: the dock shows only Options in the
        * System View). The dock icon row is at bottom-4; bottom-20 clears it.
        * An open dock panel renders in that same band (Dock.tsx) and its
        * height varies (Options is tall), so the bar is hidden while a panel

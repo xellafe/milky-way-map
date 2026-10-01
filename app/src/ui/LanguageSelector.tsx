@@ -107,7 +107,7 @@ export function LanguageSelector() {
   }
 
   return (
-    <div ref={containerRef} className="absolute top-4 right-4 z-40">
+    <div ref={containerRef} className="relative">
       <HudButton
         ref={buttonRef}
         variant="secondary"

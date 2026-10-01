@@ -1,10 +1,6 @@
-/* eslint-disable react-refresh/only-export-components --
-   useMusic() and MusicPanel live together in this file: the hook owns the <audio> ref/state (mounted once in
-   ControlDock, outside any panel) and MusicPanel is its dock panel content.
-   Splitting them into separate files for fast-refresh purity would scatter
-   one small, tightly-coupled feature across two files for no reader benefit. */
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import musicUrl from '../assets/background-music.mp3';
 import { HudSlider } from './hud/HudInputs';
 import { HudPanel } from './hud/HudPanel';
 
@@ -15,22 +11,11 @@ const MUSIC_SELECTOR = '[data-music-zone]';
  * Looping background music: play/pause + volume state, and the
  * autoplay-on-first-gesture fallback (browsers block autoplay with sound
  * until a user gesture — we try to start on mount and otherwise on the first
- * pointer/key event). `audioRef` is attached to the `<audio>` element, which
- * ControlDock mounts outside any panel so playback survives panel open/close
- * and view changes. Gestures on the music
- * icon or its panel (MUSIC_SELECTOR) do not trigger the fallback, otherwise a
- * deliberate first click there could race an unwanted autoplay; gestures on
- * any other dock icon still start the music.
+ * pointer/key event). Gestures inside the music controls (MUSIC_SELECTOR) do
+ * not trigger the fallback, otherwise a deliberate first click there could
+ * race an unwanted autoplay; gestures anywhere else still start the music.
  */
-export function useMusic(): {
-  audioRef: RefObject<HTMLAudioElement | null>;
-  playing: boolean;
-  volume: number;
-  toggle: () => void;
-  setVolume: (v: number) => void;
-  onPlay: () => void;
-  onPause: () => void;
-} {
+function useMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolumeState] = useState(DEFAULT_VOLUME);
@@ -78,32 +63,36 @@ export function useMusic(): {
   };
 }
 
-/** Music dock panel content: play/pause + volume. */
-export function MusicPanel({
-  playing,
-  volume,
-  onToggle,
-  onVolume,
-}: {
-  playing: boolean;
-  volume: number;
-  onToggle: () => void;
-  onVolume: (v: number) => void;
-}) {
+/**
+ * Always-visible music controls (top-right, next to the language selector).
+ * Mounted in App outside the galaxy/system view switch so the <audio> element
+ * and its playback state survive view changes.
+ */
+export function MusicControl() {
   const { t } = useTranslation();
+  const { audioRef, playing, volume, toggle, setVolume, onPlay, onPause } = useMusic();
   return (
     <HudPanel
-      id="dock-panel-music"
-      aria-label={t('dock.music')}
+      aria-label={t('music.label')}
       data-testid="music-control"
       data-music-zone
+      padding="px-2 py-1"
       className="flex items-center gap-2"
     >
+      <audio
+        ref={audioRef}
+        src={musicUrl}
+        loop
+        preload="none"
+        data-testid="music-audio"
+        onPlay={onPlay}
+        onPause={onPause}
+      />
       <button
         type="button"
         data-testid="music-toggle"
         aria-label={playing ? t('music.pause') : t('music.play')}
-        onClick={onToggle}
+        onClick={toggle}
         className="rounded border border-hud-accent/30 bg-white/5 px-1.5 py-0.5 font-hud text-sm text-hud-text hover:bg-white/10"
       >
         <span aria-hidden>{playing ? '❚❚' : '▶'}</span>
@@ -116,7 +105,7 @@ export function MusicPanel({
         aria-label={t('music.volume')}
         data-testid="music-volume"
         className="w-32"
-        onChange={(event) => onVolume(Number(event.target.value))}
+        onChange={(event) => setVolume(Number(event.target.value))}
       />
     </HudPanel>
   );

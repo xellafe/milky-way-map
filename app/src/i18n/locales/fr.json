@@ -57,8 +57,7 @@
     "label": "Commandes",
     "filters": "Filtres",
     "view": "Vue",
-    "options": "Options",
-    "music": "Musique"
+    "options": "Options"
   },
   "filters": {
     "title": "Filtres",
@@ -115,6 +114,7 @@
     "orbitStyle": "Style des orbites"
   },
   "music": {
+    "label": "Musique",
     "play": "Lire la musique",
     "pause": "Mettre la musique en pause",
     "volume": "Volume de la musique"

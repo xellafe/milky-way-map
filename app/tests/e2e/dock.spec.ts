@@ -1,10 +1,10 @@
 /**
- * Bottom control dock gathers Filters/View/Options/Music
+ * Bottom control dock gathers Filters/View/Options
  * into one icon row, one panel open at a time. Esc closes the open panel and
- * returns focus to its icon. Music keeps playing across panel open/close and
- * View changes (the <audio> element is mounted outside any panel); the
- * autoplay-on-first-gesture fallback must not fight an explicit first click
- * on the music icon.
+ * returns focus to its icon. Music controls live top-right next to the
+ * language selector, outside the dock and outside the view switch; they keep
+ * playing across View changes and a first gesture on them must not trigger
+ * the autoplay-on-first-gesture fallback.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { serveFixtureData } from './fixtures';
@@ -52,41 +52,42 @@ test('dock: visible-count badge does not cover the Filters icon', async ({ page 
   expect(overlap).toBe(false);
 });
 
-test('dock: music keeps playing across panel close and System View entry', async ({ page }) => {
+test('dock: no music icon, music controls live outside the dock', async ({ page }) => {
+  await openApp(page);
+  await expect(page.getByTestId('music-toggle-panel')).toHaveCount(0);
+  await expect(page.getByTestId('music-control')).toBeVisible();
+});
+
+test('music keeps playing across the switch to System View', async ({ page }) => {
   await openApp(page);
 
   const audio = page.getByTestId('music-audio');
   const paused = () => audio.evaluate((el: HTMLAudioElement) => el.paused);
-  const musicIcon = page.getByTestId('music-toggle-panel');
 
-  await musicIcon.click();
-  await expect(page.getByTestId('music-control')).toBeVisible();
   await page.getByTestId('music-toggle').click();
   await expect.poll(paused).toBe(false);
-
-  await musicIcon.click();
-  await expect(page.getByTestId('music-control')).toHaveCount(0);
-  expect(await paused()).toBe(false);
 
   await page.getByTestId('search-input').fill('trappist');
   await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
   await page.getByTestId('view-system-button').click();
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
+  await expect(page.getByTestId('music-control')).toBeVisible();
   expect(await paused()).toBe(false);
 });
 
-test('dock: first gesture on the music icon does not race the autoplay fallback', async ({
+test('first gesture on the music controls does not race the autoplay fallback', async ({
   page,
 }) => {
   await openApp(page);
   const audio = page.getByTestId('music-audio');
   const paused = () => audio.evaluate((el: HTMLAudioElement) => el.paused);
 
-  await page.getByTestId('music-toggle-panel').click();
+  // Slider: a gesture inside the music zone that does not itself toggle playback.
+  await page.getByTestId('music-volume').click();
   expect(await paused()).toBe(true);
 });
 
-test('dock: first gesture on another dock icon still starts the music', async ({ page }) => {
+test('dock: first gesture on a dock icon still starts the music', async ({ page }) => {
   await openApp(page);
   const audio = page.getByTestId('music-audio');
   const paused = () => audio.evaluate((el: HTMLAudioElement) => el.paused);
@@ -94,3 +95,46 @@ test('dock: first gesture on another dock icon still starts the music', async ({
   await page.getByTestId('filters-toggle').click();
   await expect.poll(paused).toBe(false);
 });
+
+const layoutTargets = ['galaxy', 'system'] as const;
+for (const view of layoutTargets) {
+  test(`music controls sit left of the language button (${view})`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await openApp(page);
+    await page.getByTestId('search-input').fill(view === 'galaxy' ? 'polaris' : 'trappist');
+    await page
+      .getByRole('option')
+      .filter({ hasText: view === 'galaxy' ? 'Polaris' : 'TRAPPIST-1' })
+      .first()
+      .click();
+    if (view === 'system') {
+      await page.getByTestId('view-system-button').click();
+      await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
+    } else {
+      await expect(page.getByTestId('star-panel')).toBeVisible();
+    }
+
+    const musicBox = await page.getByTestId('music-control').boundingBox();
+    const langBox = await page.getByTestId('language-button').boundingBox();
+    expect(musicBox).not.toBeNull();
+    expect(langBox).not.toBeNull();
+    const music = musicBox!;
+    const lang = langBox!;
+    expect(music.x + music.width).toBeLessThanOrEqual(lang.x);
+    expect(lang.x - (music.x + music.width)).toBeLessThanOrEqual(16);
+    expect(Math.abs(music.y + music.height / 2 - (lang.y + lang.height / 2))).toBeLessThanOrEqual(
+      4,
+    );
+    expect(music.x).toBeGreaterThanOrEqual(0);
+    expect(music.y).toBeGreaterThanOrEqual(0);
+    expect(music.x + music.width).toBeLessThanOrEqual(1280);
+    expect(music.y + music.height).toBeLessThanOrEqual(720);
+
+    const panelBox =
+      view === 'galaxy'
+        ? await page.getByTestId('star-panel').boundingBox()
+        : await page.getByRole('complementary', { name: 'Planets' }).boundingBox();
+    expect(panelBox).not.toBeNull();
+    expect(music.y + music.height).toBeLessThanOrEqual(panelBox!.y);
+  });
+}

@@ -57,8 +57,7 @@
     "label": "Bedienelemente",
     "filters": "Filter",
     "view": "Ansicht",
-    "options": "Optionen",
-    "music": "Musik"
+    "options": "Optionen"
   },
   "filters": {
     "title": "Filter",
@@ -115,6 +114,7 @@
     "orbitStyle": "Orbit-Stil"
   },
   "music": {
+    "label": "Musik",
     "play": "Musik abspielen",
     "pause": "Musik pausieren",
     "volume": "Musiklautstärke"

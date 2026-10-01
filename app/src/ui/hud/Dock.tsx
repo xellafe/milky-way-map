@@ -7,8 +7,6 @@ export interface DockItem {
   icon: ReactNode;
   testId: string;
   badge?: ReactNode;
-  /** Marks the icon as part of the music zone (see MUSIC_SELECTOR). */
-  musicZone?: boolean;
   content: ReactNode;
 }
 
@@ -68,7 +66,6 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
             aria-controls={`dock-panel-${item.id}`}
             aria-describedby={item.badge ? `dock-badge-${item.id}` : undefined}
             data-testid={item.testId}
-            data-music-zone={item.musicZone ? '' : undefined}
             onClick={() => toggleDockPanel(item.id)}
             className="relative flex h-9 w-9 items-center justify-center rounded border border-hud-accent/30 bg-white/5 text-hud-text hover:bg-white/10"
           >

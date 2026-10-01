@@ -1,10 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import musicUrl from '../assets/background-music.mp3';
 import { formatNumber } from '../lib/format';
 import { useGalaxyMapStore } from '../state/store';
 import { FiltersPanel } from './FiltersPanel';
 import { Dock, type DockItem } from './hud/Dock';
-import { MusicPanel, useMusic } from './MusicControl';
 import { OptionsPanel } from './OptionsPanel';
 import { ViewTogglesPanel } from './ViewTogglesPanel';
 
@@ -49,42 +47,16 @@ function OptionsIcon() {
   );
 }
 
-function MusicIcon() {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor">
-      <path
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-      />
-    </svg>
-  );
-}
-
 /**
- * Bottom control dock (#3): gathers Filters/View/Options/Music
- * into one icon row, one panel open at a time. Mounted in App OUTSIDE the
- * galaxy/system view switch so the audio element and its playback state
- * survive view changes; the dock shows Filters/View/Options/Music in the
- * galaxy view and only Options/Music in the System View.
+ * Bottom control dock (#3): gathers Filters/View/Options into one icon row,
+ * one panel open at a time. The galaxy view shows all three, the System View
+ * only Options.
  */
 export function ControlDock() {
   const { t, i18n } = useTranslation();
   const view = useGalaxyMapStore((s) => s.view);
   const visibleCount = useGalaxyMapStore((s) => s.visibleCount);
-  const { audioRef, playing, volume, toggle, setVolume, onPlay, onPause } = useMusic();
 
-  const musicItem: DockItem = {
-    id: 'music',
-    label: t('dock.music'),
-    icon: <MusicIcon />,
-    testId: 'music-toggle-panel',
-    musicZone: true,
-    content: (
-      <MusicPanel playing={playing} volume={volume} onToggle={toggle} onVolume={setVolume} />
-    ),
-  };
   const optionsItem: DockItem = {
     id: 'options',
     label: t('dock.options'),
@@ -120,22 +92,8 @@ export function ControlDock() {
             content: <ViewTogglesPanel />,
           },
           optionsItem,
-          musicItem,
         ]
-      : [musicItem, optionsItem];
+      : [optionsItem];
 
-  return (
-    <div>
-      <audio
-        ref={audioRef}
-        src={musicUrl}
-        loop
-        preload="none"
-        data-testid="music-audio"
-        onPlay={onPlay}
-        onPause={onPause}
-      />
-      <Dock items={items} label={t('dock.label')} />
-    </div>
-  );
+  return <Dock items={items} label={t('dock.label')} />;
 }
