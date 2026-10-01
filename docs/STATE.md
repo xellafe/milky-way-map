@@ -8,12 +8,40 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
-## Issue #3 — UI sci-fi (2026-09-30, branch `feat/sci-fi-ui`)
+## Issue #3 — UI sci-fi (2026-09-30, branch `feat/sci-fi-ui`, range `380052d..c1b72d3`)
 
-- **F1 fatta**: token HUD in `index.css` (`@theme` blu ghiaccio, `.hud-panel` con bordo/alone da `--color-hud-accent` via `color-mix`, angoli a staffa), componenti base `ui/hud/` (`HudPanel`, `HudButton`, `HudCheckbox`/`HudSlider`/`HudSelect`, `Badge`), e **restyling HUD di tutti i pannelli esistenti** (`FiltersPanel`, `ViewTogglesPanel`, `OptionsPanel`, `MusicControl`, `StarPanel`, `SystemOverlay`, `SearchBox`, `LanguageSelector`, `HoverLabel`, `LoadingOverlay`) — stesse posizioni e `data-testid`, numeri in `font-hud-mono`, badge "non ancorato" e stime/avvisi in `text-hud-warn`. Nessuna nuova dipendenza, nessuna stringa i18n nuova. Dock (F2), overlay di selezione (F3) e riscrittura `StarPanel` con `StatTile`/`Gauge` (F4) restano da fare.
+Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/superpowers/plans/2026-09-30-sci-fi-ui.md`.
 
-- **Fix round 1** (stesso giorno, dopo revisione controller su preview live 1024×768): (1) **bug critico** — `.hud-panel` in `index.css` non era in un `@layer`: la sua `position: relative` batteva l'utility Tailwind `absolute` (le utility vivono in `@layer utilities`, dichiarato dopo `@layer components`; CSS non "layerizzato" vince comunque su qualunque `@layer`) → tutti i pannelli HUD finivano fuori schermo pur restando nel DOM (gli e2e non lo notavano, controllano solo presenza/testo). Fix: `.hud-panel` e i suoi pseudo-elementi ora dentro `@layer components { … }`; nuovo e2e di regressione in `smoke.spec.ts` (bounding box dentro il viewport per `view-toggles`, `music-control`, `options-toggle`, `language-button`, `filters-toggle`, `star-panel`). (2) Overflow orizzontale sub-pixel in `FiltersPanel` (scrollWidth 304 vs clientWidth 303) → `overflow-x-hidden` sul pannello. (3) Scrollbar native bianche sui pannelli scuri → `scrollbar-color`/`scrollbar-width` nella stessa regola `.hud-panel`. (4) `HudButton` ora accetta `ref` come prop normale (React 19 non richiede `forwardRef`) → `LanguageSelector` usa `HudButton` per il trigger invece di duplicarne lo stile a mano. (5) `SystemOverlay`: il checkbox `time-log-mode` passava `text-xs` in conflitto con `text-sm` di `HudCheckbox` (stessa specificità, risolto dall'ordine nel foglio di stile generato, non dall'ordine nella stringa di classe) → la dimensione del testo ora è sullo `<span>` dell'etichetta, non sul checkbox. **Bug scoperto correggendo il (1)**: col layering di `.hud-panel` fissato, `options-toggle` e `music-control` risultavano davvero sovrapposti (prima il bug (1) li teneva entrambi fuori sequenza, mascherando il problema) — causa doppia: il pulsante play/pausa usava il padding di default di `HudButton` (`px-3 py-1.5`, molto più largo del `px-1.5 py-0.5` originale, non sovrascrivibile in modo deterministico via `className` per lo stesso motivo del punto (5)) **e** `HudSlider` aveva `w-full` di default in conflitto con l'override `w-20` del volume. Fix: `MusicControl` torna a un `<button>` nativo compatto per l'icona play/pausa (stesso motivo di `LanguageSelector` prima del fix (4), ma qui per dimensione non per `ref`); `HudSlider` non ha più `w-full` di default — ogni chiamante specifica la propria larghezza (`OptionsPanel` ora passa `className="w-full"` esplicito). Nessun cambio di posizione dei pannelli (solo dimensioni dei controlli). Verificato via preview (nessuna sovrapposizione, bounding box misurati) + e2e `options.spec.ts` tornato verde. Suite finale: 121 unit + **43 e2e** verdi (43 = 42 + il nuovo test di regressione).
-- **Fix filtri in dev già mergiato** (PR #7, commit `f8defa5`): "filters had no visible effect in dev (StrictMode)" — non collegato a questa issue ma citato qui per completezza dello stato corrente.
+**Consegnato**
+- **F1 tema HUD** (`10a2eed`, `f9376e6`, `3954cde`): token e componenti base `ui/hud/`, restyling di tutti i pannelli; fix del layering `.hud-panel` (CSS fuori da `@layer`) e delle scrollbar.
+- **F2 dock** (`34048d6`, `ec34c01`, `4d898ed`, `57e3237`): barra di controllo in basso con pannelli apribili (filtri, viste, opzioni, musica), stato nello store, Esc per chiudere.
+- **F3 dettaglio stella** (`d3736bc`, `91fbe3e`, `a54dabe`): scale dei gauge in `lib/`, tile con gauge nello `StarPanel`; test axe dei pannelli del dock separati per evitare il timeout.
+- **F4 overlay di selezione** (`36ebc45`, `f3be7a6`, `c1b72d3`): stato dell'overlay, helper di posizionamento, anello b6 e scheda riassuntiva; lookup del codice di produzione disaccoppiati dai test id.
+- **Pulizia finale**: 6 finding della review finale risolti in un'unica tornata (dettagli negli SHA sopra e in `c1b72d3`).
+
+**Esiti AC**
+- e2e **64/64**, unit **135** verdi; axe senza violazioni serious/critical su galaxy, 4 pannelli del dock e System View.
+- FPS ≥ 60 sul dataset completo: **non misurato** (headless ~5 fps, il preview non renderizza frame). Aperto: lo misura l'umano con `?stats=1`.
+
+**Deviazioni dalla spec** (decise in corso d'opera)
+- §4.1: lo stato del dock sta nello store zustand, non in uno state locale.
+- §4.1: in System View la barra della scala dei tempi è nascosta mentre un pannello del dock è aperto.
+- §4.2: la scheda dell'overlay è limitata in verticale anche tra il box di ricerca e il dock.
+- §4.2: l'alone dell'anello è un tratto largo e tenue, non `drop-shadow` (performance).
+- §5: un solo branch invece di una PR per fase; decide l'umano al momento della PR.
+- Della scheda solo la ✕ riceve input del puntatore.
+
+**Trappole**
+- CSS non in `@layer` batte le utility Tailwind (già in AGENTS › Trappole).
+- Preview e headless non misurano gli FPS né eseguono le animazioni in modo affidabile.
+- Il codice di produzione non seleziona per `data-testid`: usare `data-hud`.
+
+**Follow-up aperti** (da valutare come issue)
+- Misura FPS con `?stats=1`.
+- Badge: aria description "N visible stars" (ora solo il numero).
+- Icone del dock: stato aperto e `focus-visible` dedicati.
+- E2E: asserzione del focus dopo la chiusura del pannello.
+- Unit test del dedupe di `fetchCatalogIds`.
 
 ## Modifiche post-M9 (2026-09-28, richieste dall'umano)
 
