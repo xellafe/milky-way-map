@@ -22,22 +22,27 @@ async function enterTrappist(page: Page) {
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
 }
 
-/** A viewport point where the canvas itself (no HUD) receives the pointer. */
-async function bareCanvasPoint(page: Page): Promise<{ x: number; y: number }> {
-  const pt = await page.evaluate(() => {
+/** Viewport points where the canvas itself (no HUD) receives the pointer. */
+async function barePoints(page: Page): Promise<{ x: number; y: number }[]> {
+  const pts = await page.evaluate(() => {
     const canvas = document.querySelector('canvas')!;
     const r = canvas.getBoundingClientRect();
+    const out: { x: number; y: number }[] = [];
     for (const fy of [0.15, 0.3, 0.7, 0.85]) {
       for (const fx of [0.1, 0.25, 0.75, 0.9]) {
         const x = r.x + r.width * fx;
         const y = r.y + r.height * fy;
-        if (document.elementFromPoint(x, y) === canvas) return { x, y };
+        if (document.elementFromPoint(x, y) === canvas) out.push({ x, y });
       }
     }
-    return null;
+    return out;
   });
-  expect(pt).not.toBeNull();
-  return pt!;
+  expect(pts.length).toBeGreaterThan(0);
+  return pts;
+}
+
+async function bareCanvasPoint(page: Page): Promise<{ x: number; y: number }> {
+  return (await barePoints(page))[0]!;
 }
 
 const cursor = (page: Page) => page.locator('canvas').evaluate((el) => getComputedStyle(el).cursor);
@@ -90,7 +95,16 @@ for (const view of ['galaxy', 'system'] as const) {
     await expect.poll(() => cursor(page)).toBe('grabbing');
     await page.mouse.move(hud.x, hud.y);
     await page.mouse.up();
-    await page.mouse.move(x, y);
-    await expect.poll(() => cursor(page)).toBe('grab');
+    // The drag may have moved a star under (x, y): probe several bare points
+    // and require `grab` (never `grabbing`) on the first one without a star.
+    const points = await barePoints(page);
+    let seen = 'pointer';
+    for (const p of points) {
+      await page.mouse.move(p.x, p.y);
+      await page.waitForTimeout(150);
+      seen = await cursor(page);
+      if (seen !== 'pointer') break;
+    }
+    expect(seen).toBe('grab');
   });
 }

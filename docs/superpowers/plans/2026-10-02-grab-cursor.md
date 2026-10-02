@@ -37,3 +37,25 @@ export function canvasCursor(dragging: boolean, overTarget: boolean): CanvasCurs
 - [ ] Gate completo verde.
 
 **Acceptance:** AC1–AC4 della spec.
+
+## Task 2: drag-to-look del free-fly con verso "grab" (scelta umana)
+
+Tirando a destra la camera ruota a sinistra, tirando in basso guarda in alto:
+la scena segue la mano, coerente con il cursore `grab`. Solo il free-fly della
+Galaxy View; orbita su stella agganciata e System View vanno già in questo
+verso e restano invariate.
+
+**Files:**
+- Modify: `app/src/scene/CameraControls.tsx` (`rotateY`/`rotateX` nel drag)
+- Test: `app/tests/e2e/camera.spec.ts`
+
+**Passi:**
+- [ ] Test red: e2e che verifica il verso (drag a destra → direzione di vista
+      verso sinistra; drag in basso → direzione di vista verso l'alto).
+- [ ] Invertire il segno di `rotateY`/`rotateX` nel drag del free-fly.
+- [ ] Gate completo verde.
+
+**Acceptance:**
+- AC5: in free-fly, drag a destra → la camera ruota a sinistra; drag in basso
+  → la camera guarda in alto.
+- AC6: orbita su stella agganciata e System View invariate; gate completo verde.

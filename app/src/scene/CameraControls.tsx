@@ -49,9 +49,10 @@ function lockedTarget(): THREE.Vector3 | null {
 /**
  * Camera controller (SPEC §6.3): free-fly + orbit-on-lock + animated fly-to.
  *
- * - Free-fly: drag-to-look follows the MOUSE DELTA 1:1 (stop the mouse →
- *   rotation stops — regression-tested against three's FlyControls
- *   hold-at-offset model). WASD move, R/F up/down, Q/E roll.
+ * - Free-fly: drag-to-look follows the MOUSE DELTA 1:1 in the grab direction
+ *   (drag right → view turns left, #11). Stop the mouse → rotation stops
+ *   (regression-tested against three's FlyControls hold-at-offset model).
+ *   WASD move, R/F up/down, Q/E roll.
  * - Orbit (entered automatically on star selection, store-side): drag orbits
  *   rigidly around the target, wheel dollies in/out, translation keys release
  *   the lock back to free-fly (selection stays). A fresh lock starts an
@@ -105,8 +106,9 @@ export function CameraControls() {
           dy * ORBIT_SENSITIVITY,
         );
       } else {
-        camera.rotateY(-dx * LOOK_SENSITIVITY);
-        camera.rotateX(-dy * LOOK_SENSITIVITY);
+        // Grab direction (#11): the sky follows the hand, matching the grab cursor.
+        camera.rotateY(dx * LOOK_SENSITIVITY);
+        camera.rotateX(dy * LOOK_SENSITIVITY);
       }
     };
     const onPointerEnd = (e: PointerEvent) => {

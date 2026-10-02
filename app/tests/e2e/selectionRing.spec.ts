@@ -30,14 +30,14 @@ async function openAndSelect(page: Page) {
   await page.waitForTimeout(300);
 }
 
-/** Free-fly drag-look: dragging left moves the star right (~1.7 px per px). */
+/** Free-fly drag follows the grab: dragging right moves the star right (~1.7 px per px). */
 async function pushStarRight(page: Page) {
   await page.keyboard.down('KeyS'); // releases the orbit lock, star stays centered
   await page.waitForTimeout(100);
   await page.keyboard.up('KeyS');
   await page.mouse.move(640, 360);
   await page.mouse.down();
-  await page.mouse.move(440, 360, { steps: 1 });
+  await page.mouse.move(840, 360, { steps: 1 });
   await page.mouse.up();
   await page.waitForTimeout(500);
 }
