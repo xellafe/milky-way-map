@@ -28,7 +28,7 @@
     "absoluteMagnitude": "Absolute magnitude",
     "colorIndex": "Color index (B–V)",
     "luminosity": "Luminosity",
-    "teff": "Effective temperature",
+    "teff": "Temperature",
     "estimate": "estimate",
     "moreData": "More data and catalog IDs",
     "nakedEye": "naked eye",

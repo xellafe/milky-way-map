@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from './Badge';
+import type { Tick } from '../../lib/gaugeScale';
 import { Gauge } from './Gauge';
 
 /** Label + value + gauge. `value === null` shows "n/a" and an empty gauge. */
@@ -11,8 +12,7 @@ export function StatTile({
   estimate = false,
   position,
   variant,
-  tick,
-  tickLabel,
+  ticks,
   compact = false,
   testId,
 }: {
@@ -22,8 +22,7 @@ export function StatTile({
   estimate?: boolean;
   position: number | null;
   variant?: 'track' | 'spectral';
-  tick?: number;
-  tickLabel?: string;
+  ticks?: readonly Tick[];
   compact?: boolean;
   testId?: string;
 }) {
@@ -49,8 +48,7 @@ export function StatTile({
       <Gauge
         position={value === null ? null : position}
         variant={variant}
-        tick={tick}
-        tickLabel={tickLabel}
+        ticks={ticks}
         valueText={text}
         labelledBy={labelId}
       />

@@ -65,7 +65,7 @@ Senza logica di dominio, tipati, piccoli:
 | `HudPanel` | contenitore HUD (bordo, alone), titolo opzionale |
 | `HudButton` | pulsante primario/secondario |
 | `HudCheckbox`, `HudSlider`, `HudSelect` | input **nativi** con stile HUD |
-| `Gauge` | barra con marcatore da una posizione 0–1 (o nessun marcatore se `null`); varianti `track` e `spectral`; tacca di riferimento opzionale |
+| `Gauge` | barra con marcatore da una posizione 0–1 (o nessun marcatore se `null`); varianti `track` e `spectral`; `ticks` opzionali (tacca + etichetta facoltativa; sostituisce `tick`/`tickLabel`; modifica approvata dall'umano) |
 | `StatTile` | etichetta + valore + unità + badge "stima" opzionale + `Gauge` |
 | `Badge` | etichetta compatta |
 | `Dock`, `DockItem` | barra di icone, un pannello aperto per volta, Esc chiude e rimette il focus sull'icona |
@@ -78,10 +78,12 @@ Mappa un valore sulla posizione 0–1 della sua scala; `null` → `null`
 
 | Funzione | Scala |
 |---|---|
-| `distanceScale(ly)` | logaritmica, 1 → 1000 a.l. |
-| `temperatureScale(K)` | banda spettrale M → O/B (≈ 2400 K → 30 000 K, log) |
-| `luminosityScale(Lsun)` | logaritmica, 0,001 → 1000 L☉ (Sole = 0,5) |
-| `magnitudeScale(mag)` | lineare, −1 → 20; tacca "occhio nudo" a 6 |
+| `distanceScale(ly)` | logaritmica, 1 → 1000 a.l.; etichette 1 / 10 / 100 / 1.000 a.l. |
+| `temperatureScale(K)` | banda spettrale M → O/B (≈ 2400 K → 30 000 K, log); etichette M K G F A B centrate nelle bande, tacche ai limiti MK approssimativi 3700 / 5200 / 6000 / 7500 / 10 000 K, O resta a destra (clamp) |
+| `luminosityScale(Lsun)` | logaritmica, 0,001 → 1000 L☉ (Sole = 0,5); etichette 10⁻³ / 1 / 10³ |
+| `magnitudeScale(mag)` | lineare, −1 → 20; etichette 0 e 20, tacca a 10 senza etichetta (scelta umana: l'etichetta collideva con "occhio nudo"); tacca "occhio nudo" a 6 |
+
+Modifica approvata dall'umano: l'etichetta "Temperatura efficace" diventa "Temperatura" nelle 5 lingue (il campo dati in `SPEC.md` resta invariato).
 
 ### 3.4 Componenti di dominio
 

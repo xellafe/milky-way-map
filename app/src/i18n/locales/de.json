@@ -28,7 +28,7 @@
     "absoluteMagnitude": "Absolute Helligkeit",
     "colorIndex": "Farbindex (B–V)",
     "luminosity": "Leuchtkraft",
-    "teff": "Effektivtemperatur",
+    "teff": "Temperatur",
     "estimate": "Schätzung",
     "moreData": "Weitere Daten und Katalog-IDs",
     "nakedEye": "bloßes Auge",

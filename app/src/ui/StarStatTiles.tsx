@@ -2,7 +2,11 @@ import { useTranslation } from 'react-i18next';
 import { getStarDetails } from '../data/starDetailsStore';
 import { formatNumber } from '../lib/format';
 import {
-  NAKED_EYE_TICK,
+  DISTANCE_TICKS,
+  LUMINOSITY_TICKS,
+  MAGNITUDE_TICKS,
+  NAKED_EYE_AT,
+  TEMPERATURE_TICKS,
   distanceScale,
   luminosityScale,
   magnitudeScale,
@@ -33,6 +37,11 @@ export function StarStatTiles({ index, compact = false }: { index: number; compa
         value={fmt(distance, { maximumFractionDigits: 1 })}
         unit={t('units.ly')}
         position={distanceScale(distance)}
+        ticks={DISTANCE_TICKS.map((k) => ({
+          ...k,
+          // 'always' groups 4-digit numbers in it/es, whose locale default skips them.
+          label: formatNumber(k.value, lang, { useGrouping: 'always' }) ?? undefined,
+        }))}
       />
       <StatTile
         testId="stat-teff"
@@ -43,6 +52,7 @@ export function StarStatTiles({ index, compact = false }: { index: number; compa
         estimate
         variant="spectral"
         position={temperatureScale(teff)}
+        ticks={TEMPERATURE_TICKS}
       />
       <StatTile
         testId="stat-luminosity"
@@ -51,6 +61,7 @@ export function StarStatTiles({ index, compact = false }: { index: number; compa
         value={fmt(luminosity, { maximumSignificantDigits: 3 })}
         unit={t('units.lsun')}
         position={luminosityScale(luminosity)}
+        ticks={LUMINOSITY_TICKS}
       />
       <StatTile
         testId="stat-appmag"
@@ -58,8 +69,7 @@ export function StarStatTiles({ index, compact = false }: { index: number; compa
         label={t('panel.apparentMagnitude')}
         value={fmt(appMag, { maximumFractionDigits: 2 })}
         position={magnitudeScale(appMag)}
-        tick={NAKED_EYE_TICK}
-        tickLabel={t('panel.nakedEye')}
+        ticks={[...MAGNITUDE_TICKS, { at: NAKED_EYE_AT, label: t('panel.nakedEye'), mark: true }]}
       />
     </div>
   );
