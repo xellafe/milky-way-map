@@ -8,6 +8,21 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #11 — cursore grab/grabbing (2026-10-02, branch `feat/grab-cursor`)
+
+- Il canvas mostra `grab` a riposo e `grabbing` durante il drag in Galaxy e
+  System View, tramite la regola pura `lib/canvasCursor`.
+- Decisione: `OrbitControls` di drei incapsula three-stdlib (senza
+  `cursorStyle`); in `SystemScene` un `GrabCursor` scrive il cursore a ogni
+  frame, con pointerup/pointercancel sul document. L'hover sui pianeti non
+  scrive più su `document.body` (risolto il `pointer` residuo).
+- AC1–AC4 PASS; gate completo verde (144 unit, 89 e2e), nessun flaky.
+  Dettagli: `aeb7b6b`.
+- Decisione umana: il drag-to-look in free-fly segue il grab (drag a destra
+  gira a sinistra, drag in basso guarda in alto; segni di rotate in
+  `CameraControls` invertiti). Orbit su stella e System View invariati; helper
+  e2e di selectionRing/selectionOpening adeguati. Gate verde (144 unit, 89 e2e).
+
 ## Fix — la UI non fa passare il puntatore alle stelle (2026-10-02, branch `fix/ui-pointer-blocking`)
 
 Bug segnalato dall'umano: l'interazione col puntatore sulla UI raggiungeva le stelle dietro.

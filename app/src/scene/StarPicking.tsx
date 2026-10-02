@@ -6,6 +6,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarCore, getStarGeometry } from '../data/starCoreStore';
+import { canvasCursor } from '../lib/canvasCursor';
 import starPickFrag from '../shaders/star-pick.frag?raw';
 import starPickVert from '../shaders/star-pick.vert?raw';
 import { useSettingsStore } from '../state/settings';
@@ -38,6 +39,8 @@ export function StarPicking() {
     downY: 0,
     down: false,
     click: null as { x: number; y: number } | null,
+    dragging: false, // left button held on the canvas: CameraControls look-drag
+    over: false, // hovering a star
   });
 
   const pickTarget = useMemo(
@@ -78,6 +81,9 @@ export function StarPicking() {
 
   useEffect(() => {
     const el = gl.domElement;
+    const updateCursor = () => {
+      el.style.cursor = canvasCursor(pointer.current.dragging, pointer.current.over);
+    };
     const onMove = (e: PointerEvent) => {
       // While look-dragging (primary button held) hover picking is pointless
       // and would re-render the pick scene every frame — skip it.
@@ -91,8 +97,16 @@ export function StarPicking() {
       pointer.current.downX = e.clientX;
       pointer.current.downY = e.clientY;
       pointer.current.down = true;
+      if (e.button === 0) {
+        pointer.current.dragging = true;
+        updateCursor();
+      }
     };
     const onUp = (e: PointerEvent) => {
+      if (e.button === 0) {
+        pointer.current.dragging = false;
+        updateCursor();
+      }
       // A press that started on a panel and ends here is not a click on a star.
       if (!pointer.current.down) return;
       pointer.current.down = false;
@@ -103,17 +117,26 @@ export function StarPicking() {
         pointer.current.click = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       }
     };
+    const onCancel = () => {
+      pointer.current.down = false;
+      pointer.current.dragging = false;
+      updateCursor();
+    };
     // Leaving the canvas (e.g. onto a HUD panel) gives no more pointermove, so
     // the last hover would stick; drop it and any pending pick.
     const onLeave = () => {
       pointer.current.moved = false;
       pointer.current.down = false;
       setHoveredStar(null);
-      el.style.cursor = '';
+      pointer.current.dragging = false;
+      pointer.current.over = false;
+      updateCursor();
     };
+    updateCursor();
     el.addEventListener('pointermove', onMove);
     el.addEventListener('pointerdown', onDown);
     el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onCancel);
     el.addEventListener('pointerleave', onLeave);
     return () => {
       el.removeEventListener('pointerleave', onLeave);
@@ -122,6 +145,7 @@ export function StarPicking() {
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onCancel);
     };
   }, [gl, setHoveredStar]);
 
@@ -182,7 +206,8 @@ export function StarPicking() {
     if (p.moved) {
       const hovered = readStarAt(p.x, p.y);
       setHoveredStar(hovered);
-      gl.domElement.style.cursor = hovered === null ? '' : 'pointer';
+      p.over = hovered !== null;
+      gl.domElement.style.cursor = canvasCursor(p.dragging, p.over);
       p.moved = false;
     }
   }, -1);

@@ -92,3 +92,43 @@ test('a clean click (no drag) still selects a star after the controls change', a
   await expect(page.getByTestId('star-panel')).toBeVisible();
   await expect(page.getByTestId('panel-title')).toHaveText('Polaris');
 });
+
+/** Rotate v by unit quaternion q = [x, y, z, w]. */
+function rotate(q: CameraPose['quaternion'], v: [number, number, number]) {
+  const [x, y, z, w] = q;
+  const [vx, vy, vz] = v;
+  const tx = 2 * (y * vz - z * vy);
+  const ty = 2 * (z * vx - x * vz);
+  const tz = 2 * (x * vy - y * vx);
+  return [
+    vx + w * tx + (y * tz - z * ty),
+    vy + w * ty + (z * tx - x * tz),
+    vz + w * tz + (x * ty - y * tx),
+  ] as const;
+}
+
+const dot = (a: readonly number[], b: readonly number[]) => a.reduce((s, v, i) => s + v * b[i]!, 0);
+
+test('free-fly drag follows the grab: right drag looks left, down drag looks up', async ({
+  page,
+}) => {
+  await openApp(page);
+
+  const dragFrom = async (dx: number, dy: number) => {
+    const before = await cam(page);
+    await page.mouse.move(640, 360);
+    await page.mouse.down();
+    await page.mouse.move(640 + dx, 360 + dy, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+    return { before, after: await cam(page) };
+  };
+
+  const h = await dragFrom(200, 0);
+  const viewAfterH = rotate(h.after.quaternion, [0, 0, -1]);
+  expect(dot(viewAfterH, rotate(h.before.quaternion, [1, 0, 0]))).toBeLessThan(-0.1);
+
+  const v = await dragFrom(0, 100);
+  const viewAfterV = rotate(v.after.quaternion, [0, 0, -1]);
+  expect(dot(viewAfterV, rotate(v.before.quaternion, [0, 1, 0]))).toBeGreaterThan(0.1);
+});

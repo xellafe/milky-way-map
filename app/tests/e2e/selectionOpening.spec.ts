@@ -109,7 +109,7 @@ test('the card unfolds away from the callout side on both sides', async ({ page 
   await page.keyboard.up('KeyS');
   await page.mouse.move(640, 360);
   await page.mouse.down();
-  await page.mouse.move(440, 360, { steps: 1 });
+  await page.mouse.move(840, 360, { steps: 1 });
   await page.mouse.up();
   await expect(side).toHaveAttribute('data-side', 'left');
   expect(await unfoldVars(page)).toEqual({ r: '0px', l: '100%' });
