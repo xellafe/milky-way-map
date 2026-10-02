@@ -9,17 +9,16 @@ import { isWebGL2Available } from './lib/webgl';
 import { GalaxyScene } from './scene/GalaxyScene';
 import { SystemScene } from './scene/SystemScene';
 import { useGalaxyMapStore } from './state/store';
-import { FiltersPanel } from './ui/FiltersPanel';
+import { ControlDock } from './ui/ControlDock';
 import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
 import { LoadingOverlay } from './ui/LoadingOverlay';
 import { MusicControl } from './ui/MusicControl';
-import { OptionsPanel } from './ui/OptionsPanel';
 import { SearchBox } from './ui/SearchBox';
+import { SelectionOverlay } from './ui/SelectionOverlay';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
 import { StarPanel } from './ui/StarPanel';
 import { SystemOverlay } from './ui/SystemOverlay';
-import { ViewTogglesPanel } from './ui/ViewTogglesPanel';
 
 const webgl2Available = isWebGL2Available();
 
@@ -90,10 +89,9 @@ export default function App() {
           <GalaxyScene />
           <StarLabelsLayer />
           <SearchBox />
-          <FiltersPanel />
-          <ViewTogglesPanel />
-          <OptionsPanel />
           <StarPanel />
+          {/* After the panel: its ✕ is not the first Tab stop after the search box. */}
+          <SelectionOverlay />
           <HoverLabel />
         </>
       ) : (
@@ -102,8 +100,12 @@ export default function App() {
           <SystemOverlay />
         </>
       )}
-      <MusicControl />
-      <LanguageSelector />
+      <ControlDock />
+      {/* Outside the view switch: the <audio> and playback survive view changes. */}
+      <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+        <MusicControl />
+        <LanguageSelector />
+      </div>
       {/* SPEC §6.3: animated transition into/out of the System View — a CSS
           fade keyed by view (motion-safe only: reduced motion = hard cut). */}
       <div

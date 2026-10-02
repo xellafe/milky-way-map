@@ -11,6 +11,10 @@
     "searchNoResults": "Keine Ergebnisse",
     "searchUnanchored": "nur System"
   },
+  "overlay": {
+    "close": "Sternübersicht schließen",
+    "label": "Übersicht des ausgewählten Sterns"
+  },
   "panel": {
     "regionLabel": "Sterndetails",
     "close": "Panel schließen",
@@ -24,8 +28,10 @@
     "absoluteMagnitude": "Absolute Helligkeit",
     "colorIndex": "Farbindex (B–V)",
     "luminosity": "Leuchtkraft",
-    "teff": "Effektivtemperatur",
-    "estimateSuffix": "(grobe Schätzung)",
+    "teff": "Temperatur",
+    "estimate": "Schätzung",
+    "moreData": "Weitere Daten und Katalog-IDs",
+    "nakedEye": "bloßes Auge",
     "age": "Geschätztes Alter",
     "ageNote": "(unsichere Schätzung)",
     "variable": "Veränderlicher Stern",
@@ -46,6 +52,12 @@
     "title": "Ansichtsoptionen",
     "showNames": "Sternnamen immer anzeigen",
     "showConstellations": "Sternbildlinien"
+  },
+  "dock": {
+    "label": "Bedienelemente",
+    "filters": "Filter",
+    "view": "Ansicht",
+    "options": "Optionen"
   },
   "filters": {
     "title": "Filter",
@@ -102,6 +114,7 @@
     "orbitStyle": "Orbit-Stil"
   },
   "music": {
+    "label": "Musik",
     "play": "Musik abspielen",
     "pause": "Musik pausieren",
     "volume": "Musiklautstärke"

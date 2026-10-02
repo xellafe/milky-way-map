@@ -11,6 +11,10 @@
     "searchNoResults": "Sin resultados",
     "searchUnanchored": "solo sistema"
   },
+  "overlay": {
+    "close": "Cerrar resumen de la estrella",
+    "label": "Resumen de la estrella seleccionada"
+  },
   "panel": {
     "regionLabel": "Detalles de la estrella",
     "close": "Cerrar panel",
@@ -24,8 +28,10 @@
     "absoluteMagnitude": "Magnitud absoluta",
     "colorIndex": "Índice de color (B–V)",
     "luminosity": "Luminosidad",
-    "teff": "Temperatura efectiva",
-    "estimateSuffix": "(estimación aproximada)",
+    "teff": "Temperatura",
+    "estimate": "estimación",
+    "moreData": "Más datos e IDs de catálogo",
+    "nakedEye": "ojo desnudo",
     "age": "Edad estimada",
     "ageNote": "(estimación incierta)",
     "variable": "Estrella variable",
@@ -46,6 +52,12 @@
     "title": "Opciones de vista",
     "showNames": "Mostrar siempre los nombres de las estrellas",
     "showConstellations": "Líneas de las constelaciones"
+  },
+  "dock": {
+    "label": "Controles",
+    "filters": "Filtros",
+    "view": "Vista",
+    "options": "Opciones"
   },
   "filters": {
     "title": "Filtros",
@@ -102,6 +114,7 @@
     "orbitStyle": "Estilo de órbitas"
   },
   "music": {
+    "label": "Música",
     "play": "Reproducir música",
     "pause": "Pausar música",
     "volume": "Volumen de la música"

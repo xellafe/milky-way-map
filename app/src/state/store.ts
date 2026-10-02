@@ -6,6 +6,7 @@ import type { PlanetType } from '../lib/planetType';
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
 export type DataStatus = 'idle' | 'loading' | 'ready' | 'error';
+export type DockPanelId = 'filters' | 'view' | 'options';
 
 /**
  * Current selection: a star of the cloud (by SoA index) or an exoplanet host
@@ -52,6 +53,16 @@ export interface GalaxyMapState {
    * live in labelStore — module holder, never in reactive state).
    */
   labelsVersion: number;
+  /** Currently open dock panel, or null if none open (one at a time). */
+  dockPanel: DockPanelId | null;
+  /**
+   * Floating star overlay next to the selection (#3). Reopened by every star
+   * selection, even of the same star; closing keeps the selection itself.
+   */
+  selectionOverlayOpen: boolean;
+  /** Bumped by every star selection: remounts the overlay, so a re-click during
+   * its closing flicker reopens it. */
+  selectionEpoch: number;
 
   selectStar: (index: number | null) => void;
   selectHost: (hostname: string) => void;
@@ -75,6 +86,9 @@ export interface GalaxyMapState {
   toggleHabitableZone: () => void;
   setTimeScale: (daysPerSecond: number) => void;
   togglePlanetType: (type: PlanetType) => void;
+  toggleDockPanel: (id: DockPanelId) => void;
+  closeDockPanel: () => void;
+  closeSelectionOverlay: () => void;
 }
 
 export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
@@ -96,15 +110,23 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   dataBounds: null,
   visibleCount: null,
   labelsVersion: 0,
+  dockPanel: null,
+  selectionOverlayOpen: false,
+  selectionEpoch: 0,
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
   // deselecting releases the lock. Hosts (matched:false, e.g. TRAPPIST-1)
   // have no position in the cloud, so there is nothing to orbit.
   selectStar: (index) =>
-    set(
+    set((s) =>
       index === null
         ? { selection: null, cameraMode: 'free-fly' }
-        : { selection: { kind: 'star', index }, cameraMode: 'orbit' },
+        : {
+            selection: { kind: 'star', index },
+            cameraMode: 'orbit',
+            selectionOverlayOpen: true,
+            selectionEpoch: s.selectionEpoch + 1,
+          },
     ),
   selectHost: (hostname) => set({ selection: { kind: 'host', hostname }, cameraMode: 'free-fly' }),
   setHoveredStar: (index) => set({ hoveredStarIndex: index }),
@@ -127,11 +149,13 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       view: 'system',
       systemHostname: hostname,
       selectedPlanet: null,
+      dockPanel: null,
       ...(prefersReducedMotion() ? { timeScaleDaysPerSecond: 0 } : {}),
     }),
   // The galaxy selection survives: leaving the system brings back the same
   // star panel (and the galaxy camera pose is restored from its holder).
-  exitSystemView: () => set({ view: 'galaxy', systemHostname: null, selectedPlanet: null }),
+  exitSystemView: () =>
+    set({ view: 'galaxy', systemHostname: null, selectedPlanet: null, dockPanel: null }),
   selectPlanet: (planetName) => set({ selectedPlanet: planetName }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),
   toggleConstellations: () => set((s) => ({ showConstellations: !s.showConstellations })),
@@ -141,4 +165,10 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
     set((s) => ({
       visiblePlanetTypes: { ...s.visiblePlanetTypes, [type]: !s.visiblePlanetTypes[type] },
     })),
+  toggleDockPanel: (id) =>
+    set((s) => ({
+      dockPanel: s.dockPanel === id ? null : id,
+    })),
+  closeDockPanel: () => set({ dockPanel: null }),
+  closeSelectionOverlay: () => set({ selectionOverlayOpen: false }),
 }));

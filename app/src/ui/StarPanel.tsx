@@ -1,14 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchCatalogIds, type CatalogIds } from '../data/catalogIds';
-import {
-  getHost,
-  getHostnameByStarIndex,
-  isExoplanetsReady,
-  loadExoplanets,
-  type ExoHost,
-} from '../data/exoplanets';
-import { entryLabel, getNamesEntry } from '../data/namesIndex';
+import { getHost, isExoplanetsReady, loadExoplanets } from '../data/exoplanets';
+import { getNamesEntry } from '../data/namesIndex';
 import { getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import {
@@ -19,17 +12,35 @@ import {
   hasFlag,
   spectralClassLetter,
 } from '../lib/format';
-import { estimateTeffFromBV } from '../lib/teff';
 import { useGalaxyMapStore } from '../state/store';
+import { Badge } from './hud/Badge';
+import { HudButton } from './hud/HudButton';
+import { StarStatTiles } from './StarStatTiles';
+import { useStarHost } from './useStarHost';
+import { useStarTitle } from './useStarTitle';
 
-function Row({ label, value, note }: { label: string; value: string | null; note?: string }) {
+function Row({
+  label,
+  value,
+  note,
+  warnNote = false,
+}: {
+  label: string;
+  value: string | null;
+  note?: string;
+  warnNote?: boolean;
+}) {
   const { t } = useTranslation();
   return (
-    <div className="flex justify-between gap-4 border-b border-white/10 py-1.5">
-      <dt className="text-white/60">{label}</dt>
-      <dd className="text-right text-white">
+    <div className="flex justify-between gap-4 border-b border-hud-accent/20 py-1.5">
+      <dt className="text-hud-muted">{label}</dt>
+      <dd className="text-right font-hud-mono text-hud-bright">
         {value ?? t('panel.na')}
-        {note && value !== null && <span className="ml-1 text-xs text-white/50">{note}</span>}
+        {note && value !== null && (
+          <span className={`ml-1 text-xs ${warnNote ? 'text-hud-warn' : 'text-hud-muted'}`}>
+            {note}
+          </span>
+        )}
       </dd>
     </div>
   );
@@ -40,57 +51,14 @@ function Row({ label, value, note }: { label: string; value: string | null; note
 function StarDetails({ index }: { index: number }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
-  // Async lookups are keyed by star index: stale results for a previously
-  // selected star are simply ignored at render (no sync setState in effects).
-  const [idsResult, setIdsResult] = useState<{ index: number; ids: CatalogIds } | null>(null);
-  const [hostResult, setHostResult] = useState<{
-    index: number;
-    hostname: string | null;
-    host: ExoHost | null;
-  } | null>(null);
-
   const core = getStarCore();
   const flags = core?.flags[index] ?? 0;
   const hasExo = hasFlag(flags, FLAG_HAS_EXOPLANETS);
   const details = getStarDetails();
   const entry = getNamesEntry(index);
+  const { hostname, host } = useStarHost(index);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchCatalogIds(index)
-      .then((ids) => {
-        if (!cancelled) setIdsResult({ index, ids });
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [index]);
-
-  useEffect(() => {
-    if (!hasExo) return;
-    let cancelled = false;
-    loadExoplanets()
-      .then(() => {
-        if (cancelled) return;
-        const name = getHostnameByStarIndex(index);
-        setHostResult({ index, hostname: name, host: name ? getHost(name) : null });
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [index, hasExo]);
-
-  const catalogIds = idsResult?.index === index ? idsResult.ids : null;
-  const host = hostResult?.index === index ? hostResult.host : null;
-  const hostname = hostResult?.index === index ? hostResult.hostname : null;
-
-  const title =
-    (entry && entryLabel(entry)) ||
-    (catalogIds?.tyc && `TYC ${catalogIds.tyc}`) ||
-    (catalogIds?.gaia && `Gaia DR3 ${catalogIds.gaia}`) ||
-    `#${index}`;
+  const { title, catalogIds } = useStarTitle(index);
 
   const ids: string[] = [];
   if (entry?.hd) ids.push(`HD ${entry.hd}`);
@@ -100,39 +68,24 @@ function StarDetails({ index }: { index: number }) {
   if (catalogIds?.gaia) ids.push(`Gaia DR3 ${catalogIds.gaia}`);
 
   const bv = details ? details.colorIndex[index]! : Number.NaN;
-  const teff = estimateTeffFromBV(bv);
-  const distance = details
-    ? formatNumber(details.distanceLy[index], lang, { maximumFractionDigits: 1 })
-    : null;
+  const spectral = spectralClassLetter(core?.spectralClass[index] ?? 7);
 
   return (
     <>
-      <h2 className="mb-1 text-lg font-semibold text-white" data-testid="panel-title">
+      <h2 className="mb-1 font-hud text-lg text-hud-bright" data-testid="panel-title">
         {title}
       </h2>
-      {entry?.constellation && (
-        <p className="mb-2 text-sm text-white/60">
-          {t('panel.constellation')}: {entry.constellation}
-        </p>
-      )}
-      <dl className="text-sm">
-        <Row label={t('panel.catalogIds')} value={ids.length > 0 ? ids.join(' · ') : null} />
-        <Row
-          label={t('panel.spectralClass')}
-          value={spectralClassLetter(core?.spectralClass[index] ?? 7)}
-        />
-        {/* Luminosity class is not in the data contract (SPEC §5.1) → n/d, never guessed. */}
-        <Row label={t('panel.msClass')} value={null} />
-        <Row
-          label={t('panel.distance')}
-          value={distance !== null ? `${distance} ${t('units.ly')}` : null}
-        />
-        <Row
-          label={t('panel.apparentMagnitude')}
-          value={
-            details ? formatNumber(details.appMag[index], lang, { maximumFractionDigits: 2 }) : null
-          }
-        />
+      <p className="mb-3 flex items-center gap-2 text-sm text-hud-muted">
+        {entry?.constellation && (
+          <span>
+            {t('panel.constellation')}: {entry.constellation}
+          </span>
+        )}
+        <span className="sr-only">{t('panel.spectralClass')}</span>
+        <Badge>{spectral ?? t('panel.na')}</Badge>
+      </p>
+      <StarStatTiles index={index} />
+      <dl className="mt-3 text-sm">
         <Row
           label={t('panel.absoluteMagnitude')}
           value={
@@ -143,57 +96,50 @@ function StarDetails({ index }: { index: number }) {
           label={t('panel.colorIndex')}
           value={details ? formatNumber(bv, lang, { maximumFractionDigits: 3 }) : null}
         />
-        <Row
-          label={t('panel.luminosity')}
-          value={
-            details
-              ? formatNumber(details.luminosity[index], lang, { maximumSignificantDigits: 3 })
-              : null
-          }
-          note={t('units.lsun')}
-        />
-        <Row
-          label={t('panel.teff')}
-          value={
-            teff !== null ? `≈ ${formatNumber(Math.round(teff), lang)} ${t('units.kelvin')}` : null
-          }
-          note={t('panel.estimateSuffix')}
-        />
         {/* Age is not present in HYG/AT-HYG → always n/d in v1 (SPEC §6.6: never fabricated). */}
-        <Row label={t('panel.age')} value={null} note={t('panel.ageNote')} />
-        <Row
-          label={t('panel.variable')}
-          value={t(hasFlag(flags, FLAG_VARIABLE) ? 'panel.yes' : 'panel.no')}
-        />
-        <Row
-          label={t('panel.multiple')}
-          value={t(hasFlag(flags, FLAG_MULTIPLE) ? 'panel.yes' : 'panel.no')}
-        />
-        <Row
-          label={t('panel.exoplanets')}
-          value={
-            hasExo
-              ? host
-                ? t('panel.planetsCount', { count: host.planets.length })
-                : t('panel.yes')
-              : t('panel.no')
-          }
-        />
+        <Row label={t('panel.age')} value={null} note={t('panel.ageNote')} warnNote />
       </dl>
+      <details className="mt-2 text-sm">
+        <summary className="cursor-pointer py-1 text-hud-muted hover:text-hud-bright">
+          {t('panel.moreData')}
+        </summary>
+        <dl>
+          <Row label={t('panel.catalogIds')} value={ids.length > 0 ? ids.join(' · ') : null} />
+          {/* Luminosity class is not in the data contract (SPEC §5.1) → n/d, never guessed. */}
+          <Row label={t('panel.msClass')} value={null} />
+          <Row
+            label={t('panel.variable')}
+            value={t(hasFlag(flags, FLAG_VARIABLE) ? 'panel.yes' : 'panel.no')}
+          />
+          <Row
+            label={t('panel.multiple')}
+            value={t(hasFlag(flags, FLAG_MULTIPLE) ? 'panel.yes' : 'panel.no')}
+          />
+        </dl>
+      </details>
       {hasExo && (
-        <button
-          type="button"
-          // Enabled once the exoplanets data resolved this star to its host.
-          disabled={!hostname}
-          onClick={() => {
-            if (hostname) useGalaxyMapStore.getState().enterSystemView(hostname);
-          }}
-          className="mt-3 w-full rounded bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:text-white/50"
-          data-testid="view-system-button"
-        >
-          {t('panel.viewSystem')}
-          {hostname ? ` — ${hostname}` : ''}
-        </button>
+        <div className="mt-3">
+          {host && (
+            <p className="mb-2">
+              <Badge data-testid="planets-badge">
+                {t('panel.planetsCount', { count: host.planets.length })}
+              </Badge>
+            </p>
+          )}
+          <HudButton
+            variant="secondary"
+            // Enabled once the exoplanets data resolved this star to its host.
+            disabled={!hostname}
+            onClick={() => {
+              if (hostname) useGalaxyMapStore.getState().enterSystemView(hostname);
+            }}
+            className="w-full"
+            data-testid="view-system-button"
+          >
+            {t('panel.viewSystem')}
+            {hostname ? ` — ${hostname}` : ''}
+          </HudButton>
+        </div>
       )}
     </>
   );
@@ -214,22 +160,19 @@ function HostDetails({ hostname }: { hostname: string }) {
   }, [hostname]);
 
   const host = getHost(hostname);
-  if (!host) return <p className="text-sm text-white/60">{t('ui.loading')}</p>;
+  if (!host) return <p className="text-sm text-hud-muted">{t('ui.loading')}</p>;
 
   const lumLinear = host.st_lum !== null ? 10 ** host.st_lum : null;
 
   return (
     <>
-      <h2 className="mb-1 text-lg font-semibold text-white" data-testid="panel-title">
+      <h2 className="mb-1 font-hud text-lg text-hud-bright" data-testid="panel-title">
         {hostname}
       </h2>
-      <p
-        className="mb-2 rounded bg-amber-500/15 px-2 py-1 text-xs text-amber-300"
-        data-testid="not-anchored-badge"
-      >
-        {t('panel.notAnchored')}
+      <p className="mb-2" data-testid="not-anchored-badge">
+        <Badge tone="warn">{t('panel.notAnchored')}</Badge>
       </p>
-      <p className="mb-1 text-sm text-white/60">{t('panel.hostStar')}</p>
+      <p className="mb-1 text-sm text-hud-muted">{t('panel.hostStar')}</p>
       <dl className="text-sm">
         <Row
           label={t('panel.stTeff')}
@@ -254,21 +197,21 @@ function HostDetails({ hostname }: { hostname: string }) {
           value={t('panel.planetsCount', { count: host.planets.length })}
         />
       </dl>
-      <ul className="mt-2 text-sm text-white/80" data-testid="planet-list">
+      <ul className="mt-2 text-sm text-hud-text" data-testid="planet-list">
         {host.planets.map((p) => (
-          <li key={p.pl_name} className="border-b border-white/10 py-1">
+          <li key={p.pl_name} className="border-b border-hud-accent/20 py-1">
             {p.pl_name}
           </li>
         ))}
       </ul>
-      <button
-        type="button"
+      <HudButton
+        variant="secondary"
         onClick={() => useGalaxyMapStore.getState().enterSystemView(hostname)}
-        className="mt-3 w-full rounded bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+        className="mt-3 w-full"
         data-testid="view-system-button"
       >
         {t('panel.viewSystem')}
-      </button>
+      </HudButton>
     </>
   );
 }
@@ -286,14 +229,16 @@ export function StarPanel() {
       role="region"
       aria-label={t('panel.regionLabel')}
       data-testid="star-panel"
-      className="absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg bg-zinc-900/90 p-4 shadow-xl backdrop-blur"
+      data-hud="star-panel"
+      className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg p-4"
     >
       <button
         type="button"
         onClick={() => selectStar(null)}
         aria-label={t('panel.close')}
         data-testid="panel-close"
-        className="absolute top-2 right-2 rounded px-2 py-0.5 text-white/60 hover:bg-white/10 hover:text-white"
+        data-hud="panel-close"
+        className="absolute top-2 right-2 rounded px-2 py-0.5 text-hud-muted hover:bg-white/10 hover:text-hud-bright"
       >
         ✕
       </button>

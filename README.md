@@ -14,8 +14,11 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
   energy-faithful sizing/color and bloom.
 - Free-fly + click-to-orbit camera with animated fly-to; `prefers-reduced-motion`
   aware.
-- GPU picking, hover labels, star detail panel, always-on names with culling,
-  IAU constellation lines (toggle).
+- Sci-fi HUD UI: bottom control dock (filters, view toggles, options) with
+  slide-in panels; music play/pause and volume sit in the top-right cluster, left of the language button; star detail panel with stat tiles and gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude); selecting a star
+  shows a ring and a summary card anchored to it.
+- GPU picking, hover labels, always-on names with culling, IAU constellation
+  lines (toggle).
 - Search (proper names, HD/HIP/Gl, Gaia/TYC ids, exoplanet hosts) and runtime
   filters via a GPU visibility mask.
 - System View: fly into an exoplanet system, real-scale orbits (Kepler solver),

@@ -10,6 +10,9 @@ import {
   TIME_SCALE_MIN_DAYS_PER_SECOND,
   useGalaxyMapStore,
 } from '../state/store';
+import { HudButton } from './hud/HudButton';
+import { HudCheckbox, HudSelect, HudSlider } from './hud/HudInputs';
+import { HudPanel } from './hud/HudPanel';
 
 const SLIDER_STEPS = 1000;
 const LOG_MIN = Math.log10(TIME_SCALE_MIN_DAYS_PER_SECOND);
@@ -57,18 +60,21 @@ function PlanetDetails({ planet }: { planet: ExoplanetRecord }) {
   ];
 
   return (
-    <div className="mt-2 border-t border-white/10 pt-2" data-testid="planet-panel">
-      <h3 className="mb-1 font-semibold text-white" data-testid="planet-panel-title">
+    <div className="mt-2 border-t border-hud-accent/20 pt-2" data-testid="planet-panel">
+      <h3 className="mb-1 font-hud text-hud-bright" data-testid="planet-panel-title">
         {planet.pl_name}
       </h3>
       {planet.pl_orbincl === null && (
-        <p className="mb-1 text-xs text-amber-300">{t('system.schematicOrbit')}</p>
+        <p className="mb-1 text-xs text-hud-warn">{t('system.schematicOrbit')}</p>
       )}
       <dl className="text-sm">
         {rows.map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-3 border-b border-white/10 py-1">
-            <dt className="text-white/60">{label}</dt>
-            <dd className="text-right text-white">{value}</dd>
+          <div
+            key={label}
+            className="flex justify-between gap-3 border-b border-hud-accent/20 py-1"
+          >
+            <dt className="text-hud-muted">{label}</dt>
+            <dd className="text-right font-hud-mono text-hud-bright">{value}</dd>
           </div>
         ))}
       </dl>
@@ -97,6 +103,7 @@ export function SystemOverlay() {
   const togglePlanetType = useGalaxyMapStore((s) => s.togglePlanetType);
   const orbitStyle = useSettingsStore((s) => s.orbitStyle);
   const setSettings = useSettingsStore((s) => s.setSettings);
+  const dockPanel = useGalaxyMapStore((s) => s.dockPanel);
   const [logMode, setLogMode] = useState(false);
   const [pausedFrom, setPausedFrom] = useState<number | null>(null);
 
@@ -109,54 +116,46 @@ export function SystemOverlay() {
   return (
     <>
       <header className="absolute top-4 left-4 z-10 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={exitSystemView}
-          data-testid="system-back"
-          className="rounded-lg bg-zinc-900/90 px-3 py-2 text-sm text-white shadow-xl backdrop-blur hover:bg-zinc-800/90"
-        >
+        <HudButton variant="secondary" onClick={exitSystemView} data-testid="system-back">
           ← {t('system.back')}
-        </button>
-        <h1 className="text-lg font-semibold text-white" data-testid="system-title">
+        </HudButton>
+        <h1 className="font-hud text-lg text-hud-bright" data-testid="system-title">
           {hostname}
         </h1>
       </header>
 
       <aside
         aria-label={t('system.planets')}
-        className="absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg bg-zinc-900/90 p-4 shadow-xl backdrop-blur"
+        className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg p-4"
       >
-        <p className="mb-2 text-sm text-white/60">{t('system.planets')}</p>
+        <p className="mb-2 text-sm text-hud-muted">{t('system.planets')}</p>
         <fieldset className="mb-2" data-testid="planet-type-filter">
-          <legend className="text-xs text-white/60">{t('system.planetTypes')}</legend>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-white">
+          <legend className="font-hud text-xs text-hud-muted">{t('system.planetTypes')}</legend>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {PLANET_TYPES.map((type) => (
-              <label key={type} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={visibleTypes[type]}
-                  data-testid={`planet-type-${type}`}
-                  onChange={() => togglePlanetType(type)}
-                />
-                {t(`planetType.${type}`)}
-              </label>
+              <HudCheckbox
+                key={type}
+                label={t(`planetType.${type}`)}
+                checked={visibleTypes[type]}
+                data-testid={`planet-type-${type}`}
+                onChange={() => togglePlanetType(type)}
+              />
             ))}
           </div>
         </fieldset>
-        <label className="mb-2 flex items-center justify-between gap-2 text-xs text-white/60">
+        <label className="mb-2 flex items-center justify-between gap-2 font-hud text-xs text-hud-muted">
           {t('system.orbitStyle')}
-          <select
+          <HudSelect
             value={orbitStyle}
             data-testid="orbit-style"
             onChange={(e) => setSettings({ orbitStyle: e.target.value as OrbitStyle })}
-            className="rounded bg-white/10 px-2 py-1 text-sm text-white"
           >
             {ORBIT_STYLES.map((style) => (
-              <option key={style} value={style} className="bg-zinc-900">
+              <option key={style} value={style}>
                 {t(`orbitStyle.${style}`)}
               </option>
             ))}
-          </select>
+          </HudSelect>
         </label>
         <div className="flex flex-wrap gap-1">
           {shownPlanets.map((p) => (
@@ -166,10 +165,10 @@ export function SystemOverlay() {
               data-testid="planet-chip"
               aria-pressed={selectedPlanet === p.pl_name}
               onClick={() => selectPlanet(selectedPlanet === p.pl_name ? null : p.pl_name)}
-              className={`rounded px-2 py-1 text-xs ${
+              className={`rounded border px-2 py-1 font-hud text-xs ${
                 selectedPlanet === p.pl_name
-                  ? 'bg-white/30 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20'
+                  ? 'border-hud-accent/60 bg-hud-accent/20 text-hud-bright'
+                  : 'border-hud-accent/30 bg-white/5 text-hud-text hover:bg-white/10'
               }`}
             >
               {p.pl_name}
@@ -177,73 +176,84 @@ export function SystemOverlay() {
           ))}
         </div>
         {planet && <PlanetDetails planet={planet} />}
-        <p className="mt-3 text-xs text-white/40">{t('system.scaleNote')}</p>
+        <p className="mt-3 text-xs text-hud-muted">{t('system.scaleNote')}</p>
       </aside>
 
-      <section
-        aria-label={t('system.timeScale')}
-        className="absolute bottom-4 left-1/2 z-10 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-lg bg-zinc-900/90 p-3 text-sm text-white shadow-xl backdrop-blur"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span>{t('system.timeScale')}</span>
-          <span className="text-white/70" data-testid="time-scale-value">
-            {t('system.daysPerSecond', {
-              value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
-            })}
-          </span>
-        </div>
-        <div className="mt-2 flex items-center gap-3">
-          <button
-            type="button"
-            data-testid="time-pause"
-            onClick={() => {
-              if (paused) {
-                setTimeScale(pausedFrom ?? 2);
-                setPausedFrom(null);
-              } else {
-                setPausedFrom(timeScale);
-                setTimeScale(0);
-              }
-            }}
-            className="rounded bg-white/10 px-2 py-1 hover:bg-white/20"
-          >
-            {paused ? '▶' : '⏸'}
-            <span className="sr-only">{t(paused ? 'system.resume' : 'system.pause')}</span>
-          </button>
-          <input
-            type="range"
-            min={0}
-            max={SLIDER_STEPS}
-            step={1}
-            value={toSlider(paused ? (pausedFrom ?? 2) : timeScale, logMode)}
-            disabled={paused}
-            data-testid="time-slider"
-            aria-label={t('system.timeScale')}
-            onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
-            className="flex-1 disabled:opacity-40"
-          />
-          <label className="flex items-center gap-1 text-xs whitespace-nowrap">
-            <input
-              type="checkbox"
+      {/*
+       * Sits above the dock (#3: the dock shows only Options in the
+       * System View). The dock icon row is at bottom-4; bottom-20 clears it.
+       * An open dock panel renders in that same band (Dock.tsx) and its
+       * height varies (Options is tall), so the bar is hidden while a panel
+       * is open instead of guessing an offset that can still overlap.
+       */}
+      {!dockPanel && (
+        <HudPanel
+          aria-label={t('system.timeScale')}
+          className="absolute bottom-20 left-1/2 z-10 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span>{t('system.timeScale')}</span>
+            <span className="font-hud-mono text-hud-bright" data-testid="time-scale-value">
+              {t('system.daysPerSecond', {
+                value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
+              })}
+            </span>
+          </div>
+          <div className="mt-2 flex items-center gap-3">
+            <HudButton
+              variant="secondary"
+              data-testid="time-pause"
+              onClick={() => {
+                if (paused) {
+                  setTimeScale(pausedFrom ?? 2);
+                  setPausedFrom(null);
+                } else {
+                  setPausedFrom(timeScale);
+                  setTimeScale(0);
+                }
+              }}
+            >
+              {paused ? '▶' : '⏸'}
+              <span className="sr-only">{t(paused ? 'system.resume' : 'system.pause')}</span>
+            </HudButton>
+            <HudSlider
+              min={0}
+              max={SLIDER_STEPS}
+              step={1}
+              value={toSlider(paused ? (pausedFrom ?? 2) : timeScale, logMode)}
+              disabled={paused}
+              data-testid="time-slider"
+              aria-label={t('system.timeScale')}
+              onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
+              className="flex-1"
+            />
+            <HudCheckbox
+              // The wrapping label bakes in text-sm; a same-specificity text-xs in
+              // className would conflict with it by stylesheet order, not intent, so
+              // the smaller size is set on the label text itself instead.
+              label={<span className="text-xs">{t('system.logScale')}</span>}
               checked={logMode}
               data-testid="time-log-mode"
               onChange={(e) => setLogMode(e.target.checked)}
+              className="whitespace-nowrap"
             />
-            {t('system.logScale')}
-          </label>
-        </div>
-        <label className="mt-2 flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={showHz}
-            disabled={host.st_lum === null}
-            data-testid="toggle-hz"
-            onChange={toggleHz}
-          />
-          {t('system.habitableZone')}
-          <span className="text-xs text-white/50">{t('system.hzApprox')}</span>
-        </label>
-      </section>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <HudCheckbox
+              label={
+                <>
+                  {t('system.habitableZone')}{' '}
+                  <span className="text-xs text-hud-warn">{t('system.hzApprox')}</span>
+                </>
+              }
+              checked={showHz}
+              disabled={host.st_lum === null}
+              data-testid="toggle-hz"
+              onChange={toggleHz}
+            />
+          </div>
+        </HudPanel>
+      )}
     </>
   );
 }

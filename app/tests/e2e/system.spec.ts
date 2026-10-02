@@ -219,3 +219,17 @@ test('orbit style: each style renders and the choice persists', async ({ page })
   await expect(page.getByTestId('orbit-style')).toHaveValue('thick');
   expect(errors.filter((e) => /shader|WebGL|THREE/i.test(e))).toEqual([]);
 });
+
+test('time bar is hidden while a dock panel is open so it cannot overlap it', async ({ page }) => {
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+
+  const bar = page.getByTestId('time-pause');
+  await expect(bar).toBeVisible();
+  await page.getByTestId('options-toggle').click();
+  await expect(page.getByTestId('options-panel')).toBeVisible();
+  await expect(bar).toHaveCount(0);
+
+  await page.getByTestId('options-toggle').click();
+  await expect(bar).toBeVisible();
+});

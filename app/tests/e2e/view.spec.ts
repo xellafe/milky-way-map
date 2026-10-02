@@ -10,6 +10,9 @@ async function openApp(page: Page, query = '') {
   await serveFixtureData(page);
   await page.goto(`/${query}`);
   await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  // The toggles live in the View dock panel: open it once.
+  await page.getByTestId('view-toggle').click();
+  await expect(page.getByTestId('view-toggles')).toBeVisible();
 }
 
 test('default configuration: both toggles off, no labels in the way', async ({ page }) => {

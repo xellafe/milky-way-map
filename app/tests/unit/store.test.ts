@@ -112,4 +112,52 @@ describe('galaxy map store', () => {
     expect(useGalaxyMapStore.getState().visiblePlanetTypes.giant).toBe(false);
     expect(useGalaxyMapStore.getState().visiblePlanetTypes.rocky).toBe(true);
   });
+
+  it('dock: one panel at a time, toggle closes', () => {
+    const s = () => useGalaxyMapStore.getState();
+    expect(s().dockPanel).toBeNull();
+    s().toggleDockPanel('filters');
+    expect(s().dockPanel).toBe('filters');
+    s().toggleDockPanel('view');
+    expect(s().dockPanel).toBe('view');
+    s().toggleDockPanel('view');
+    expect(s().dockPanel).toBeNull();
+  });
+
+  it('dock: view changes close the open panel', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().toggleDockPanel('filters');
+    s().enterSystemView('TRAPPIST-1');
+    expect(s().dockPanel).toBeNull();
+    s().toggleDockPanel('options');
+    s().exitSystemView();
+    expect(s().dockPanel).toBeNull();
+  });
+
+  it('overlay reopens on every star selection, even the same star', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().selectStar(7);
+    expect(s().selectionOverlayOpen).toBe(true);
+    s().closeSelectionOverlay();
+    expect(s().selectionOverlayOpen).toBe(false);
+    s().selectStar(7);
+    expect(s().selectionOverlayOpen).toBe(true);
+  });
+
+  it('selecting the same star twice bumps selectionEpoch', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().selectStar(7);
+    const before = s().selectionEpoch;
+    s().selectStar(7);
+    expect(s().selectionEpoch).toBeGreaterThan(before);
+  });
+
+  it('overlay state survives the System View round trip', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().selectStar(7);
+    s().closeSelectionOverlay();
+    s().enterSystemView('X');
+    s().exitSystemView();
+    expect(s().selectionOverlayOpen).toBe(false);
+  });
 });

@@ -78,17 +78,43 @@ test('language menu is fully keyboard operable (arrows, Enter, Escape)', async (
   await expect(page.locator('html')).toHaveAttribute('lang', 'it');
 });
 
+async function scan(page: Page, include?: string) {
+  const builder = new AxeBuilder({ page }).exclude('canvas');
+  const results = await (include ? builder.include(include) : builder).analyze();
+  const violations = results.violations.filter((v) => blocking(v.impact));
+  expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+}
+
 test('galaxy overlay has no blocking axe violations', async ({ page }) => {
   await openApp(page);
-  // Open the panels so they are part of the scan.
   await page.getByTestId('search-input').click();
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
   await expect(page.getByTestId('star-panel')).toBeVisible();
+  await scan(page);
+});
 
-  const results = await new AxeBuilder({ page }).exclude('canvas').analyze();
-  const violations = results.violations.filter((v) => blocking(v.impact));
-  expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+// One test per dock panel (each AxeBuilder.analyze opens a new page, so a single
+// test scanning all panels exceeds the timeout under load).
+const dockPanels = [
+  ['filters', 'filters-toggle'],
+  ['view', 'view-toggle'],
+  ['options', 'options-toggle'],
+] as const;
+
+for (const [id, toggle] of dockPanels) {
+  test(`dock panel ${id} has no blocking axe violations`, async ({ page }) => {
+    await openApp(page);
+    await page.getByTestId(toggle).click();
+    await expect(page.getByTestId(toggle)).toHaveAttribute('aria-expanded', 'true');
+    await scan(page, `#dock-panel-${id}`);
+  });
+}
+
+test('music controls have no blocking axe violations', async ({ page }) => {
+  await openApp(page);
+  await expect(page.getByTestId('music-control')).toBeVisible();
+  await scan(page, '[data-testid="music-control"]');
 });
 
 test('system overlay has no blocking axe violations', async ({ page }) => {

@@ -1,7 +1,7 @@
 /**
- * Background music: play/pause toggle and volume slider drive the <audio>.
- * Clicking the toggle as the very first gesture must start playback (the
- * autoplay-on-first-gesture fallback must not race it into an immediate pause).
+ * Background music: the play/pause toggle and volume slider drive the <audio>.
+ * The controls are always visible top-right (no panel to open), and the first
+ * gesture on them must not race the autoplay-on-first-gesture fallback.
  */
 import { expect, test } from '@playwright/test';
 import { serveFixtureData } from './fixtures';
@@ -13,6 +13,7 @@ test('music toggle plays/pauses and the slider sets the volume', async ({ page }
 
   const audio = page.getByTestId('music-audio');
   const paused = () => audio.evaluate((el: HTMLAudioElement) => el.paused);
+  await expect(page.getByTestId('music-control')).toBeVisible();
   const toggle = page.getByTestId('music-toggle');
 
   await toggle.click();

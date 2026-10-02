@@ -1,5 +1,92 @@
 @import 'tailwindcss';
 
+/* HUD theme tokens (sci-fi UI, SPEC §3.1). Ice-blue palette, exact values from spec. */
+@theme {
+  --color-hud-accent: #9ec8ff;
+  --color-hud-bright: #d6e8ff;
+  --color-hud-muted: #8aa0c0;
+  --color-hud-text: #f4f8ff;
+  --color-hud-warn: #ff9f5f;
+  --color-hud-bg: rgb(10 16 30 / 0.82);
+  --font-hud: 'Segoe UI', system-ui, sans-serif;
+  --font-hud-mono: Consolas, 'Cascadia Mono', ui-monospace, monospace;
+}
+
+/* Components layer: Tailwind utilities (incl. `absolute`/`static` position) live in
+ * @layer utilities, which is declared after @layer components — an unlayered rule
+ * here would beat them regardless of source order (higher-specificity-equivalent
+ * unlayered CSS always wins over any @layer), so component rules stay layered. */
+@layer components {
+  /* HUD panel: dark translucent card, thin accent border, inner glow,
+   * and native scrollbars tinted to match instead of the default white. */
+  .hud-panel {
+    background-color: var(--color-hud-bg);
+    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 35%, transparent);
+    box-shadow: inset 0 0 20px color-mix(in srgb, var(--color-hud-accent) 12%, transparent);
+    font-family: var(--font-hud);
+    color: var(--color-hud-text);
+    scrollbar-color: color-mix(in srgb, var(--color-hud-accent) 40%, transparent) transparent;
+    scrollbar-width: thin;
+  }
+
+  /* Selection overlay card (#3): right of the star; SelectionTracker flips
+   * data-side to "left" when it would run under the detail panel. 34px = ring
+   * radius + margin (human choice), keep in sync with CARD_GAP_PX. */
+  .selection-card {
+    left: 34px;
+  }
+
+  [data-side='left'] .selection-card {
+    left: auto;
+    right: 34px;
+  }
+
+  /* B6 ring + overlay close animations (#3; durations are human choices). */
+  @keyframes hud-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes hud-spin-reverse {
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+
+  @keyframes hud-lock {
+    from {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes hud-flicker {
+    0% {
+      opacity: 1;
+    }
+    20% {
+      opacity: 0.2;
+    }
+    40% {
+      opacity: 0.9;
+    }
+    60% {
+      opacity: 0.1;
+    }
+    80% {
+      opacity: 0.6;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
 /* View transition (SPEC §6.3): black overlay fading out on view change. */
 @keyframes view-fade {
   from {

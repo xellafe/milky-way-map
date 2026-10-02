@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '../i18n';
+import { HudButton } from './hud/HudButton';
 
 /**
  * Endonyms (each language named in itself) — intentionally NOT translated:
@@ -106,28 +107,28 @@ export function LanguageSelector() {
   }
 
   return (
-    <div ref={containerRef} className="absolute top-4 right-4 z-40">
-      <button
+    <div ref={containerRef} className="relative">
+      <HudButton
         ref={buttonRef}
-        type="button"
+        variant="secondary"
         data-testid="language-button"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`${t('language.menuLabel')}: ${LANGUAGE_NAMES[current]}`}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onButtonKeyDown}
-        className="flex items-center gap-1.5 rounded-lg bg-zinc-900/90 px-2.5 py-2 text-sm text-white shadow-xl backdrop-blur hover:bg-zinc-800/90"
+        className="flex items-center gap-1.5"
       >
         <span aria-hidden>🌐</span>
-        <span className="font-medium">{current.toUpperCase()}</span>
-      </button>
+        <span className="font-hud-mono">{current.toUpperCase()}</span>
+      </HudButton>
       {open && (
         <ul
           id={menuId}
           role="menu"
           aria-label={t('language.menuLabel')}
           data-testid="language-menu"
-          className="absolute right-0 mt-1 min-w-40 overflow-hidden rounded-lg bg-zinc-900/95 py-1 shadow-xl ring-1 ring-white/10 backdrop-blur"
+          className="hud-panel absolute right-0 mt-1 min-w-40 overflow-hidden rounded-lg py-1 font-hud"
         >
           {SUPPORTED_LANGUAGES.map((lng, index) => (
             <li key={lng} role="none">
@@ -142,7 +143,7 @@ export function LanguageSelector() {
                 tabIndex={lng === current ? 0 : -1}
                 onClick={() => choose(lng)}
                 onKeyDown={(e) => onItemKeyDown(e, index)}
-                className="flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm text-white hover:bg-white/10 focus:bg-white/15 focus:outline-none"
+                className="flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm text-hud-text hover:bg-white/10 focus:bg-white/15 focus:outline-none"
               >
                 {LANGUAGE_NAMES[lng]}
                 {lng === current && <span aria-hidden>✓</span>}
