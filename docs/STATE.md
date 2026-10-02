@@ -16,8 +16,12 @@
   `cursorStyle`); in `SystemScene` un `GrabCursor` scrive il cursore a ogni
   frame, con pointerup/pointercancel sul document. L'hover sui pianeti non
   scrive più su `document.body` (risolto il `pointer` residuo).
-- AC1–AC4 PASS; gate completo verde (144 unit, 88 e2e), nessun flaky.
+- AC1–AC4 PASS; gate completo verde (144 unit, 89 e2e), nessun flaky.
   Dettagli: `aeb7b6b`.
+- Decisione umana: il drag-to-look in free-fly segue il grab (drag a destra
+  gira a sinistra, drag in basso guarda in alto; segni di rotate in
+  `CameraControls` invertiti). Orbit su stella e System View invariati; helper
+  e2e di selectionRing/selectionOpening adeguati. Gate verde (144 unit, 89 e2e).
 
 ## Fix — la UI non fa passare il puntatore alle stelle (2026-10-02, branch `fix/ui-pointer-blocking`)
 
