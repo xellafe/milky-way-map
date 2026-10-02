@@ -28,8 +28,8 @@ stelle (M9), stringhe in 5 lingue, reduced-motion rispettato.
 | Tema | **HUD olografico**: pannelli scuri semitrasparenti, bordo sottile, alone interno, numeri monospace |
 | Palette | **Blu ghiaccio** `#9ec8ff` (accento), `#d6e8ff` (valori/titoli), `#8aa0c0` (etichette), `#f4f8ff` (testo); **arancio** `#ff9f5f` solo per stime e avvisi |
 | Layout controlli | **Dock di icone in basso al centro** (Filtri, Vista, Opzioni); ogni icona apre il suo pannello sopra il dock; al massimo uno aperto. *Modifica approvata dall'umano dopo l'implementazione:* la musica sta nel gruppo in alto a destra, a sinistra del selettore lingua |
-| Anello di selezione | **Doppio anello B6**: interno ≈ 40 px a tratto-punto con alone, esterno ≈ 54 px a puntini fini; ruotano in versi opposti (interno ~14 s/giro, esterno ~8 s/giro); animazione di **aggancio** alla selezione (arrivano larghi e si stringono in ~1 s) |
-| Finestrella overlay | **I 4 valori in verticale** (distanza, temperatura, luminosità, magnitudine apparente), ognuno con la sua mini-scala; badge "N pianeti" solo se presenti. **Sempre visibile** (anche col pannello dettaglio aperto). Chiusura con una **x** in alto a destra e **effetto sfarfallio**; si riapre **cliccando di nuovo la stella**. Blocca il puntatore (decisione umana post-#3) |
+| Anello di selezione | **Doppio anello B6**: interno Ø60 px a tratto-punto con alone (era ≈ 40), esterno Ø≈95 px (era ≈ 54) a tratti di 6°/4° invece dei puntini; ruotano in versi opposti (interno ~14 s/giro, esterno ~8 s/giro); animazione di **aggancio** alla selezione (arrivano larghi e si stringono in ~1 s). **Callout statico** (modifica approvata dall'umano): arco di 40° sull'anello esterno centrato a −45°, segmento a 45° dal suo punto medio al gomito (51, −51), poi orizzontale fino alla scheda (a 72 px dalla stella; la linea entra 12 px sotto il bordo alto); specchiato a sinistra. Geometria in un'unica fonte: `app/src/lib/selectionGeometry.ts` |
+| Finestrella overlay | **I 4 valori in verticale** (distanza, temperatura, luminosità, magnitudine apparente), ognuno con la sua mini-scala; badge "N pianeti" solo se presenti. **Sempre visibile** (anche col pannello dettaglio aperto). Chiusura con una **x** in alto a destra e **effetto sfarfallio**; si riapre **cliccando di nuovo la stella**. Un clic sul cielo vuoto **non deseleziona**: scheda e pannello si chiudono solo con la propria ✕ (modifica approvata dall'umano). Blocca il puntatore (decisione umana post-#3) |
 | Dettaglio stella | **4 riquadri con indicatori grafici** (stessi 4 valori), poi elenco (magnitudine assoluta, B–V, età), poi "Altri dati e ID catalogo" richiudibile. Badge pianeti e pulsante "Vedi sistema" **solo** se la stella ha pianeti noti |
 
 Motivo del cambio "pianeti" → "magnitudine apparente" nei riquadri: la grande
@@ -113,6 +113,7 @@ Modifica approvata dall'umano: l'etichetta "Temperatura efficace" diventa "Tempe
 - Stella dietro la camera o fuori schermo → overlay nascosto.
 - Se la finestrella non entra a destra (bordo schermo o pannello dettaglio), si
   posiziona a sinistra della stella.
+- Il callout resta fisso quando la scheda è limitata in verticale: la linea incontra allora il bordo della scheda più in basso (modifica approvata dall'umano).
 - Store: nuovo `selectionOverlayOpen: boolean`; `selectStar(index)` lo imposta a
   `true` **a ogni** chiamata (anche sulla stessa stella → il clic riapre).
 - La x avvia l'animazione di sfarfallio (CSS, ~350 ms, opacità irregolare), poi

@@ -1,6 +1,16 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { prefersReducedMotion } from '../lib/motion';
+import {
+  CALLOUT_PATH,
+  CARD_GAP_PX,
+  CARD_TOP_OFFSET_PX,
+  INNER_DASH,
+  INNER_R,
+  OUTER_DASH,
+  OUTER_R,
+  RING_HALF_PX,
+} from '../lib/selectionGeometry';
 import { setSelectionAnchor } from '../scene/selectionAnchor';
 import { useGalaxyMapStore } from '../state/store';
 import { Badge } from './hud/Badge';
@@ -9,8 +19,8 @@ import { useStarHost } from './useStarHost';
 import { useStarTitle } from './useStarTitle';
 
 /** B6 double ring + compact 4-value card that follows the selected star (#3).
- * Ring diameters (40/54 px), rotation periods (14 s / 8 s), lock (1 s) and
- * flicker (350 ms) are human design choices (#3 design spec §2), not data.
+ * Ring diameters (60/94.5 px, lib/selectionGeometry), rotation periods
+ * (14 s / 8 s), lock (1 s) and flicker (350 ms) are human design choices (#3 design spec §2), not data.
  * Position is written by SelectionTracker. */
 function Overlay({ index }: { index: number }) {
   const { t } = useTranslation();
@@ -48,43 +58,69 @@ function Overlay({ index }: { index: number }) {
       >
         <div
           aria-hidden
-          className="absolute -top-[28px] -left-[28px] h-[56px] w-[56px] motion-safe:animate-[hud-lock_1s_ease-out]"
+          data-hud="selection-ring"
+          style={{
+            top: -RING_HALF_PX,
+            left: -RING_HALF_PX,
+            width: 2 * RING_HALF_PX,
+            height: 2 * RING_HALF_PX,
+          }}
+          className="absolute motion-safe:animate-[hud-lock_1s_ease-out]"
         >
-          {/* Geometry of mockup B6. Inner ring Ø40: dash 40° / gap 5° / dot 5° /
-              gap 10° (r=20: 13.96 1.75 1.75 3.49). Outer ring Ø54: dots 2° on /
-              5° off (r=27: 0.94 2.36). fill-box: rotate around each circle's own
-              centre (the viewBox origin), not the view-box centre. */}
-          <svg viewBox="-28 -28 56 56" className="h-full w-full text-hud-accent">
+          {/* Geometry of mockup B6 (patterns in lib/selectionGeometry). fill-box:
+              rotate around each circle's own centre (the viewBox origin), not the
+              view-box centre. */}
+          <svg
+            viewBox={`${-RING_HALF_PX} ${-RING_HALF_PX} ${2 * RING_HALF_PX} ${2 * RING_HALF_PX}`}
+            className="h-full w-full text-hud-accent"
+          >
             <g className="origin-center [transform-box:fill-box] motion-safe:animate-[hud-spin_14s_linear_infinite]">
               {/* Halo: a wide faint stroke, not a CSS drop-shadow (a filter on an
                   animated element is re-rasterized every frame). */}
               <circle
-                r="20"
+                r={INNER_R}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="5"
                 opacity="0.2"
-                strokeDasharray="13.96 1.75 1.75 3.49"
+                strokeDasharray={INNER_DASH}
               />
               <circle
-                r="20"
+                r={INNER_R}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 opacity="0.85"
-                strokeDasharray="13.96 1.75 1.75 3.49"
+                strokeDasharray={INNER_DASH}
               />
             </g>
             <g className="origin-center [transform-box:fill-box] motion-safe:animate-[hud-spin-reverse_8s_linear_infinite]">
               <circle
-                r="27"
+                r={OUTER_R}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1"
                 opacity="0.55"
-                strokeDasharray="0.94 2.36"
+                strokeDasharray={OUTER_DASH}
               />
             </g>
+          </svg>
+        </div>
+        {/* Static leader (star → card). A zero-size box at the star, so the lock
+            animation scales it about the same centre as the rings. */}
+        <div
+          aria-hidden
+          className="absolute top-0 left-0 motion-safe:animate-[hud-lock_1s_ease-out]"
+        >
+          <svg width="1" height="1" className="selection-callout overflow-visible text-hud-accent">
+            <path
+              data-hud="callout"
+              d={CALLOUT_PATH}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              opacity="0.85"
+            />
           </svg>
         </div>
         {/* The card blocks the pointer: UI must not let hover, click or wheel
@@ -93,7 +129,8 @@ function Overlay({ index }: { index: number }) {
           data-testid="selection-card"
           data-hud="selection-card"
           aria-label={t('overlay.label')}
-          className="hud-panel selection-card pointer-events-auto absolute top-[-27px] w-56 rounded-lg p-2"
+          style={{ top: CARD_TOP_OFFSET_PX, '--card-gap': `${CARD_GAP_PX}px` } as CSSProperties}
+          className="hud-panel selection-card pointer-events-auto absolute w-56 rounded-lg p-2"
         >
           <button
             type="button"

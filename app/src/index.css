@@ -30,15 +30,26 @@
   }
 
   /* Selection overlay card (#3): right of the star; SelectionTracker flips
-   * data-side to "left" when it would run under the detail panel. 34px = ring
-   * radius + margin (human choice), keep in sync with CARD_GAP_PX. */
+   * data-side to "left" when it would run under the detail panel. --card-gap
+   * is set inline from CARD_GAP_PX (lib/selectionGeometry). */
   .selection-card {
-    left: 34px;
+    left: var(--card-gap);
   }
 
   [data-side='left'] .selection-card {
     left: auto;
-    right: 34px;
+    right: var(--card-gap);
+  }
+
+  /* Callout is drawn for the right side; the left side mirrors it about the
+   * star (origin 0 0 = the zero-size anchor). The lock animation lives on
+   * the parent, so the mirror never fights it. */
+  .selection-callout {
+    transform-origin: 0 0;
+  }
+
+  [data-side='left'] .selection-callout {
+    scale: -1 1;
   }
 
   /* B6 ring + overlay close animations (#3; durations are human choices). */
