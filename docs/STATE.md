@@ -35,6 +35,9 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - `3b34207`: scale con etichette sotto i gauge (scheda e pannello): distanza 1/10/100/1.000 a.l.; classi spettrali M–B con tacche ai confini MK convenzionali approssimati; luminosità 10⁻³/1/10³; magnitudine 0/20 e occhio nudo a 6, 10 solo tacca (scelta umana: collisione tra etichette).
 - **Assunzione sui dati:** confini delle classi spettrali approssimati da manuale; classe O (> 30000 K) clampata a destra.
 - Etichetta "Temperatura efficace" → "Temperatura" (5 locale); `tsconfig` lib + `ES2023.Intl`.
+- 4a (6be357d4083c5219bf000ed46017ba2434f454d3): il clic sul cielo vuoto non deseleziona più; scheda e pannello si chiudono solo con la ✕.
+- 4b (addee139eac37c377e275e07eb552a36ab16d2cf): anelli Ø60/Ø95 (esterno a tratti) e callout statico verso la scheda; geometria in `lib/selectionGeometry.ts`.
+- **Limite noto:** se `SelectionTracker` sposta la scheda in basso di oltre 12 px (stella vicino al bordo alto, es. sotto il box di ricerca) il callout statico non la raggiunge. Raro perché il fly-to centra la stella. Semplificazione deliberata: si rivede se emerge nell'uso.
 
 **Esiti AC**
 - Dopo i ritocchi: gate completo verde (unit **140**, e2e **71**).
