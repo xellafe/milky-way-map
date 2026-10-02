@@ -22,8 +22,9 @@ import { useStarTitle } from './useStarTitle';
 
 /** B6 double ring + compact 4-value card that follows the selected star (#3).
  * Ring diameters (60/94.5 px, lib/selectionGeometry), rotation periods
- * (14 s / 8 s), lock (1 s) and flicker (350 ms) are human design choices (#3 design spec §2), not data.
- * Position is written by SelectionTracker. */
+ * (14 s / 8 s), opening sequence (lock 600 ms, callout draw 300 ms at 450 ms, card
+ * unfold 250 ms at 700 ms) and flicker (350 ms) are human design choices (#3 design
+ * spec §2), not data. Position is written by SelectionTracker. */
 function Overlay({ index }: { index: number }) {
   const { t } = useTranslation();
   const { host } = useStarHost(index);
@@ -67,7 +68,7 @@ function Overlay({ index }: { index: number }) {
             width: 2 * RING_HALF_PX,
             height: 2 * RING_HALF_PX,
           }}
-          className="absolute motion-safe:animate-[hud-lock_1s_ease-out]"
+          className="absolute motion-safe:animate-[hud-lock_600ms_ease-out]"
         >
           {/* Geometry of mockup B6 (patterns in lib/selectionGeometry). fill-box:
               rotate around each circle's own centre (the viewBox origin), not the
@@ -108,15 +109,14 @@ function Overlay({ index }: { index: number }) {
             </g>
           </svg>
         </div>
-        {/* Static leader (star → card). A zero-size box at the star, so the lock
-            animation scales it about the same centre as the rings. */}
-        <div
-          aria-hidden
-          className="absolute top-0 left-0 motion-safe:animate-[hud-lock_1s_ease-out]"
-        >
+        {/* Leader (star → card), drawn as the ring locks. */}
+        <div aria-hidden className="absolute top-0 left-0">
           <svg width="1" height="1" className="selection-callout overflow-visible text-hud-accent">
             <path
               data-hud="callout"
+              pathLength="1"
+              strokeDasharray="1"
+              className="motion-safe:animate-[hud-draw_300ms_ease-out_450ms_backwards]"
               d={CALLOUT_PATH}
               fill="none"
               stroke="currentColor"
@@ -139,7 +139,7 @@ function Overlay({ index }: { index: number }) {
               '--card-stroke-alpha': `${CALLOUT_OPACITY * 100}%`,
             } as CSSProperties
           }
-          className="hud-panel selection-card pointer-events-auto absolute w-56 rounded-hud p-2"
+          className="hud-panel selection-card pointer-events-auto absolute w-56 motion-safe:animate-[hud-unfold_250ms_ease-out_700ms_backwards] rounded-hud p-2"
         >
           <button
             type="button"
@@ -172,7 +172,7 @@ export function SelectionOverlay() {
       : null,
   );
   const epoch = useGalaxyMapStore((s) => s.selectionEpoch);
-  // key: every selection (also of the same star) remounts, restarting the lock
-  // animation and resetting `closing`: a click during the flicker reopens.
+  // key: every selection (also of the same star) remounts, restarting the opening
+  // sequence and resetting `closing`: a click during the flicker reopens.
   return index === null ? null : <Overlay key={`${index}:${epoch}`} index={index} />;
 }

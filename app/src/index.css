@@ -40,16 +40,21 @@
     border-width: var(--card-stroke);
     border-color: color-mix(in srgb, var(--color-hud-accent) var(--card-stroke-alpha), transparent);
     left: var(--card-gap);
+    /* The card opens from the callout side: the hidden edge is set per side. */
+    --unfold-r: 100%;
+    --unfold-l: 0px;
   }
 
   [data-side='left'] .selection-card {
     left: auto;
     right: var(--card-gap);
+    --unfold-r: 0px;
+    --unfold-l: 100%;
   }
 
   /* Callout is drawn for the right side; the left side mirrors it about the
-   * star (origin 0 0 = the zero-size anchor). The lock animation lives on
-   * the parent, so the mirror never fights it. */
+   * star (origin 0 0 = the zero-size anchor). Only the path is animated, so
+   * the mirror never fights a transform animation. */
   .selection-callout {
     transform-origin: 0 0;
   }
@@ -78,6 +83,28 @@
     }
     to {
       transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Selection opening sequence (#3; durations and delays are a human design
+   * choice, not data): callout path draws star -> card, then the card unfolds. */
+  @keyframes hud-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes hud-unfold {
+    from {
+      clip-path: inset(0 var(--unfold-r) 0 var(--unfold-l));
+      opacity: 0;
+    }
+    to {
+      clip-path: inset(0);
       opacity: 1;
     }
   }
