@@ -28,8 +28,12 @@ export function canvasCursor(dragging: boolean, overTarget: boolean): CanvasCurs
 - [ ] `canvasCursor` in `lib/`.
 - [ ] `StarPicking`: cursore da `canvasCursor` al mount, su down/up del tasto
       sinistro, sull'hover e su `pointerleave`.
-- [ ] `SystemScene`: `cursorStyle="grab"` su `OrbitControls`; hover pianeti
-      sul canvas, `pointer` solo con `e.buttons === 0`, `grab` su out.
+- [ ] `SystemScene`: componente `GrabCursor` (figlio del Canvas) che scrive
+      su `gl.domElement` a ogni frame `canvasCursor(dragging, overPlanet)`;
+      `dragging` da pointerdown/up sinistro e `pointercancel` sul document
+      (three-stdlib non ha `cursorStyle`); `overPlanet` ref da
+      onPointerOver/onPointerOut dei pianeti. E2e extra: rilascio fuori dal
+      canvas.
 - [ ] Gate completo verde.
 
 **Acceptance:** AC1–AC4 della spec.

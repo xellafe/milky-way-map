@@ -1,8 +1,9 @@
 import { Line, OrbitControls } from '@react-three/drei';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
+import { canvasCursor } from '../lib/canvasCursor';
 import { hzBoundsAU } from '../lib/habitableZone';
 import {
   nameSeed,
@@ -257,11 +258,52 @@ function PlanetAnimator({
 }
 
 /**
+ * drei's OrbitControls wraps three-stdlib, which has no `cursorStyle`, so the
+ * grab/grabbing cursor (#11) is driven here from the left-button drag.
+ */
+/* eslint-disable react-hooks/immutability -- imperative cursor style on the canvas element */
+function GrabCursor({ overPlanet }: { overPlanet: { current: boolean } }) {
+  const el = useThree((s) => s.gl.domElement);
+  const dragging = useRef(false);
+  useEffect(() => {
+    const down = (e: PointerEvent) => {
+      if (e.button === 0) dragging.current = true;
+    };
+    const cancel = () => {
+      dragging.current = false;
+    };
+    const up = (e: PointerEvent) => {
+      if (e.button === 0) cancel();
+    };
+    // three-stdlib does not capture the pointer: a drag can end outside the
+    // canvas, so release is listened on the document.
+    const doc = el.ownerDocument;
+    el.addEventListener('pointerdown', down);
+    doc.addEventListener('pointerup', up);
+    doc.addEventListener('pointercancel', cancel);
+    return () => {
+      el.removeEventListener('pointerdown', down);
+      doc.removeEventListener('pointerup', up);
+      doc.removeEventListener('pointercancel', cancel);
+      el.style.cursor = '';
+    };
+  }, [el]);
+  // Polled per frame: hover comes from R3F handlers, drag from DOM listeners;
+  // one writer keeps them consistent.
+  useFrame(() => {
+    el.style.cursor = canvasCursor(dragging.current, overPlanet.current);
+  });
+  return null;
+}
+/* eslint-enable react-hooks/immutability */
+
+/**
  * System View (SPEC §6.7): real-scale orbits in AU around the host star at
  * the origin; star/planet RADII are presentational (real ones would be
  * sub-pixel). Orbit-cam around the star, planets clickable for details.
  */
 export function SystemScene() {
+  const overPlanet = useRef(false);
   const hostname = useGalaxyMapStore((s) => s.systemHostname);
   const showHz = useGalaxyMapStore((s) => s.showHabitableZone);
   const selectPlanet = useGalaxyMapStore((s) => s.selectPlanet);
@@ -341,8 +383,8 @@ export function SystemScene() {
               e.stopPropagation();
               selectPlanet(p.record.pl_name);
             }}
-            onPointerOver={() => (document.body.style.cursor = 'pointer')}
-            onPointerOut={() => (document.body.style.cursor = '')}
+            onPointerOver={() => (overPlanet.current = true)}
+            onPointerOut={() => (overPlanet.current = false)}
           >
             <sphereGeometry args={[p.radiusAU, 48, 24]} />
             <primitive object={materials.get(p.record.pl_name)!} attach="material" />
@@ -350,6 +392,7 @@ export function SystemScene() {
         </group>
       ))}
       <PlanetAnimator planets={planets} meshes={meshes} angles={angles} hz={hz} />
+      <GrabCursor overPlanet={overPlanet} />
       <OrbitControls
         makeDefault
         enablePan={false}
