@@ -38,6 +38,7 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - 4a (6be357d4083c5219bf000ed46017ba2434f454d3): il clic sul cielo vuoto non deseleziona più; scheda e pannello si chiudono solo con la ✕.
 - 4b (addee139eac37c377e275e07eb552a36ab16d2cf): anelli Ø60/Ø95 (esterno a tratti) e callout statico verso la scheda; geometria in `lib/selectionGeometry.ts`.
 - 9fce32d: bordo della scheda = tratto del callout (1 px, accent 85%); callout ridotto da 1,5 a 1 px perché Chrome arrotonda gli spessori dei border a pixel interi.
+- 88e16de: box HUD con raggio 3 px (token `--radius-hud`).
 - **Limite noto:** se `SelectionTracker` sposta la scheda in basso di oltre 12 px (stella vicino al bordo alto, es. sotto il box di ricerca) il callout statico non la raggiunge. Raro perché il fly-to centra la stella. Semplificazione deliberata: si rivede se emerge nell'uso.
 
 **Esiti AC**
