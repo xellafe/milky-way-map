@@ -165,7 +165,8 @@ export function StarPicking() {
     if (!p.moved && !p.click) return;
     if (p.click) {
       const picked = readStarAt(p.click.x, p.click.y);
-      selectStar(picked);
+      // A click on empty sky keeps the current selection: only the ✕ closes it.
+      if (picked !== null) selectStar(picked);
       // Click-lock also flies to the fixed arrival distance (same as search
       // select, SPEC §6.3 + user decision post-M5): the camera always ends
       // ARRIVE_DISTANCE_LY in front of a locked star.
