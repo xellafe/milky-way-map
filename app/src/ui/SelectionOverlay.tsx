@@ -87,20 +87,20 @@ function Overlay({ index }: { index: number }) {
             </g>
           </svg>
         </div>
-        {/* The card sits beside the centred star: pointer-events-none lets wheel
-            and drag reach the canvas (orbit lock); only ✕ is interactive. */}
+        {/* The card blocks the pointer: UI must not let hover, click or wheel
+            reach the stars drawn behind it. */}
         <section
           data-testid="selection-card"
           data-hud="selection-card"
           aria-label={t('overlay.label')}
-          className="hud-panel selection-card pointer-events-none absolute top-[-27px] w-56 rounded-lg p-2"
+          className="hud-panel selection-card pointer-events-auto absolute top-[-27px] w-56 rounded-lg p-2"
         >
           <button
             type="button"
             onClick={close}
             aria-label={t('overlay.close')}
             data-testid="overlay-close"
-            className="pointer-events-auto absolute top-1 right-1 rounded px-1.5 text-hud-muted hover:bg-white/10 hover:text-hud-bright"
+            className="absolute top-1 right-1 rounded px-1.5 text-hud-muted hover:bg-white/10 hover:text-hud-bright"
           >
             ✕
           </button>

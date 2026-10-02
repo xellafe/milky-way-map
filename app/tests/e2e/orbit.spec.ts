@@ -253,6 +253,8 @@ test('orbit lock: drag circles the star keeping it centered, wheel zooms, moveme
 
   // Wheel zoom: deltaY < 0 dollies toward the locked star.
   const beforeZoom = distanceTo(after, target);
+  // The drag ended under the selection card, which blocks the wheel: move to a free canvas point.
+  await page.mouse.move(300, 360);
   await page.mouse.wheel(0, -600);
   await expect
     .poll(async () => distanceTo(await cam(page), target), { timeout: 2_000 })

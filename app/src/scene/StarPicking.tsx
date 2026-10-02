@@ -36,6 +36,7 @@ export function StarPicking() {
     moved: false,
     downX: 0,
     downY: 0,
+    down: false,
     click: null as { x: number; y: number } | null,
   });
 
@@ -89,8 +90,12 @@ export function StarPicking() {
     const onDown = (e: PointerEvent) => {
       pointer.current.downX = e.clientX;
       pointer.current.downY = e.clientY;
+      pointer.current.down = true;
     };
     const onUp = (e: PointerEvent) => {
+      // A press that started on a panel and ends here is not a click on a star.
+      if (!pointer.current.down) return;
+      pointer.current.down = false;
       const dx = e.clientX - pointer.current.downX;
       const dy = e.clientY - pointer.current.downY;
       if (e.button === 0 && Math.hypot(dx, dy) <= CLICK_MAX_DRAG_PX) {
@@ -98,15 +103,27 @@ export function StarPicking() {
         pointer.current.click = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       }
     };
+    // Leaving the canvas (e.g. onto a HUD panel) gives no more pointermove, so
+    // the last hover would stick; drop it and any pending pick.
+    const onLeave = () => {
+      pointer.current.moved = false;
+      pointer.current.down = false;
+      setHoveredStar(null);
+      el.style.cursor = '';
+    };
     el.addEventListener('pointermove', onMove);
     el.addEventListener('pointerdown', onDown);
     el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointerleave', onLeave);
     return () => {
+      el.removeEventListener('pointerleave', onLeave);
+      // Drop a stale hover that would otherwise reappear on remount.
+      setHoveredStar(null);
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
     };
-  }, [gl]);
+  }, [gl, setHoveredStar]);
 
   useEffect(() => () => pickTarget.dispose(), [pickTarget]);
   useEffect(() => () => pickScene?.material.dispose(), [pickScene]);
