@@ -2,7 +2,9 @@ import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { prefersReducedMotion } from '../lib/motion';
 import {
+  CALLOUT_OPACITY,
   CALLOUT_PATH,
+  CALLOUT_STROKE_PX,
   CARD_GAP_PX,
   CARD_TOP_OFFSET_PX,
   INNER_DASH,
@@ -118,8 +120,8 @@ function Overlay({ index }: { index: number }) {
               d={CALLOUT_PATH}
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.5"
-              opacity="0.85"
+              strokeWidth={CALLOUT_STROKE_PX}
+              opacity={CALLOUT_OPACITY}
             />
           </svg>
         </div>
@@ -129,7 +131,14 @@ function Overlay({ index }: { index: number }) {
           data-testid="selection-card"
           data-hud="selection-card"
           aria-label={t('overlay.label')}
-          style={{ top: CARD_TOP_OFFSET_PX, '--card-gap': `${CARD_GAP_PX}px` } as CSSProperties}
+          style={
+            {
+              top: CARD_TOP_OFFSET_PX,
+              '--card-gap': `${CARD_GAP_PX}px`,
+              '--card-stroke': `${CALLOUT_STROKE_PX}px`,
+              '--card-stroke-alpha': `${CALLOUT_OPACITY * 100}%`,
+            } as CSSProperties
+          }
           className="hud-panel selection-card pointer-events-auto absolute w-56 rounded-lg p-2"
         >
           <button

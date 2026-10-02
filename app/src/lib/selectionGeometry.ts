@@ -32,6 +32,13 @@ const pt = (deg: number) => {
   return `${(OUTER_R * Math.cos(a)).toFixed(2)} ${(OUTER_R * Math.sin(a)).toFixed(2)}`;
 };
 
+/** Callout stroke width (px) and opacity: the selection card border reuses both,
+ * so leader and card read as one stroke. Width is 1 because Chrome snaps borders
+ * to whole px, so the callout matches the card border. Human design choices
+ * (not data). */
+export const CALLOUT_STROKE_PX = 1;
+export const CALLOUT_OPACITY = 0.85;
+
 /** Right-side leader: arc, then from its midpoint a 45° segment to the elbow and
  * a horizontal one to the card. Mirrored in CSS for the left side. */
 export const CALLOUT_PATH =

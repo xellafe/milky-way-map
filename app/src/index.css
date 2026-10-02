@@ -31,8 +31,12 @@
 
   /* Selection overlay card (#3): right of the star; SelectionTracker flips
    * data-side to "left" when it would run under the detail panel. --card-gap
-   * is set inline from CARD_GAP_PX (lib/selectionGeometry). */
+   * is set inline from CARD_GAP_PX (lib/selectionGeometry). The border matches
+   * the callout stroke (width and alpha set inline from the same constants);
+   * human design choice, not data. */
   .selection-card {
+    border-width: var(--card-stroke);
+    border-color: color-mix(in srgb, var(--color-hud-accent) var(--card-stroke-alpha), transparent);
     left: var(--card-gap);
   }
 

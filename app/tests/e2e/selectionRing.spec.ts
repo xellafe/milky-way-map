@@ -119,3 +119,41 @@ test('left side: mirrored callout meets the card right edge', async ({ page }) =
   checkCommon(m);
   expect(near(m.callout!.x, m.card!.x + m.card!.w, 3), 'callout end vs card right').toBe(true);
 });
+
+// Chrome snaps border widths to whole px, so the card border can only match a whole-px callout stroke.
+test('card border has the same stroke as the callout; other panels keep theirs', async ({
+  page,
+}) => {
+  await openAndSelect(page);
+  const m = await page.evaluate(() => {
+    const cs = (sel: string) => getComputedStyle(document.querySelector(sel)!);
+    const card = cs('[data-hud=selection-card]');
+    const callout = cs('[data-hud=callout]');
+    const panel = cs('[data-testid=star-panel]');
+    return {
+      cardWidth: parseFloat(card.borderTopWidth),
+      cardColor: card.borderTopColor,
+      calloutWidth: parseFloat(callout.strokeWidth),
+      calloutColor: callout.stroke,
+      calloutOpacity: parseFloat(callout.opacity),
+      panelWidth: parseFloat(panel.borderTopWidth),
+      panelColor: panel.borderTopColor,
+    };
+  });
+
+  // Chrome may serialize as rgb()/rgba() or color(srgb r g b / a).
+  const parse = (c: string) => {
+    const n = (c.match(/-?[\d.]+/g) ?? []).map(Number);
+    const scale = c.startsWith('color(') ? 255 : 1; // srgb channels are 0..1 floats
+    return { rgb: n.slice(0, 3).map((v) => v * scale), a: n.length > 3 ? n[3]! : 1 };
+  };
+  const card = parse(m.cardColor);
+  const stroke = parse(m.calloutColor);
+
+  expect(m.cardWidth).toBeCloseTo(m.calloutWidth, 1);
+  expect(Math.abs(card.a - m.calloutOpacity)).toBeLessThanOrEqual(0.02);
+  card.rgb.forEach((v, i) => expect(Math.abs(v - stroke.rgb[i]!)).toBeLessThanOrEqual(2));
+  expect(m.panelWidth).toBe(1);
+  // Generic .hud-panel border alpha (35%), untouched by the card override.
+  expect(Math.abs(parse(m.panelColor).a - 0.35)).toBeLessThanOrEqual(0.02);
+});
