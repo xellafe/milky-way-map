@@ -13,7 +13,7 @@ export function HudPanel({
   children: ReactNode;
 } & HTMLAttributes<HTMLElement>) {
   return (
-    <section className={`hud-panel rounded-lg ${padding} ${className}`} {...rest}>
+    <section className={`hud-panel rounded-hud ${padding} ${className}`} {...rest}>
       {children}
     </section>
   );

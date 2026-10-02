@@ -8,6 +8,8 @@
   --color-hud-text: #f4f8ff;
   --color-hud-warn: #ff9f5f;
   --color-hud-bg: rgb(10 16 30 / 0.82);
+  /* Corner radius of every HUD box and stat tile: human design choice (3 px), not data. */
+  --radius-hud: 3px;
   --font-hud: 'Segoe UI', system-ui, sans-serif;
   --font-hud-mono: Consolas, 'Cascadia Mono', ui-monospace, monospace;
 }

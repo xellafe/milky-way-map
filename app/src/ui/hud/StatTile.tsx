@@ -32,7 +32,7 @@ export function StatTile({
   return (
     <div
       data-testid={testId}
-      className={`rounded border border-hud-accent/25 bg-hud-accent/5 ${compact ? 'p-1.5' : 'p-2'}`}
+      className={`rounded-hud border border-hud-accent/25 bg-hud-accent/5 ${compact ? 'p-1.5' : 'p-2'}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-1">
         <span id={labelId} className="text-xs text-hud-muted">

@@ -139,7 +139,7 @@ function Overlay({ index }: { index: number }) {
               '--card-stroke-alpha': `${CALLOUT_OPACITY * 100}%`,
             } as CSSProperties
           }
-          className="hud-panel selection-card pointer-events-auto absolute w-56 rounded-lg p-2"
+          className="hud-panel selection-card pointer-events-auto absolute w-56 rounded-hud p-2"
         >
           <button
             type="button"

@@ -128,7 +128,7 @@ export function LanguageSelector() {
           role="menu"
           aria-label={t('language.menuLabel')}
           data-testid="language-menu"
-          className="hud-panel absolute right-0 mt-1 min-w-40 overflow-hidden rounded-lg py-1 font-hud"
+          className="hud-panel absolute right-0 mt-1 min-w-40 overflow-hidden rounded-hud py-1 font-hud"
         >
           {SUPPORTED_LANGUAGES.map((lng, index) => (
             <li key={lng} role="none">

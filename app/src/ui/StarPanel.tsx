@@ -230,7 +230,7 @@ export function StarPanel() {
       aria-label={t('panel.regionLabel')}
       data-testid="star-panel"
       data-hud="star-panel"
-      className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg p-4"
+      className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-hud p-4"
     >
       <button
         type="button"
