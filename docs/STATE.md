@@ -4,11 +4,11 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-09-29 (issue #1 mergiata; issue #2: stili pianeti e orbite)
+- **Data ultimo aggiornamento:** 2026-09-29 (issue #1 mergiata; issue #2: stili pianeti e orbite; issue #3 UI sci-fi completa su `feat/sci-fi-ui`, prossimo passo: push, PR, merge, deploy)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
-## Issue #3 — UI sci-fi (2026-09-30, branch `feat/sci-fi-ui`, range `380052d..c1b72d3`)
+## Issue #3 — UI sci-fi (2026-09-30, branch `feat/sci-fi-ui`, range `380052d..3b34207`)
 
 Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/superpowers/plans/2026-09-30-sci-fi-ui.md`.
 
@@ -19,7 +19,15 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - **F4 overlay di selezione** (`36ebc45`, `f3be7a6`, `c1b72d3`): stato dell'overlay, helper di posizionamento, anello b6 e scheda riassuntiva; lookup del codice di produzione disaccoppiati dai test id.
 - **Pulizia finale**: 6 finding della review finale risolti in un'unica tornata (dettagli negli SHA sopra e in `c1b72d3`).
 
+**Ritocchi post-review (richiesta umana)**
+- `004eca9`: rimossi gli angoli a parentesi dei pannelli HUD (e `position: relative` di `.hud-panel`, non più necessario).
+- `27051b9`: controlli musica (play/pausa + volume) spostati dal dock al gruppo in alto a destra, sempre visibile, a sinistra del pulsante lingua; dock = Filtri/Viste/Opzioni (galassia), Opzioni (System View); chiave i18n `dock.music` → `music.label`.
+- `3b34207`: scale con etichette sotto i gauge (scheda e pannello): distanza 1/10/100/1.000 a.l.; classi spettrali M–B con tacche ai confini MK convenzionali approssimati; luminosità 10⁻³/1/10³; magnitudine 0/20 e occhio nudo a 6, 10 solo tacca (scelta umana: collisione tra etichette).
+- **Assunzione sui dati:** confini delle classi spettrali approssimati da manuale; classe O (> 30000 K) clampata a destra.
+- Etichetta "Temperatura efficace" → "Temperatura" (5 locale); `tsconfig` lib + `ES2023.Intl`.
+
 **Esiti AC**
+- Dopo i ritocchi: gate completo verde (unit **140**, e2e **71**).
 - e2e **64/64**, unit **135** verdi; axe senza violazioni serious/critical su galaxy, 4 pannelli del dock e System View.
 - FPS ≥ 60 sul dataset completo: **non misurato** (headless ~5 fps, il preview non renderizza frame). Aperto: lo misura l'umano con `?stats=1`.
 
@@ -35,6 +43,8 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - CSS non in `@layer` batte le utility Tailwind (già in AGENTS › Trappole).
 - Preview e headless non misurano gli FPS né eseguono le animazioni in modo affidabile.
 - Il codice di produzione non seleziona per `data-testid`: usare `data-hud`.
+
+**Prossimo passo:** push del branch, PR su `main`, merge, deploy su Pages (rilascio approvato dall'umano).
 
 **Follow-up aperti** (da valutare come issue)
 - Misura FPS con `?stats=1`.
