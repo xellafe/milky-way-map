@@ -8,6 +8,16 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Fix — la UI non fa passare il puntatore alle stelle (2026-10-02, branch `fix/ui-pointer-blocking`)
+
+Bug segnalato dall'umano: l'interazione col puntatore sulla UI raggiungeva le stelle dietro.
+
+- **Causa 1:** la scheda di selezione era `pointer-events-none` (scelta di #3 per far arrivare wheel/drag al canvas): click e hover sulla scheda colpivano le stelle dietro. **Decisione umana:** la scheda blocca il puntatore; conseguenza: wheel/drag sopra la scheda non muovono più la camera.
+- **Causa 2:** `StarPicking` ascoltava solo il canvas, quindi hover (etichetta + cursore pointer) restava stantio passando su un pannello. Ora l'hover si azzera su `pointerleave` del canvas, un click richiede il `pointerdown` sul canvas e l'hover si azzera all'unmount (rientro dalla System View).
+- Le etichette dei nomi (`StarLabelsLayer`) restano `pointer-events-none` di proposito (ancorate alla stella, `aria-hidden`).
+- **Test:** nuovo `app/tests/e2e/pointerBlocking.spec.ts` (3 regressioni); in `orbit.spec` la wheel è spostata fuori dalla scheda.
+- Gate completo verde: unit 140, e2e 74 (0 flaky).
+
 ## Issue #3 — UI sci-fi (2026-09-30, branch `feat/sci-fi-ui`, range `380052d..3b34207`)
 
 Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/superpowers/plans/2026-09-30-sci-fi-ui.md`.
