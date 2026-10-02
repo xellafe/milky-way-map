@@ -8,6 +8,16 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Fix — la UI non fa passare il puntatore alle stelle (2026-10-02, branch `fix/ui-pointer-blocking`)
+
+Bug segnalato dall'umano: l'interazione col puntatore sulla UI raggiungeva le stelle dietro.
+
+- **Causa 1:** la scheda di selezione era `pointer-events-none` (scelta di #3 per far arrivare wheel/drag al canvas): click e hover sulla scheda colpivano le stelle dietro. **Decisione umana:** la scheda blocca il puntatore; conseguenza: wheel/drag sopra la scheda non muovono più la camera.
+- **Causa 2:** `StarPicking` ascoltava solo il canvas, quindi hover (etichetta + cursore pointer) restava stantio passando su un pannello. Ora l'hover si azzera su `pointerleave` del canvas, un click richiede il `pointerdown` sul canvas e l'hover si azzera all'unmount (rientro dalla System View).
+- Le etichette dei nomi (`StarLabelsLayer`) restano `pointer-events-none` di proposito (ancorate alla stella, `aria-hidden`).
+- **Test:** nuovo `app/tests/e2e/pointerBlocking.spec.ts` (3 regressioni); in `orbit.spec` la wheel è spostata fuori dalla scheda.
+- Gate completo verde: unit 140, e2e 74 (0 flaky).
+
 ## Issue #3 — UI sci-fi (2026-09-30, branch `feat/sci-fi-ui`, range `380052d..3b34207`)
 
 Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/superpowers/plans/2026-09-30-sci-fi-ui.md`.
@@ -25,6 +35,12 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - `3b34207`: scale con etichette sotto i gauge (scheda e pannello): distanza 1/10/100/1.000 a.l.; classi spettrali M–B con tacche ai confini MK convenzionali approssimati; luminosità 10⁻³/1/10³; magnitudine 0/20 e occhio nudo a 6, 10 solo tacca (scelta umana: collisione tra etichette).
 - **Assunzione sui dati:** confini delle classi spettrali approssimati da manuale; classe O (> 30000 K) clampata a destra.
 - Etichetta "Temperatura efficace" → "Temperatura" (5 locale); `tsconfig` lib + `ES2023.Intl`.
+- 4a (6be357d4083c5219bf000ed46017ba2434f454d3): il clic sul cielo vuoto non deseleziona più; scheda e pannello si chiudono solo con la ✕.
+- 4b (addee139eac37c377e275e07eb552a36ab16d2cf): anelli Ø60/Ø95 (esterno a tratti) e callout statico verso la scheda; geometria in `lib/selectionGeometry.ts`.
+- 9fce32d: bordo della scheda = tratto del callout (1 px, accent 85%); callout ridotto da 1,5 a 1 px perché Chrome arrotonda gli spessori dei border a pixel interi.
+- 88e16de: box HUD con raggio 3 px (token `--radius-hud`).
+- Apertura in sequenza della selezione, solo `motion-safe`: anelli `hud-lock` 600 ms, callout `hud-draw` (450 ms + 300 ms), scheda `hud-unfold` (700 ms + 250 ms). Durate = scelta umana. Gate veloce verde, 84 e2e, axe 0 serious/critical.
+- **Limite noto:** se `SelectionTracker` sposta la scheda in basso di oltre 12 px (stella vicino al bordo alto, es. sotto il box di ricerca) il callout statico non la raggiunge. Raro perché il fly-to centra la stella. Semplificazione deliberata: si rivede se emerge nell'uso.
 
 **Esiti AC**
 - Dopo i ritocchi: gate completo verde (unit **140**, e2e **71**).

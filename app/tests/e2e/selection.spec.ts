@@ -195,3 +195,26 @@ test('hovering a star shows its name label', async ({ page }) => {
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.getByTestId('hover-label')).toHaveText('Polaris', { timeout: 5_000 });
 });
+
+// Issue #3: a click on empty sky keeps the current selection (only ✕ closes the card).
+test('clicking empty sky keeps the selection (card and panel stay)', async ({ page }) => {
+  await serveFixtureData(page);
+  await page.goto('/');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await page.getByTestId('search-input').fill('polaris');
+  await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
+  await waitForFlyToArrival(page);
+  await expect(page.getByTestId('selection-card')).toBeVisible();
+
+  // Left-middle of the viewport: away from Polaris (centered), the panel,
+  // the card, the search box and the dock. Precondition: no star hovered there.
+  await page.mouse.move(250, 400);
+  await page.waitForTimeout(400);
+  await expect(page.getByTestId('hover-label')).toHaveCount(0);
+
+  await page.mouse.click(250, 400);
+  await page.waitForTimeout(600);
+  await expect(page.getByTestId('selection-card')).toBeVisible();
+  await expect(page.getByTestId('star-panel')).toBeVisible();
+  await expect(page.getByTestId('panel-title')).toHaveText('Polaris');
+});

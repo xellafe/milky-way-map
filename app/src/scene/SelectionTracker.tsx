@@ -3,19 +3,14 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 import { getStarCore } from '../data/starCoreStore';
 import { overlaySide } from '../lib/overlayPlacement';
+import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
 import { useGalaxyMapStore } from '../state/store';
 import { getSelectionAnchor } from './selectionAnchor';
 
-// Card offset from the star, in px: clears the ring (diameter 54) plus a
-// margin. Human choice (#3); keep in sync with `.selection-card` in index.css.
-const CARD_GAP_PX = 34;
 // Card width before it is measured (first frame): mirrors `w-56` in
 // SelectionOverlay (224 px). Human choice (#3).
 const FALLBACK_CARD_WIDTH_PX = 224;
 
-// Card top relative to the star, px: mirrors `top-[-27px]` in SelectionOverlay.
-// Human choice (#3).
-const CARD_TOP_OFFSET_PX = -27;
 // Clearance between the card and the search box / dock, px. Human choice (#3).
 const CARD_MARGIN_PX = 8;
 

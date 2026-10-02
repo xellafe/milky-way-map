@@ -8,6 +8,8 @@
   --color-hud-text: #f4f8ff;
   --color-hud-warn: #ff9f5f;
   --color-hud-bg: rgb(10 16 30 / 0.82);
+  /* Corner radius of every HUD box and stat tile: human design choice (3 px), not data. */
+  --radius-hud: 3px;
   --font-hud: 'Segoe UI', system-ui, sans-serif;
   --font-hud-mono: Consolas, 'Cascadia Mono', ui-monospace, monospace;
 }
@@ -30,15 +32,35 @@
   }
 
   /* Selection overlay card (#3): right of the star; SelectionTracker flips
-   * data-side to "left" when it would run under the detail panel. 34px = ring
-   * radius + margin (human choice), keep in sync with CARD_GAP_PX. */
+   * data-side to "left" when it would run under the detail panel. --card-gap
+   * is set inline from CARD_GAP_PX (lib/selectionGeometry). The border matches
+   * the callout stroke (width and alpha set inline from the same constants);
+   * human design choice, not data. */
   .selection-card {
-    left: 34px;
+    border-width: var(--card-stroke);
+    border-color: color-mix(in srgb, var(--color-hud-accent) var(--card-stroke-alpha), transparent);
+    left: var(--card-gap);
+    /* The card opens from the callout side: the hidden edge is set per side. */
+    --unfold-r: 100%;
+    --unfold-l: 0px;
   }
 
   [data-side='left'] .selection-card {
     left: auto;
-    right: 34px;
+    right: var(--card-gap);
+    --unfold-r: 0px;
+    --unfold-l: 100%;
+  }
+
+  /* Callout is drawn for the right side; the left side mirrors it about the
+   * star (origin 0 0 = the zero-size anchor). Only the path is animated, so
+   * the mirror never fights a transform animation. */
+  .selection-callout {
+    transform-origin: 0 0;
+  }
+
+  [data-side='left'] .selection-callout {
+    scale: -1 1;
   }
 
   /* B6 ring + overlay close animations (#3; durations are human choices). */
@@ -61,6 +83,28 @@
     }
     to {
       transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Selection opening sequence (#3; durations and delays are a human design
+   * choice, not data): callout path draws star -> card, then the card unfolds. */
+  @keyframes hud-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes hud-unfold {
+    from {
+      clip-path: inset(0 var(--unfold-r) 0 var(--unfold-l));
+      opacity: 0;
+    }
+    to {
+      clip-path: inset(0);
       opacity: 1;
     }
   }

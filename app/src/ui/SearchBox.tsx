@@ -136,7 +136,7 @@ export function SearchBox() {
         placeholder={t('ui.searchPlaceholder')}
         data-testid="search-input"
         data-hud="search"
-        className="hud-panel w-full rounded-lg px-3 py-2 font-hud text-sm text-hud-text placeholder-hud-muted outline-none focus:ring-2 focus:ring-hud-accent"
+        className="hud-panel w-full rounded-hud px-3 py-2 font-hud text-sm text-hud-text placeholder-hud-muted outline-none focus:ring-2 focus:ring-hud-accent"
         onChange={(e) => {
           setQuery(e.target.value);
           setActive(0);
@@ -156,7 +156,7 @@ export function SearchBox() {
           id="search-results"
           role="listbox"
           data-testid="search-results"
-          className="hud-panel mt-1 overflow-hidden rounded-lg font-hud text-sm"
+          className="hud-panel mt-1 overflow-hidden rounded-hud font-hud text-sm"
         >
           {results.length === 0 && (
             <li className="px-3 py-2 text-hud-muted">

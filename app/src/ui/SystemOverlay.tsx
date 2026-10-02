@@ -126,7 +126,7 @@ export function SystemOverlay() {
 
       <aside
         aria-label={t('system.planets')}
-        className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-lg p-4"
+        className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-hud p-4"
       >
         <p className="mb-2 text-sm text-hud-muted">{t('system.planets')}</p>
         <fieldset className="mb-2" data-testid="planet-type-filter">
