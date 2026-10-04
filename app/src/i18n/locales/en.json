@@ -139,5 +139,44 @@
     "trail": "Trail",
     "thick": "Thick",
     "simple": "Simple"
+  },
+  "welcome": {
+    "title": "Welcome to Galaxy Map",
+    "description": "A 3D map of the stellar neighborhood around the Sun, built from real data from the HYG and AT-HYG catalogs. Explore the stars and step into systems hosting exoplanets to watch their orbits to scale.",
+    "guideTitle": "Quick guide",
+    "guide": {
+      "look": {
+        "action": "Look around / orbit the selected star",
+        "command": "Drag with the mouse"
+      },
+      "move": {
+        "action": "Move",
+        "upDown": "up / down",
+        "roll": "roll"
+      },
+      "zoom": {
+        "action": "Move closer to or away from the selected star",
+        "command": "Mouse wheel"
+      },
+      "select": {
+        "action": "Select a star and fly to it",
+        "command": "Click"
+      },
+      "search": {
+        "action": "Find a star by name or catalog ID",
+        "command": "Search box"
+      },
+      "system": {
+        "action": "See the planetary system",
+        "command": "\"View system\" button in the star panel"
+      },
+      "dock": {
+        "action": "Filters, view options and settings",
+        "command": "Bottom bar"
+      }
+    },
+    "dontShowAgain": "Don't show again",
+    "start": "Start exploring",
+    "helpButton": "Show the welcome guide"
   }
 }

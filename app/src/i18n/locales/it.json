@@ -139,5 +139,44 @@
     "trail": "Scia",
     "thick": "Spessa",
     "simple": "Semplice"
+  },
+  "welcome": {
+    "title": "Benvenuto in Galaxy Map",
+    "description": "Una mappa 3D del vicinato stellare attorno al Sole, costruita con dati reali dei cataloghi HYG e AT-HYG. Esplora le stelle ed entra nei sistemi con esopianeti per vederne le orbite in scala.",
+    "guideTitle": "Guida rapida",
+    "guide": {
+      "look": {
+        "action": "Guarda intorno / orbita attorno alla stella selezionata",
+        "command": "Trascina con il mouse"
+      },
+      "move": {
+        "action": "Muoviti",
+        "upDown": "su / giù",
+        "roll": "rollio"
+      },
+      "zoom": {
+        "action": "Avvicinati o allontanati dalla stella selezionata",
+        "command": "Rotellina del mouse"
+      },
+      "select": {
+        "action": "Seleziona una stella e volaci",
+        "command": "Clic"
+      },
+      "search": {
+        "action": "Trova una stella per nome o ID di catalogo",
+        "command": "Casella di ricerca"
+      },
+      "system": {
+        "action": "Vedi il sistema planetario",
+        "command": "Pulsante \"Vedi sistema\" nel pannello della stella"
+      },
+      "dock": {
+        "action": "Filtri, opzioni di vista e impostazioni",
+        "command": "Barra in basso"
+      }
+    },
+    "dontShowAgain": "Non mostrare più",
+    "start": "Inizia a esplorare",
+    "helpButton": "Mostra la guida di benvenuto"
   }
 }

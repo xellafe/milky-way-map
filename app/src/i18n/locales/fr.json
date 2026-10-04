@@ -139,5 +139,44 @@
     "trail": "Traînée",
     "thick": "Épaisse",
     "simple": "Simple"
+  },
+  "welcome": {
+    "title": "Bienvenue dans Galaxy Map",
+    "description": "Une carte 3D du voisinage stellaire autour du Soleil, construite à partir de données réelles des catalogues HYG et AT-HYG. Explorez les étoiles et entrez dans les systèmes abritant des exoplanètes pour observer leurs orbites à l'échelle.",
+    "guideTitle": "Guide rapide",
+    "guide": {
+      "look": {
+        "action": "Regarder autour / orbiter autour de l'étoile sélectionnée",
+        "command": "Glisser avec la souris"
+      },
+      "move": {
+        "action": "Se déplacer",
+        "upDown": "haut / bas",
+        "roll": "roulis"
+      },
+      "zoom": {
+        "action": "Se rapprocher ou s'éloigner de l'étoile sélectionnée",
+        "command": "Molette de la souris"
+      },
+      "select": {
+        "action": "Sélectionner une étoile et s'y rendre",
+        "command": "Clic"
+      },
+      "search": {
+        "action": "Trouver une étoile par nom ou identifiant de catalogue",
+        "command": "Zone de recherche"
+      },
+      "system": {
+        "action": "Voir le système planétaire",
+        "command": "Bouton « Voir le système » dans le panneau de l'étoile"
+      },
+      "dock": {
+        "action": "Filtres, options d'affichage et réglages",
+        "command": "Barre du bas"
+      }
+    },
+    "dontShowAgain": "Ne plus afficher",
+    "start": "Commencer l'exploration",
+    "helpButton": "Afficher le guide de bienvenue"
   }
 }
