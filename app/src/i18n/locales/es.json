@@ -139,5 +139,44 @@
     "trail": "Estela",
     "thick": "Gruesa",
     "simple": "Simple"
+  },
+  "welcome": {
+    "title": "Bienvenido a Galaxy Map",
+    "description": "Un mapa 3D de la vecindad estelar alrededor del Sol, creado con datos reales de los catálogos HYG y AT-HYG. Explora las estrellas y entra en sistemas con exoplanetas para ver sus órbitas a escala.",
+    "guideTitle": "Guía rápida",
+    "guide": {
+      "look": {
+        "action": "Mira alrededor / orbita la estrella seleccionada",
+        "command": "Arrastra con el ratón"
+      },
+      "move": {
+        "action": "Moverse",
+        "upDown": "arriba / abajo",
+        "roll": "alabeo"
+      },
+      "zoom": {
+        "action": "Acércate o aléjate de la estrella seleccionada",
+        "command": "Rueda del ratón"
+      },
+      "select": {
+        "action": "Selecciona una estrella y vuela hacia ella",
+        "command": "Clic"
+      },
+      "search": {
+        "action": "Busca una estrella por nombre o ID de catálogo",
+        "command": "Cuadro de búsqueda"
+      },
+      "system": {
+        "action": "Ver el sistema planetario",
+        "command": "Botón \"Ver sistema\" en el panel de la estrella"
+      },
+      "dock": {
+        "action": "Filtros, opciones de vista y ajustes",
+        "command": "Barra inferior"
+      }
+    },
+    "dontShowAgain": "No volver a mostrar",
+    "start": "Empezar a explorar",
+    "helpButton": "Mostrar la guía de bienvenida"
   }
 }

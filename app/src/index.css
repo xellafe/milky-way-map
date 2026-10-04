@@ -19,6 +19,23 @@
  * here would beat them regardless of source order (higher-specificity-equivalent
  * unlayered CSS always wins over any @layer), so component rules stay layered. */
 @layer components {
+  /* Welcome dialog (#12): dim the scene behind the modal; kbd keycaps. */
+  dialog[data-testid='welcome-dialog']::backdrop {
+    background-color: rgb(0 0 0 / 0.6);
+  }
+
+  dialog[data-testid='welcome-dialog'] kbd {
+    display: inline-block;
+    margin-inline: 1px;
+    padding: 0 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 40%, transparent);
+    border-radius: var(--radius-hud);
+    background-color: rgb(255 255 255 / 0.06);
+    color: var(--color-hud-bright);
+    font-family: var(--font-hud);
+    font-size: 0.75rem;
+  }
+
   /* HUD panel: dark translucent card, thin accent border, inner glow,
    * and native scrollbars tinted to match instead of the default white. */
   .hud-panel {

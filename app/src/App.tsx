@@ -10,6 +10,7 @@ import { GalaxyScene } from './scene/GalaxyScene';
 import { SystemScene } from './scene/SystemScene';
 import { useGalaxyMapStore } from './state/store';
 import { ControlDock } from './ui/ControlDock';
+import { HelpButton } from './ui/HelpButton';
 import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
 import { LoadingOverlay } from './ui/LoadingOverlay';
@@ -19,6 +20,7 @@ import { SelectionOverlay } from './ui/SelectionOverlay';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
 import { StarPanel } from './ui/StarPanel';
 import { SystemOverlay } from './ui/SystemOverlay';
+import { WelcomeDialog } from './ui/WelcomeDialog';
 
 const webgl2Available = isWebGL2Available();
 
@@ -103,6 +105,7 @@ export default function App() {
       <ControlDock />
       {/* Outside the view switch: the <audio> and playback survive view changes. */}
       <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+        <HelpButton />
         <MusicControl />
         <LanguageSelector />
       </div>
@@ -114,6 +117,7 @@ export default function App() {
         className="pointer-events-none absolute inset-0 z-30 bg-black opacity-0 motion-safe:animate-[view-fade_450ms_ease-out]"
       />
       <LoadingOverlay />
+      <WelcomeDialog />
     </div>
   );
 }

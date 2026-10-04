@@ -8,6 +8,26 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #12 — messaggio di benvenuto (2026-10-03, branch `feat/welcome-message`, commit `6901bda`, `9b8c4d7`, `a0da4da`, `294975e`)
+
+- Costruito: `WelcomeDialog` (nativo `<dialog>`, modale) con breve descrizione
+  e guida rapida ai comandi, pulsante "?" per riaprirlo in Galaxy e System
+  View, flag in `lib/welcome`.
+- AC1–AC6 PASS; gate completo verde (149 unit, 108 e2e).
+- Decisione: il dialog compare a ogni visita finché l'utente non sceglie
+  "Don't show again".
+- Decisione: il flag sta in localStorage (`galaxy-map-welcome-dismissed`), fuori
+  da Settings, quindi "Reset settings" non lo tocca. Gli e2e esistenti lo
+  ricevono via `storageState`.
+- Decisione: i tasti con target dentro un `<dialog>` sono ignorati da
+  `CameraControls` e dall'Escape di `Dock`. Focus iniziale su "Start exploring"
+  con `focus()` dopo `showModal()` (`294975e`).
+- Limite noto: un tasto di movimento già premuto all'apertura continua ad agire
+  fino al keyup (parcheggiato, nessun AC lo copre).
+- Limite noto: il guard è basato sul target; verificato in Chromium (click sul
+  testo del dialog lascia il focus sul `<dialog>`). In un browser che sposta il
+  focus su body la camera si muoverebbe sotto il dialog.
+
 ## Issue #11 — cursore grab/grabbing (2026-10-02, branch `feat/grab-cursor`)
 
 - Il canvas mostra `grab` a riposo e `grabbing` durante il drag in Galaxy e

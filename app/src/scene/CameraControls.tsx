@@ -124,8 +124,9 @@ export function CameraControls() {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      // Don't steal keys from the search box / panels.
+      // Don't steal keys from the search box / panels, nor from modal dialogs (#12).
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof Element && e.target.closest('dialog')) return;
       keys.current.add(e.code);
     };
     const onKeyUp = (e: KeyboardEvent) => keys.current.delete(e.code);

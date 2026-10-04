@@ -139,5 +139,44 @@
     "trail": "Schweif",
     "thick": "Dick",
     "simple": "Einfach"
+  },
+  "welcome": {
+    "title": "Willkommen bei Galaxy Map",
+    "description": "Eine 3D-Karte der Sternumgebung um die Sonne, erstellt aus echten Daten der Kataloge HYG und AT-HYG. Erkunde die Sterne und betritt Systeme mit Exoplaneten, um ihre Umlaufbahnen maßstabsgetreu zu sehen.",
+    "guideTitle": "Kurzanleitung",
+    "guide": {
+      "look": {
+        "action": "Umschauen / den ausgewählten Stern umkreisen",
+        "command": "Mit der Maus ziehen"
+      },
+      "move": {
+        "action": "Bewegen",
+        "upDown": "hoch / runter",
+        "roll": "rollen"
+      },
+      "zoom": {
+        "action": "Dem ausgewählten Stern näher kommen oder sich entfernen",
+        "command": "Mausrad"
+      },
+      "select": {
+        "action": "Einen Stern auswählen und hinfliegen",
+        "command": "Klick"
+      },
+      "search": {
+        "action": "Einen Stern nach Name oder Katalog-ID finden",
+        "command": "Suchfeld"
+      },
+      "system": {
+        "action": "Das Planetensystem ansehen",
+        "command": "Schaltfläche „System ansehen“ im Sternpanel"
+      },
+      "dock": {
+        "action": "Filter, Ansichtsoptionen und Einstellungen",
+        "command": "Untere Leiste"
+      }
+    },
+    "dontShowAgain": "Nicht mehr anzeigen",
+    "start": "Erkundung starten",
+    "helpButton": "Willkommensanleitung anzeigen"
   }
 }

@@ -30,6 +30,8 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
     if (!dockPanel) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || event.defaultPrevented) return;
+      // Escape inside the welcome dialog closes only the dialog (#12).
+      if (event.target instanceof Element && event.target.closest('dialog')) return;
       const openId = dockPanel;
       closeDockPanel();
       buttonRefs.current.get(openId)?.focus();

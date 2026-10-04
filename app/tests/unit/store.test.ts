@@ -160,4 +160,12 @@ describe('galaxy map store', () => {
     s().exitSystemView();
     expect(s().selectionOverlayOpen).toBe(false);
   });
+
+  it('setWelcomeOpen toggles welcomeOpen', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().setWelcomeOpen(false);
+    expect(s().welcomeOpen).toBe(false);
+    s().setWelcomeOpen(true);
+    expect(s().welcomeOpen).toBe(true);
+  });
 });

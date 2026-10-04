@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { DEFAULT_FILTERS, type DataBounds, type Filters } from '../lib/filterMask';
 import { prefersReducedMotion } from '../lib/motion';
 import type { PlanetType } from '../lib/planetType';
+import { isWelcomeDismissed } from '../lib/welcome';
 
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
@@ -60,6 +61,10 @@ export interface GalaxyMapState {
    * selection, even of the same star; closing keeps the selection itself.
    */
   selectionOverlayOpen: boolean;
+  /** Welcome dialog (#12) open; initialised from the persisted dismissal flag. */
+  welcomeOpen: boolean;
+  /** Opens or closes the welcome dialog (#12). */
+  setWelcomeOpen: (open: boolean) => void;
   /** Bumped by every star selection: remounts the overlay, so a re-click during
    * its closing flicker reopens it. */
   selectionEpoch: number;
@@ -112,6 +117,8 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   labelsVersion: 0,
   dockPanel: null,
   selectionOverlayOpen: false,
+  welcomeOpen: !isWelcomeDismissed(),
+  setWelcomeOpen: (open) => set({ welcomeOpen: open }),
   selectionEpoch: 0,
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
