@@ -173,7 +173,7 @@ export function MusicPlayer() {
               onClick={prev}
               className={BUTTON_CLASS}
             >
-              <span aria-hidden>⏮</span>
+              <span aria-hidden>⏮&#xFE0E;</span>
             </button>
             <button
               type="button"
@@ -191,7 +191,7 @@ export function MusicPlayer() {
               onClick={next}
               className={BUTTON_CLASS}
             >
-              <span aria-hidden>⏭</span>
+              <span aria-hidden>⏭&#xFE0E;</span>
             </button>
             <HudSlider
               min={0}

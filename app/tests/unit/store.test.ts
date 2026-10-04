@@ -218,6 +218,28 @@ describe('galaxy map store', () => {
       expect(s().musicExpanded).toBe(false);
     });
 
+    it('compact: opening a dock panel persists the collapsed flag', () => {
+      const storage = stubEnv(true);
+      useGalaxyMapStore.setState({ dockPanel: null, musicExpanded: true });
+      s().toggleDockPanel('view');
+      expect(storage.getItem(MUSIC_COLLAPSED_KEY)).toBe('1');
+    });
+
+    it('compact: closing a dock panel leaves the player state unchanged', () => {
+      stubEnv(true);
+      useGalaxyMapStore.setState({ dockPanel: 'view', musicExpanded: false });
+      s().toggleDockPanel('view');
+      expect(s().dockPanel).toBeNull();
+      expect(s().musicExpanded).toBe(false);
+    });
+
+    it('compact: collapsing the player leaves an open dock panel open', () => {
+      stubEnv(true);
+      useGalaxyMapStore.setState({ dockPanel: 'filters', musicExpanded: true });
+      s().setMusicExpanded(false);
+      expect(s().dockPanel).toBe('filters');
+    });
+
     it('not compact: player and dock panel do not affect each other', () => {
       stubEnv(false);
       useGalaxyMapStore.setState({ dockPanel: 'filters', musicExpanded: false });

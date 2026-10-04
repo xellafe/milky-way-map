@@ -193,9 +193,11 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   toggleDockPanel: (id) =>
     set((s) => {
       const opening = s.dockPanel !== id;
+      const collapsePlayer = opening && isCompactViewport();
+      if (collapsePlayer) writeFlag(MUSIC_COLLAPSED_KEY, true);
       return {
         dockPanel: opening ? id : null,
-        musicExpanded: opening && isCompactViewport() ? false : s.musicExpanded,
+        musicExpanded: collapsePlayer ? false : s.musicExpanded,
       };
     }),
   closeDockPanel: () => set({ dockPanel: null }),

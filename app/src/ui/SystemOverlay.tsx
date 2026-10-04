@@ -193,9 +193,9 @@ export function SystemOverlay() {
        * System View). The dock icon row is at bottom-4; bottom-20 clears it.
        * An open dock panel renders in that same band (Dock.tsx) and its
        * height varies (Options is tall), so the bar is hidden while a panel
-       * is open instead of guessing an offset that can still overlap.
+       * is open instead of guessing an offset that can still overlap. The
+       * expanded player takes the bar's band on compact viewports.
        */}
-      {/* The expanded player takes the bar's band on compact viewports. */}
       {!dockPanel && !(musicExpanded && compact) && (
         <HudPanel
           aria-label={t('system.timeScale')}
