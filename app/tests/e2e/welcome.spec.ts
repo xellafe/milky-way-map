@@ -144,3 +144,49 @@ test('welcome dialog has no blocking axe violations', async ({ page }) => {
   );
   expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
 });
+
+test('movement keys do not move the camera while the dialog is open', async ({ page }) => {
+  await serveFixtureData(page);
+  await page.goto('/?pdb=1');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await expect(dialog(page)).toBeVisible();
+  // showModal() focuses the checkbox, which the input guard already ignores:
+  // focus a button so the dialog guard is what's under test.
+  await page.getByTestId('welcome-start').focus();
+
+  const position = () =>
+    page.evaluate(
+      () => ((globalThis as Record<string, unknown>).__camera as { position: number[] }).position,
+    );
+  const hold = async () => {
+    await page.keyboard.down('KeyW');
+    await page.waitForTimeout(500);
+    await page.keyboard.up('KeyW');
+    await page.waitForTimeout(100);
+  };
+
+  const before = await position();
+  await hold();
+  expect(await position()).toEqual(before);
+
+  // Control: with the dialog closed the same key moves the camera.
+  await page.keyboard.press('Escape');
+  await expect(dialog(page)).toBeHidden();
+  await hold();
+  expect(await position()).not.toEqual(before);
+});
+
+test('Escape in the dialog does not close an open dock panel', async ({ page }) => {
+  await openApp(page);
+  await page.getByTestId('welcome-start').click();
+  await expect(dialog(page)).toBeHidden();
+
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
+
+  await page.getByTestId('help-button').click();
+  await expect(dialog(page)).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog(page)).toBeHidden();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
+});
