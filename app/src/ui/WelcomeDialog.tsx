@@ -16,6 +16,7 @@ export function WelcomeDialog() {
   const open = useGalaxyMapStore((s) => s.welcomeOpen);
   const setOpen = useGalaxyMapStore((s) => s.setWelcomeOpen);
   const ref = useRef<HTMLDialogElement>(null);
+  const startRef = useRef<HTMLButtonElement>(null);
   const [dontShow, setDontShow] = useState(isWelcomeDismissed);
 
   useEffect(() => {
@@ -24,6 +25,9 @@ export function WelcomeDialog() {
     if (open && !dialog.open) {
       setDontShow(isWelcomeDismissed());
       dialog.showModal();
+      // React's autoFocus runs while the dialog is closed and is a no-op, and
+      // showModal() would focus the checkbox, so the first Space would tick it.
+      startRef.current?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
     }
@@ -75,7 +79,7 @@ export function WelcomeDialog() {
           />
           {t('welcome.dontShowAgain')}
         </label>
-        <HudButton type="submit" data-testid="welcome-start">
+        <HudButton ref={startRef} type="submit" data-testid="welcome-start">
           {t('welcome.start')}
         </HudButton>
       </form>

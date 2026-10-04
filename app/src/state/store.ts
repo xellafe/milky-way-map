@@ -61,7 +61,9 @@ export interface GalaxyMapState {
    * selection, even of the same star; closing keeps the selection itself.
    */
   selectionOverlayOpen: boolean;
+  /** Welcome dialog (#12) open; initialised from the persisted dismissal flag. */
   welcomeOpen: boolean;
+  /** Opens or closes the welcome dialog (#12). */
   setWelcomeOpen: (open: boolean) => void;
   /** Bumped by every star selection: remounts the overlay, so a re-click during
    * its closing flicker reopens it. */

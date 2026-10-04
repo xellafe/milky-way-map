@@ -150,8 +150,9 @@ test('movement keys do not move the camera while the dialog is open', async ({ p
   await page.goto('/?pdb=1');
   await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
   await expect(dialog(page)).toBeVisible();
-  // showModal() focuses the checkbox, which the input guard already ignores:
-  // focus a button so the dialog guard is what's under test.
+  // The dialog opens with welcome-start focused (focused after showModal), so the input guard
+  // is not what ignores the keys: the dialog guard is under test. Focus is set
+  // explicitly to keep the test independent of the initial focus.
   await page.getByTestId('welcome-start').focus();
 
   const position = () =>
@@ -189,4 +190,57 @@ test('Escape in the dialog does not close an open dock panel', async ({ page }) 
   await page.keyboard.press('Escape');
   await expect(dialog(page)).toBeHidden();
   await expect(page.getByTestId('filters-panel')).toBeVisible();
+});
+
+test('movement keys are ignored after clicking the dialog text', async ({ page }) => {
+  await serveFixtureData(page);
+  await page.goto('/?pdb=1');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await expect(dialog(page)).toBeVisible();
+  await page.locator('#welcome-title').click();
+
+  const position = () =>
+    page.evaluate(
+      () => ((globalThis as Record<string, unknown>).__camera as { position: number[] }).position,
+    );
+  const before = await position();
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(500);
+  await page.keyboard.up('KeyW');
+  await page.waitForTimeout(100);
+  expect(await position()).toEqual(before);
+});
+
+test('Escape after clicking the dialog text keeps the dock panel open', async ({ page }) => {
+  await openApp(page);
+  await page.getByTestId('welcome-start').click();
+  await expect(dialog(page)).toBeHidden();
+
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
+
+  await page.getByTestId('help-button').click();
+  await expect(dialog(page)).toBeVisible();
+  await page.locator('#welcome-title').click();
+  await page.keyboard.press('Escape');
+  await expect(dialog(page)).toBeHidden();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
+});
+
+test('initial focus is on Start exploring', async ({ page }) => {
+  await openApp(page);
+  await expect(dialog(page)).toBeVisible();
+  await expect(page.getByTestId('welcome-start')).toBeFocused();
+});
+
+test('shows the dialog while the catalog is still loading', async ({ page }) => {
+  await serveFixtureData(page);
+  // Registered after the fixture route, so it runs first and defers to it.
+  await page.route('**/data/**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.fallback();
+  });
+  await page.goto('/');
+  await expect(dialog(page)).toBeVisible();
+  await expect(page.getByTestId('loading-overlay')).toBeVisible();
 });
