@@ -1,6 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_TIME_SCALE_DAYS_PER_SECOND, useGalaxyMapStore } from '../../src/state/store';
+import {
+  DEFAULT_TIME_SCALE_DAYS_PER_SECOND,
+  MUSIC_COLLAPSED_KEY,
+  useGalaxyMapStore,
+} from '../../src/state/store';
 
 const initialState = useGalaxyMapStore.getState();
 
@@ -167,5 +171,62 @@ describe('galaxy map store', () => {
     expect(s().welcomeOpen).toBe(false);
     s().setWelcomeOpen(true);
     expect(s().welcomeOpen).toBe(true);
+  });
+
+  describe('music player state', () => {
+    const s = () => useGalaxyMapStore.getState();
+
+    function stubEnv(compact: boolean): Storage {
+      const data = new Map<string, string>();
+      const storage = {
+        getItem: (k: string) => data.get(k) ?? null,
+        setItem: (k: string, v: string) => void data.set(k, v),
+        removeItem: (k: string) => void data.delete(k),
+      } as unknown as Storage;
+      vi.stubGlobal('localStorage', storage);
+      vi.stubGlobal('window', { matchMedia: () => ({ matches: compact }) });
+      return storage;
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('setMusicExpanded updates the state and persists the collapsed flag', () => {
+      const storage = stubEnv(false);
+      s().setMusicExpanded(false);
+      expect(s().musicExpanded).toBe(false);
+      expect(storage.getItem(MUSIC_COLLAPSED_KEY)).toBe('1');
+      s().setMusicExpanded(true);
+      expect(s().musicExpanded).toBe(true);
+      expect(storage.getItem(MUSIC_COLLAPSED_KEY)).toBeNull();
+    });
+
+    it('compact: expanding the player closes the open dock panel', () => {
+      stubEnv(true);
+      useGalaxyMapStore.setState({ dockPanel: 'filters', musicExpanded: false });
+      s().setMusicExpanded(true);
+      expect(s().dockPanel).toBeNull();
+      expect(s().musicExpanded).toBe(true);
+    });
+
+    it('compact: opening a dock panel collapses the player', () => {
+      stubEnv(true);
+      useGalaxyMapStore.setState({ dockPanel: null, musicExpanded: true });
+      s().toggleDockPanel('view');
+      expect(s().dockPanel).toBe('view');
+      expect(s().musicExpanded).toBe(false);
+    });
+
+    it('not compact: player and dock panel do not affect each other', () => {
+      stubEnv(false);
+      useGalaxyMapStore.setState({ dockPanel: 'filters', musicExpanded: false });
+      s().setMusicExpanded(true);
+      expect(s().dockPanel).toBe('filters');
+      expect(s().musicExpanded).toBe(true);
+      s().toggleDockPanel('view');
+      expect(s().dockPanel).toBe('view');
+      expect(s().musicExpanded).toBe(true);
+    });
   });
 });
