@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import musicUrl from '../assets/background-music.mp3';
 import { nextIndex, prevIndex, type Track } from '../lib/playlist';
+import { useCompactViewport } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 import { HudSlider } from './hud/HudInputs';
 import { HudPanel } from './hud/HudPanel';
@@ -115,6 +116,14 @@ export function MusicPlayer() {
   } = useMusic();
   const expanded = useGalaxyMapStore((s) => s.musicExpanded);
   const setExpanded = useGalaxyMapStore((s) => s.setMusicExpanded);
+  // Compact: the expanded player and a dock panel compete for the same band;
+  // the player yields when the viewport shrinks into compact with a panel open.
+  const compact = useCompactViewport();
+  useEffect(() => {
+    const { musicExpanded, dockPanel } = useGalaxyMapStore.getState();
+    if (compact && musicExpanded && dockPanel) setExpanded(false);
+  }, [compact, setExpanded]);
+
   const collapseRef = useRef<HTMLButtonElement>(null);
   const expandRef = useRef<HTMLButtonElement>(null);
   // The clicked button unmounts and drops focus: hand it to the opposite one.
@@ -139,7 +148,7 @@ export function MusicPlayer() {
       data-music-zone
       data-expanded={expanded}
       padding="px-2 py-1"
-      className={`absolute bottom-4 right-4 z-20 ${expanded ? 'w-64' : ''}`}
+      className={`absolute bottom-4 right-4 z-20 ${expanded ? 'w-64 max-lg:bottom-20 max-lg:max-w-[calc(100%-2rem)]' : ''}`}
     >
       <audio
         ref={audioRef}

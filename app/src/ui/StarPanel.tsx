@@ -225,12 +225,15 @@ export function StarPanel() {
   if (!selection) return null;
 
   return (
+    // max-h ends 1rem above the expanded music player (aesthetic choice, not data;
+    // rem). Panel top is 4rem; the player is 3.5rem tall (measured). Below lg it sits
+    // at bottom-20: 4 + 5 + 3.5 + 1 = 13.5rem. From lg at bottom-4: 4 + 1 + 3.5 + 1 = 9.5rem.
     <aside
       role="region"
       aria-label={t('panel.regionLabel')}
       data-testid="star-panel"
       data-hud="star-panel"
-      className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-hud p-4"
+      className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-13.5rem)] lg:max-h-[calc(100%-9.5rem)] w-80 overflow-y-auto rounded-hud p-4"
     >
       <button
         type="button"

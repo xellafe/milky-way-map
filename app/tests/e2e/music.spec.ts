@@ -5,8 +5,8 @@
  * interrupt playback.
  */
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
-import { serveFixtureData } from './fixtures';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import { serveFixtureData, waitForFlyToArrival } from './fixtures';
 
 async function openApp(page: Page) {
   await serveFixtureData(page);
@@ -168,4 +168,117 @@ test('axe finds no blocking violations, expanded or collapsed', async ({ page })
   await page.getByTestId('music-collapse').click();
   await expect(page.getByTestId('music-expand')).toBeVisible();
   expect(await scan()).toEqual([]);
+});
+
+// Layout coexistence with the other HUD panels (issue #13).
+type Box = { x: number; y: number; width: number; height: number };
+/** Rectangles that only touch along an edge do not intersect. */
+const intersects = (a: Box, b: Box) =>
+  a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+const boxOf = async (loc: Locator): Promise<Box> => {
+  const b = await loc.boundingBox();
+  expect(b, 'element has a bounding box').not.toBeNull();
+  return b!;
+};
+const playerOf = (page: Page) => page.getByTestId('music-control');
+const expectClear = async (page: Page, other: Locator) =>
+  expect(intersects(await boxOf(playerOf(page)), await boxOf(other))).toBe(false);
+
+async function selectStar(page: Page, query: string, name: string) {
+  const input = page.getByTestId('search-input');
+  await input.fill(query);
+  await page.getByRole('option').filter({ hasText: name }).first().click();
+  await expect(page.getByTestId('star-panel')).toBeVisible();
+}
+
+async function enterTrappist(page: Page) {
+  await page.getByTestId('search-input').fill('trappist');
+  await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
+  const button = page.getByTestId('view-system-button');
+  await expect(button).toBeEnabled({ timeout: 10_000 });
+  await button.click();
+  await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
+}
+
+const timeBar = (page: Page) =>
+  page.getByTestId('time-pause').locator('xpath=ancestor::*[@aria-label][1]');
+
+test('desktop: player clear of the dock and an open dock panel', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openApp(page);
+  const player = await boxOf(playerOf(page));
+  expect(player.x + player.width).toBeGreaterThanOrEqual(1280 - 24);
+  expect(player.y + player.height).toBeGreaterThanOrEqual(720 - 24);
+  const dock = await boxOf(page.getByTestId('dock'));
+  expect(player.x).toBeGreaterThanOrEqual(dock.x + dock.width);
+  await expectClear(page, page.getByTestId('dock'));
+
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
+  await expectClear(page, page.getByTestId('filters-panel'));
+});
+
+test('desktop: player clear of the star panel and the selection card', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openApp(page);
+  await selectStar(page, 'polaris', 'Polaris');
+  await waitForFlyToArrival(page);
+  await expectClear(page, page.getByTestId('star-panel'));
+  const card = page.locator('[data-hud=selection-card]');
+  await expect(card).toBeVisible();
+  await expectClear(page, card);
+});
+
+test('desktop: player clear of the System View time bar', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openApp(page);
+  await enterTrappist(page);
+  await expectClear(page, timeBar(page));
+});
+
+test('compact: expanded player sits above the dock', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await openApp(page);
+  await expect(page.getByTestId('music-collapse')).toBeVisible();
+  await expectClear(page, page.getByTestId('dock'));
+
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('music-expand')).toBeVisible();
+  await expectClear(page, page.getByTestId('filters-panel'));
+
+  await page.getByTestId('music-expand').click();
+  await expect(page.getByTestId('filters-panel')).toHaveCount(0);
+});
+
+test('compact: resizing down collapses the player when a dock panel is open', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openApp(page);
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
+  await expect(page.getByTestId('music-collapse')).toBeVisible();
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByTestId('music-expand')).toBeVisible();
+  await expectClear(page, page.getByTestId('filters-panel'));
+});
+
+test('compact System View hides the time bar while the player is expanded', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await openApp(page);
+  await enterTrappist(page);
+  await expect(page.getByTestId('music-collapse')).toBeVisible();
+  await expect(page.getByTestId('time-pause')).toBeHidden();
+
+  await page.getByTestId('music-collapse').click();
+  await expect(page.getByTestId('time-pause')).toBeVisible();
+  await expectClear(page, timeBar(page));
+});
+
+test('compact: star panel ends above the expanded player', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await openApp(page);
+  await selectStar(page, 'polaris', 'Polaris');
+  await expect(page.getByTestId('music-collapse')).toBeVisible();
+  await expectClear(page, page.getByTestId('star-panel'));
 });
