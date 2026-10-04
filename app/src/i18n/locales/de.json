@@ -117,7 +117,15 @@
     "label": "Musik",
     "play": "Musik abspielen",
     "pause": "Musik pausieren",
-    "volume": "Musiklautstärke"
+    "volume": "Musiklautstärke",
+    "prev": "Vorheriger Titel",
+    "next": "Nächster Titel",
+    "collapse": "Musikplayer einklappen",
+    "expand": "Musikplayer ausklappen",
+    "nowPlaying": "Läuft gerade",
+    "tracks": {
+      "soundtrack": "Galaxy-Map-Soundtrack"
+    }
   },
   "options": {
     "title": "Optionen",

@@ -117,7 +117,15 @@
     "label": "Música",
     "play": "Reproducir música",
     "pause": "Pausar música",
-    "volume": "Volumen de la música"
+    "volume": "Volumen de la música",
+    "prev": "Pista anterior",
+    "next": "Pista siguiente",
+    "collapse": "Contraer el reproductor de música",
+    "expand": "Expandir el reproductor de música",
+    "nowPlaying": "Reproduciendo",
+    "tracks": {
+      "soundtrack": "Banda sonora de Galaxy Map"
+    }
   },
   "options": {
     "title": "Opciones",

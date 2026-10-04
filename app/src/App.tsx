@@ -14,7 +14,7 @@ import { HelpButton } from './ui/HelpButton';
 import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
 import { LoadingOverlay } from './ui/LoadingOverlay';
-import { MusicControl } from './ui/MusicControl';
+import { MusicPlayer } from './ui/MusicPlayer';
 import { SearchBox } from './ui/SearchBox';
 import { SelectionOverlay } from './ui/SelectionOverlay';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
@@ -104,9 +104,9 @@ export default function App() {
       )}
       <ControlDock />
       {/* Outside the view switch: the <audio> and playback survive view changes. */}
+      <MusicPlayer />
       <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
         <HelpButton />
-        <MusicControl />
         <LanguageSelector />
       </div>
       {/* SPEC §6.3: animated transition into/out of the System View — a CSS

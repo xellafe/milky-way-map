@@ -15,7 +15,7 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 - Free-fly + click-to-orbit camera with animated fly-to; `prefers-reduced-motion`
   aware.
 - Sci-fi HUD UI: bottom control dock (filters, view toggles, options) with
-  slide-in panels; music play/pause and volume sit in the top-right cluster, left of the language button; star detail panel with stat tiles and gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude); selecting a star
+  slide-in panels; music player in the bottom-right corner (playlist with prev/next, play/pause, volume, translated track title; collapsible to an icon, state remembered across visits; playback continues across view changes); star detail panel with stat tiles and gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude); selecting a star
   shows a ring and a summary card anchored to it.
 - Welcome dialog with a short description and quick controls guide, shown on
   every visit until "Don't show again" is ticked; the "?" button in the
