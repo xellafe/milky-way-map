@@ -332,7 +332,7 @@ export function SystemScene() {
   );
   useEffect(() => () => materials.forEach((m) => m.dispose()), [materials]);
 
-  if (!host) return null;
+  if (!host || !hostname) return null;
   const maxA = Math.max(...allPlanets.map((p) => p.semiMajorAxisAU), 0.01);
   const starRadius = Math.max((host.st_rad ?? 0) * SUN_RADIUS_AU, maxA * 0.045);
   const hz = hzBoundsAU(host.st_lum);
@@ -349,7 +349,7 @@ export function SystemScene() {
       onPointerMissed={() => selectPlanet(null)}
     >
       <color attach="background" args={[0x000000]} />
-      <HostStar radius={starRadius} teffK={host.st_teff} hostname={hostname!} />
+      <HostStar radius={starRadius} teffK={host.st_teff} hostname={hostname} />
       {showHz && hz && (
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[hz.innerAU, hz.outerAU, 96]} />

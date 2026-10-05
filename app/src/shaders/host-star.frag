@@ -35,10 +35,22 @@ const float SURFACE_GAIN = 1.2;
 const float SPOT_FREQ = 7.0;
 const float SPOT_WARP = 1.2;
 const float SPOT_DARKEN = 0.3;
+// fbm value thresholds where the spots start and reach full darkness (aesthetic
+// choice, not data): high, so spots cover only a few percent of the surface.
+const float SPOT_EDGE_LO = 0.66;
+const float SPOT_EDGE_HI = 0.76;
+// Granulation fades out between these screen-space frequencies, cycles per
+// pixel (aesthetic choice, not data): near 1 cycle/px it would alias into
+// animated shimmer on the small discs of the default camera.
+const float AA_FULL_CYCLES_PX = 0.35;
+const float AA_ZERO_CYCLES_PX = 0.7;
+// Granulation weight kept beyond AA_ZERO_CYCLES_PX, unitless (aesthetic choice,
+// not data): small discs stay faintly alive instead of going static.
+const float AA_FLOOR = 0.4;
 // Reference linear limb-darkening coefficient u (dimensionless): inspired by
 // the Sun, not the coefficient of this star (aesthetic choice, not data).
 const float LIMB_U = 0.6;
-// Per-channel limb coefficients (R, G, B), mean ~ LIMB_U: darkening is stronger
+// Per-channel limb coefficients (R, G, B), mean = LIMB_U: darkening is stronger
 // at short wavelengths, so the limb turns darker AND warmer instead of grey
 // (aesthetic choice, not data).
 const vec3 LIMB_U_RGB = LIMB_U + vec3(-0.2, 0.0, 0.2);
@@ -49,14 +61,16 @@ void main() {
   // Dark lanes sit on the n = 0.5 isosurface of the first field, which draws a
   // cellular network; the second field adds a faint brightness mottling.
   float lane = 1.0 - smoothstep(0.0, LANE_WIDTH, abs(0.65 * noise(pa) + 0.35 * noise(pa * 2.03) - 0.5));
-  float granulation = 1.0 - LANE_DARKEN * lane + MOTTLE * (fbm(pb) - 0.5);
+  float cyclesPerPx = length(fwidth(vObj)) * GRANULE_FREQ;
+  float aa = mix(1.0, AA_FLOOR, smoothstep(AA_FULL_CYCLES_PX, AA_ZERO_CYCLES_PX, cyclesPerPx));
+  float granulation = 1.0 + aa * (MOTTLE * (fbm(pb) - 0.5) - LANE_DARKEN * lane);
 
   // Domain-warped fbm thresholded high: organic blobs, no lattice edges.
   // Positioned per host by the seed; static in time.
   vec3 sp = vObj * SPOT_FREQ + uSeed * 37.0;
   vec3 warp = vec3(noise(sp + 3.1), noise(sp + 8.7), noise(sp + 15.3)) - 0.5;
   float spotNoise = fbm(sp + SPOT_WARP * warp);
-  float spot = smoothstep(0.66, 0.76, spotNoise) * uSpots;
+  float spot = smoothstep(SPOT_EDGE_LO, SPOT_EDGE_HI, spotNoise) * uSpots;
 
   float mu = max(dot(normalize(vViewNormal), normalize(-vViewPos)), 0.0);
   vec3 limb = 1.0 - LIMB_U_RGB * (1.0 - mu);

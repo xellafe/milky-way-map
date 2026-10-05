@@ -80,9 +80,9 @@ export function HostStar({
     [],
   );
 
-  /* eslint-disable react-hooks/immutability -- per-frame uniform updates on materials owned by this component */
   const quad = useRef<THREE.Mesh>(null);
   const time = useRef(0);
+  /* eslint-disable react-hooks/immutability -- per-frame uniform updates on materials owned by this component */
   useFrame(({ camera }, delta) => {
     const look = hostStarLook(useSettingsStore.getState().realism, prefersReducedMotion());
     if (look.animate) time.current += delta;

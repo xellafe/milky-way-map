@@ -18,7 +18,7 @@ const float GLOW_GAIN = 0.8;
 
 void main() {
   float r = length(vUv - 0.5) * 2.0;
-  float glow = pow(smoothstep(1.0, 1.0 / CORONA_SCALE, r), 3.0);
+  float glow = pow((1.0 - smoothstep(1.0 / CORONA_SCALE, 1.0, r)), 3.0);
   float pulse = 1.0 + uPulse * sin(6.2831853 * uTime / CORONA_PERIOD_S);
   gl_FragColor = vec4(uColor * glow * GLOW_GAIN * uIntensity * pulse, 1.0);
 }

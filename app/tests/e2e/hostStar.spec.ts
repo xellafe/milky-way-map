@@ -55,24 +55,28 @@ async function enterTrappist(page: Page) {
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
 }
 
-function discRadiusPx(canvasHeight: number): number {
+function discRadiusPx(canvasHeight: number, distFactor = Math.hypot(...CAMERA_OFFSET)): number {
   const data = JSON.parse(readFileSync(path.join(FIXTURES, 'exoplanets.json'), 'utf-8')) as {
     hosts: Record<string, { st_rad: number; planets: { pl_orbsmax: number }[] }>;
   };
   const host = data.hosts['TRAPPIST-1']!;
   const maxA = Math.max(...host.planets.map((p) => p.pl_orbsmax));
   const r = Math.max(host.st_rad * SUN_RADIUS_AU, maxA * 0.045);
-  const d = maxA * Math.hypot(...CAMERA_OFFSET);
+  const d = maxA * distFactor;
   const tanHalfFov = Math.tan((FOV_DEG / 2) * (Math.PI / 180));
   return ((canvasHeight / 2) * Math.tan(Math.asin(r / d))) / tanHalfFov;
 }
 
 /** Luminance (0-255) at canvas centre + (dx, dy) * R for each offset, in R units. */
-async function sampleLuma(page: Page, offsets: [number, number][]): Promise<number[]> {
+async function sampleLuma(
+  page: Page,
+  offsets: [number, number][],
+  distFactor?: number,
+): Promise<number[]> {
   const height = await page.evaluate(
     () => (document.querySelector('canvas') as HTMLCanvasElement).height,
   );
-  const radius = discRadiusPx(height);
+  const radius = discRadiusPx(height, distFactor);
   return page.evaluate(
     ({ offsets, radius }) => {
       const src = document.querySelector('canvas') as HTMLCanvasElement;
@@ -102,7 +106,11 @@ const GRID: [number, number][] = Array.from({ length: 25 }, (_, i) => [
   ((i % 5) - 2) * 0.175,
   (Math.floor(i / 5) - 2) * 0.175,
 ]);
-const discGrid = (page: Page) => sampleLuma(page, GRID);
+const discGrid = (page: Page, distFactor?: number) => sampleLuma(page, GRID, distFactor);
+
+// OrbitControls minDistance in units of maxA (SystemScene): zooming past it
+// clamps there, so the camera distance after a long wheel is known exactly.
+const MIN_DISTANCE_FACTOR = 0.15;
 
 const mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
 const std = (v: number[]) => Math.sqrt(mean(v.map((x) => (x - mean(v)) ** 2)));
@@ -125,8 +133,18 @@ async function expectAnimating(page: Page) {
 test('the star surface is textured', async ({ page }) => {
   const errors = collectErrors(page);
   await enterTrappist(page);
-  await page.waitForTimeout(500);
-  const grid = await discGrid(page);
+  // At the default camera the disc is ~13 px wide-radius and the grid spans a
+  // few pixels, so texture is only meaningful zoomed in: wheel in to the
+  // OrbitControls minDistance clamp (disc radius >> 60 px).
+  const box = (await page.locator('canvas').boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let i = 0; i < 60; i++) await page.mouse.wheel(0, -200);
+  await page.waitForTimeout(1_500); // damping settles
+  const height = await page.evaluate(
+    () => (document.querySelector('canvas') as HTMLCanvasElement).height,
+  );
+  expect(discRadiusPx(height, MIN_DISTANCE_FACTOR)).toBeGreaterThan(60);
+  const grid = await discGrid(page, MIN_DISTANCE_FACTOR);
   // Sampling sanity: the grid is on the lit disc (not on black space).
   expect(mean(grid)).toBeGreaterThan(30);
   expect(std(grid)).toBeGreaterThan(4);
