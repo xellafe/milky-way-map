@@ -66,6 +66,11 @@ corona che pulsa piano, nel colore della sua temperatura.
    - limb darkening: `I = 1 − u·(1 − μ)`, `μ = dot(normal, viewDir)`,
      `u = 0.6` (commento: "ispirato al Sole, non è il coefficiente della
      stella; scelta estetica");
+     **Modificato (decisione del controller, 2026-10-05, durante
+     l'implementazione, da confermare dall'umano):** il limb darkening è
+     applicato per canale, `u_R/u_G/u_B = 0.4/0.6/0.8` (media e G = 0.6; più
+     forte nel blu, come nelle stelle reali), dopo un controllo visivo (bordo
+     grigio sulle stelle bianche);
    - colore: `pow(uColor, vec3(uColorGamma))` × intensità.
    Uniform: `uTime` (s), `uColor`, `uColorGamma`, `uSpots`, `uSeed`.
 4. **`app/src/shaders/host-corona.vert` / `host-corona.frag`** — quad
