@@ -17,7 +17,7 @@ const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import
 interface SystemBridge {
   tDays: number;
   timeScale: number;
-  hz: { innerAU: number; outerAU: number } | null;
+  hz: { innerAU: number; outerAU: number; inclinationDeg: number | null } | null;
   planets: {
     name: string;
     schematic: boolean;
@@ -36,7 +36,10 @@ const fixturePlanets = (host: string) => {
   const data = JSON.parse(readFileSync(path.join(FIXTURES, 'exoplanets.json'), 'utf-8')) as {
     hosts: Record<
       string,
-      { st_lum: number | null; planets: { pl_name: string; pl_orbper: number | null }[] }
+      {
+        st_lum: number | null;
+        planets: { pl_name: string; pl_orbper: number | null; pl_orbincl: number | null }[];
+      }
     >;
   };
   return data.hosts[host]!;
@@ -147,6 +150,124 @@ test('habitable zone: toggle shows the √L ring consistent with the in_hz flags
 
   await page.getByTestId('toggle-hz').uncheck();
   await expect.poll(litPixels, { timeout: 5_000 }).toBeLessThan(before * 1.5);
+});
+
+test('habitable zone: ring plane follows the median orbital inclination, no console errors', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('pageerror', (e) => errors.push(e.message));
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  await page.getByTestId('toggle-hz').check();
+  await page.waitForTimeout(500);
+
+  const incl = fixturePlanets('TRAPPIST-1')
+    .planets.map((p) => p.pl_orbincl)
+    .filter((v): v is number => v !== null)
+    .sort((a, b) => a - b);
+  const mid = incl.length >> 1;
+  const median = incl.length % 2 ? incl[mid]! : (incl[mid - 1]! + incl[mid]!) / 2;
+  const s = await bridge(page);
+  expect(s.hz!.inclinationDeg).toBeCloseTo(median, 6);
+
+  await page.getByTestId('toggle-hz').uncheck();
+  expect(errors).toEqual([]);
+});
+
+test('habitable zone: gradient is warmer at the inner edge than at the outer edge', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('pageerror', (e) => errors.push(e.message));
+  await openApp(page);
+  // Proxima Cen has no inclination → the ring is flat in XZ, whose projection
+  // is known from the fixed initial camera (see samplePoints below).
+  await enterSystem(page, 'proxima cen', 'Proxima Cen');
+  await page.getByTestId('time-slider').fill('0'); // paused: planets must not move between shots
+  await page.waitForTimeout(300);
+
+  const s = await bridge(page);
+  const maxA = Math.max(...s.planets.map((p) => p.semiMajorAxisAU));
+  const { innerAU, outerAU } = s.hz!;
+
+  // Sample points: ring-plane points at t = 0.2 (inner) and t = 0.8 (outer) of
+  // the radial span, at 12 azimuths, projected to the drawing buffer with the
+  // known initial camera: position maxA·(1.7, 1.1, 1.7), looking at the
+  // origin, fov 50° vertical. Each pixel is compared HZ-on vs HZ-off and
+  // pixels already lit with HZ off (planets, orbits, star) are discarded, so
+  // the on−off difference is the ring colour alone.
+  const sample = () =>
+    page.evaluate(
+      ({ maxA, innerAU, outerAU }) => {
+        const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+        const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
+        const { drawingBufferWidth: w, drawingBufferHeight: h } = gl;
+        const pixels = new Uint8Array(w * h * 4);
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        const cam = [maxA * 1.7, maxA * 1.1, maxA * 1.7];
+        const norm = (v: number[]) => v.map((x) => x / Math.hypot(...v));
+        const cross = (a: number[], b: number[]) => [
+          a[1]! * b[2]! - a[2]! * b[1]!,
+          a[2]! * b[0]! - a[0]! * b[2]!,
+          a[0]! * b[1]! - a[1]! * b[0]!,
+        ];
+        const dot = (a: number[], b: number[]) => a[0]! * b[0]! + a[1]! * b[1]! + a[2]! * b[2]!;
+        const fwd = norm(cam.map((x) => -x));
+        const right = norm(cross(fwd, [0, 1, 0]));
+        const up = cross(right, fwd);
+        const tanHalf = Math.tan((50 * Math.PI) / 360);
+        const aspect = canvas.clientWidth / canvas.clientHeight;
+        const out: Record<'inner' | 'outer', number[][]> = { inner: [], outer: [] };
+        for (const [key, t] of [
+          ['inner', 0.2],
+          ['outer', 0.8],
+        ] as const) {
+          const r = innerAU + t * (outerAU - innerAU);
+          for (let k = 0; k < 12; k++) {
+            const th = (k / 12) * 2 * Math.PI;
+            const d = [r * Math.cos(th) - cam[0]!, -cam[1]!, r * Math.sin(th) - cam[2]!];
+            const z = dot(d, fwd);
+            const nx = dot(d, right) / (z * tanHalf * aspect);
+            const ny = dot(d, up) / (z * tanHalf);
+            const px = Math.round(((nx + 1) / 2) * w);
+            const py = Math.round(((ny + 1) / 2) * h);
+            if (px < 0 || px >= w || py < 0 || py >= h) continue;
+            const i = (py * w + px) * 4;
+            out[key].push([pixels[i]!, pixels[i + 1]!, pixels[i + 2]!]);
+          }
+        }
+        return out;
+      },
+      { maxA, innerAU, outerAU },
+    );
+
+  const off = await sample();
+  await page.getByTestId('toggle-hz').check();
+
+  // Mean red-minus-blue gain of the ring over the HZ-off frame; null until
+  // the shader has compiled and enough clean sample pixels show the ring.
+  const warmth = (on: Awaited<ReturnType<typeof sample>>, key: 'inner' | 'outer') => {
+    const diffs = on[key]
+      .map((p, i) => ({ p, o: off[key][i]! }))
+      .filter(({ o }) => o.every((c) => c <= 8))
+      .map(({ p, o }) => p[0]! - o[0]! - (p[2]! - o[2]!));
+    return diffs.length >= 6 ? diffs.reduce((x, y) => x + y, 0) / diffs.length : null;
+  };
+  await expect
+    .poll(
+      async () => {
+        const on = await sample();
+        const inner = warmth(on, 'inner');
+        const outer = warmth(on, 'outer');
+        return inner !== null && outer !== null && inner > outer;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(true);
+  expect(errors).toEqual([]);
 });
 
 test('Proxima Cen: schematic orbits without inclination + planet details panel', async ({

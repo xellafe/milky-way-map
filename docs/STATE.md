@@ -8,6 +8,43 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Zona abitabile — gradiente e piano orbitale (2026-10-05, branch `feat/host-star-surface`, richiesta umana senza issue)
+
+Commit successivo a `a3476d1`.
+
+- Costruito: l'anello HZ (limiti √L invariati, SPEC §6.7) ha un gradiente
+  termico arancione (interno, troppo caldo) → verde → azzurro (esterno, troppo
+  freddo), sfumato ai bordi, con linee di confine a larghezza costante in pixel.
+- Piano: mediana dei `pl_orbincl` dei pianeti, inclinata come le orbite.
+  Scelta di presentazione, non dato (Ω assente); senza inclinazioni l'anello
+  resta piatto come prima. Colori e opacità sono estetici.
+- AC rispettati: Vitest 184, Playwright 134, `system.spec` ×3 30/30.
+- Limite noto: per host con hot Jupiter (es. HD 209458, HZ ~1 AU contro orbita
+  0.05 AU) la distanza massima della camera non inquadra l'intero anello
+  (limite preesistente).
+
+## Issue #16 — superficie animata della stella ospite (2026-10-05, branch `feat/host-star-surface`, commit `0f560ac`, `9c28fe4`, `4a5bf6d`)
+
+- Costruito: shader di superficie (granulazione, macchie, limb darkening) e
+  corona pulsante per la stella ospite in System View; helper in `lib/`.
+- AC1–AC5 PASS; Vitest 179, Playwright 132 (suite completa); `hostStar.spec`
+  ×3 21/21 dopo il fix finale (`4a5bf6d`).
+- Costanti estetiche (non dati): limb darkening per canale u = 0.4/0.6/0.8
+  (media 0.6, più forte nel blu come nelle stelle reali), deciso dopo un
+  controllo visivo; `CORONA_SCALE` 2.5 (multipli del raggio);
+  `CORONA_PERIOD_S` 6 s; granulazione 14 cicli/raggio con fade `fwidth` fino a
+  un minimo di 0.4 sui dischi piccoli.
+- Limite noto: alla camera di default il disco ha ~13 px di raggio, quindi la
+  granulazione è quasi del tutto sfumata; si mantiene un contrasto residuo del
+  40% perché il moto resti visibile (da valutare nel controllo visivo umano).
+- Limite noto: il centro del disco satura per stelle G/F/bianche
+  (`SURFACE_GAIN` 1.2); la corona usa il colore Teff senza gamma, quindi in
+  modalità default l'alone è più pallido del disco.
+- Limite noto: l'e2e della texture campiona con la camera alla distanza minima
+  (zoom massimo).
+- Nessuna rotazione (periodo assente dai dati); animazione in secondi reali,
+  indipendente dalla scala temporale.
+
 ## Issue #13 — music player in basso a destra (2026-10-05, branch `feat/music-player`, commit `9dc457e`, `addb47d`, `dee1ca2`, `43f5cca`)
 
 - Costruito: `MusicPlayer` in basso a destra in Galaxy e System View, con
