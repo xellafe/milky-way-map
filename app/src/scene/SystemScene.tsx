@@ -16,13 +16,14 @@ import {
 } from '../lib/planetStyle';
 import { classifyPlanet, type PlanetType } from '../lib/planetType';
 import { orbitAngleDeg, orbitPathPoints, orbitPlanePosition, toSceneCoords } from '../lib/orbit';
-import { teffToColor } from '../lib/starColor';
 import orbitTrailFrag from '../shaders/orbit-trail.frag?raw';
 import orbitTrailVert from '../shaders/orbit-trail.vert?raw';
+import noiseGlsl from '../shaders/noise.glsl?raw';
 import planetFrag from '../shaders/planet.frag?raw';
 import planetVert from '../shaders/planet.vert?raw';
 import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
+import { HostStar } from './HostStar';
 
 const SUN_RADIUS_AU = 0.00465;
 // Orbits are real-scale; BODY sizes and looks are not (pscomppars has no
@@ -187,7 +188,7 @@ function planetMaterial(planet: RenderablePlanet): THREE.ShaderMaterial {
   );
   return new THREE.ShaderMaterial({
     vertexShader: planetVert,
-    fragmentShader: planetFrag,
+    fragmentShader: noiseGlsl + planetFrag,
     uniforms: {
       uType: { value: PLANET_TYPE_INDEX[planet.type] },
       uSeed: { value: planet.seed },
@@ -348,10 +349,7 @@ export function SystemScene() {
       onPointerMissed={() => selectPlanet(null)}
     >
       <color attach="background" args={[0x000000]} />
-      <mesh>
-        <sphereGeometry args={[starRadius, 32, 16]} />
-        <meshBasicMaterial color={teffToColor(host.st_teff)} />
-      </mesh>
+      <HostStar radius={starRadius} teffK={host.st_teff} hostname={hostname!} />
       {showHz && hz && (
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[hz.innerAU, hz.outerAU, 96]} />

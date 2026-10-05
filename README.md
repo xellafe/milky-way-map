@@ -31,6 +31,11 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
   planet colors or surfaces, so each planet gets a procedural look from its
   size class (rocky / sub-Neptune / giant / unknown, from radius or mass) plus
   a per-planet variation derived from its name.
+  The host star is likewise presentational: a procedural animated surface
+  (granulation, small seeded spots, chromatic limb darkening) and a pulsing
+  corona. Realism mode keeps granulation and limb darkening but drops colour
+  exaggeration, spots and pulse, and halves the corona. The animation runs in
+  real time (independent of the time scale) and freezes with reduced motion.
 - i18n (EN/IT/ES/FR/DE) and a keyboard-accessible 2D overlay (axe-clean).
 
 ## Structure
