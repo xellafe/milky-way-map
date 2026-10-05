@@ -1,3 +1,7 @@
+// Hue exaggeration in the fragment shaders (aesthetic, SPEC §13): per-channel
+// power curve on the pastel catalog colors; neutral white stays white.
+export const STAR_COLOR_GAMMA = 2.5;
+
 /**
  * Presentational tint for a star from its effective temperature — a coarse
  * piecewise blackbody approximation for the System View host sphere only

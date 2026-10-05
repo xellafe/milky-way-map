@@ -3,6 +3,7 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarGeometry } from '../data/starCoreStore';
 import { prefersReducedMotion } from '../lib/motion';
+import { STAR_COLOR_GAMMA } from '../lib/starColor';
 import { DEFAULT_SETTINGS, useSettingsStore } from '../state/settings';
 import starFrag from '../shaders/star.frag?raw';
 import starVert from '../shaders/star.vert?raw';
@@ -21,9 +22,6 @@ export const STAR_PIXEL_SCALE = 25.0;
 export const STAR_DIST_EXP = 0.75;
 export const STAR_MIN_PX = 1.0;
 export const STAR_MAX_PX = 24.0;
-// Hue exaggeration in the fragment shader (aesthetic, SPEC §13): per-channel
-// power curve on the pastel catalog colors; neutral white stays white.
-export const STAR_COLOR_GAMMA = 2.5;
 // Twinkle (aesthetic): brightness swings ±twinkleAmplitude on stars farther
 // than the range start (ly from camera), full effect past its end.
 // Disabled under prefers-reduced-motion (SPEC §6.9) and in realism mode.
