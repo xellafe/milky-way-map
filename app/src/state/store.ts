@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { DEFAULT_FILTERS, type DataBounds, type Filters } from '../lib/filterMask';
 import { prefersReducedMotion } from '../lib/motion';
 import type { PlanetType } from '../lib/planetType';
+import { readFlag, writeFlag } from '../lib/localFlag';
+import { isCompactViewport } from '../lib/viewport';
 import { isWelcomeDismissed } from '../lib/welcome';
 
 export type CameraMode = 'free-fly' | 'orbit';
@@ -15,6 +17,9 @@ export type DockPanelId = 'filters' | 'view' | 'options';
  * SPEC §5.3/§10, e.g. TRAPPIST-1).
  */
 export type Selection = { kind: 'star'; index: number } | { kind: 'host'; hostname: string } | null;
+
+/** Persisted flag set while the music player is collapsed (#13). */
+export const MUSIC_COLLAPSED_KEY = 'galaxy-map-music-collapsed';
 
 /** Default System View time scale: 1 real second = 2 simulated days (SPEC §13). */
 export const DEFAULT_TIME_SCALE_DAYS_PER_SECOND = 2;
@@ -65,6 +70,9 @@ export interface GalaxyMapState {
   welcomeOpen: boolean;
   /** Opens or closes the welcome dialog (#12). */
   setWelcomeOpen: (open: boolean) => void;
+  /** Music player expanded (#13); initialised from the persisted collapsed flag. */
+  musicExpanded: boolean;
+  setMusicExpanded: (expanded: boolean) => void;
   /** Bumped by every star selection: remounts the overlay, so a re-click during
    * its closing flicker reopens it. */
   selectionEpoch: number;
@@ -119,6 +127,16 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   selectionOverlayOpen: false,
   welcomeOpen: !isWelcomeDismissed(),
   setWelcomeOpen: (open) => set({ welcomeOpen: open }),
+  musicExpanded: !readFlag(MUSIC_COLLAPSED_KEY),
+  // On compact viewports the expanded player and an open dock panel would
+  // overlap, so opening one collapses the other (#13).
+  setMusicExpanded: (expanded) => {
+    writeFlag(MUSIC_COLLAPSED_KEY, !expanded);
+    set((s) => ({
+      musicExpanded: expanded,
+      dockPanel: expanded && isCompactViewport() ? null : s.dockPanel,
+    }));
+  },
   selectionEpoch: 0,
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
@@ -173,9 +191,15 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       visiblePlanetTypes: { ...s.visiblePlanetTypes, [type]: !s.visiblePlanetTypes[type] },
     })),
   toggleDockPanel: (id) =>
-    set((s) => ({
-      dockPanel: s.dockPanel === id ? null : id,
-    })),
+    set((s) => {
+      const opening = s.dockPanel !== id;
+      const collapsePlayer = opening && isCompactViewport();
+      if (collapsePlayer) writeFlag(MUSIC_COLLAPSED_KEY, true);
+      return {
+        dockPanel: opening ? id : null,
+        musicExpanded: collapsePlayer ? false : s.musicExpanded,
+      };
+    }),
   closeDockPanel: () => set({ dockPanel: null }),
   closeSelectionOverlay: () => set({ selectionOverlayOpen: false }),
 }));

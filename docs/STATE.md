@@ -8,6 +8,35 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #13 — music player in basso a destra (2026-10-05, branch `feat/music-player`, commit `9dc457e`, `addb47d`, `dee1ca2`, `43f5cca`)
+
+- Costruito: `MusicPlayer` in basso a destra in Galaxy e System View, con
+  prev/next, play/pausa, volume e titolo del brano; comprimibile.
+- Decisione (umana, dopo l'implementazione): la playlist si legge a build time
+  da `app/src/assets/musics/` (`import.meta.glob`; mp3/m4a/ogg), ordinata per
+  nome (numeric-aware); titolo = nome file senza estensione né numero iniziale
+  + separatore, `_` → spazio, non tradotto; cartella vuota = nessun player.
+  Aggiungere un brano richiede solo rebuild/redeploy (dev: reload).
+- AC1–AC6 PASS; gate completo verde (162 unit, 125 e2e), nessun flaky.
+- Decisione: con un solo brano prev/next lo riavviano; niente `loop`, a fine
+  brano (`ended`) passa al successivo.
+- Decisione: espanso di default; il flag `galaxy-map-music-collapsed` sta fuori
+  da Settings, via `lib/localFlag` condiviso con il welcome dialog.
+- Decisione: modalità compatta sotto 1024 px (= `lg` di Tailwind), soglia
+  ricavata dalle larghezze reali. Nella modalità compatta la barra del tempo è
+  nascosta a player espanso.
+- Decisione: pannelli a destra con max-h `100%-13.5rem` sotto `lg` e
+  `100%-9.5rem` da `lg`, per un player misurato di 3,5rem; il limite della
+  scheda di selezione include il player.
+- Limite noto: `data-music-zone` copre anche comprimi/espandi; dove l'autoplay
+  è bloccato, un primo gesto lì disattiva il fallback (parcheggiato, non
+  testabile in headless).
+- Limite noto: ogni numero iniziale seguito da un separatore viene tolto dal
+  titolo ("2001 Space Odyssey.mp3" → "Space Odyssey"); prefissare il nome
+  ("01 - 2001 Space Odyssey.mp3").
+- Nota test: gli e2e di overlap su desktop e del pannello stella in modalità
+  compatta passano anche senza il max-h (sono solo guardie).
+
 ## Issue #12 — messaggio di benvenuto (2026-10-03, branch `feat/welcome-message`, commit `6901bda`, `9b8c4d7`, `a0da4da`, `294975e`)
 
 - Costruito: `WelcomeDialog` (nativo `<dialog>`, modale) con breve descrizione

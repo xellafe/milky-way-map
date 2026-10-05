@@ -117,7 +117,12 @@
     "label": "Musik",
     "play": "Musik abspielen",
     "pause": "Musik pausieren",
-    "volume": "Musiklautstärke"
+    "volume": "Musiklautstärke",
+    "prev": "Vorheriger Titel",
+    "next": "Nächster Titel",
+    "collapse": "Musikplayer einklappen",
+    "expand": "Musikplayer ausklappen",
+    "nowPlaying": "Läuft gerade"
   },
   "options": {
     "title": "Optionen",

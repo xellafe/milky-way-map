@@ -52,7 +52,10 @@ Acknowledgment standard da includere:
 
 ## 4. Musica di sottofondo
 
-- **File:** `app/src/assets/background-music.mp3` (fornito dall'utente, 2026-09-28).
+Questa sezione copre ogni file in `app/src/assets/musics/`. Ogni brano
+aggiunto va elencato qui con autore e licenza.
+
+- **File:** `app/src/assets/musics/01 - Colonna sonora di Galaxy Map.mp3` (fornito dall'utente, 2026-09-28).
 - **Autore:** Federico Xella, titolare dei diritti; incluso nell'app per sua scelta.
 - **Licenza:** tutti i diritti riservati all'autore. **Non** è coperto dalla
   licenza MIT del codice né dalla CC BY-SA dei dati.

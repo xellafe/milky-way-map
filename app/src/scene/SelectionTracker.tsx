@@ -50,12 +50,16 @@ export function SelectionTracker() {
       document.querySelector<HTMLElement>('[data-hud=star-panel]')?.offsetWidth ?? 0;
     const card = el.querySelector<HTMLElement>('[data-hud=selection-card]');
     const cardWidth = card?.offsetWidth || FALLBACK_CARD_WIDTH_PX;
-    // Keep the card between the search box and the dock: shift it vertically
+    // Keep the card between the search box and the dock / music player: shift it vertically
     // (individual `translate` property, so it never fights `transform`).
     if (card) {
       const top = document.querySelector('[data-hud=search]')?.getBoundingClientRect().bottom ?? 0;
-      const bottom =
-        document.querySelector('[data-hud=dock]')?.getBoundingClientRect().top ?? size.height;
+      const bottom = Math.min(
+        ...['dock', 'music-player'].map(
+          (hud) =>
+            document.querySelector(`[data-hud=${hud}]`)?.getBoundingClientRect().top ?? size.height,
+        ),
+      );
       const cardTop = y + CARD_TOP_OFFSET_PX;
       const maxShift = bottom - CARD_MARGIN_PX - (cardTop + card.offsetHeight);
       const minShift = top + CARD_MARGIN_PX - cardTop;

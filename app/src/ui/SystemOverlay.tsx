@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getHost, type ExoplanetRecord } from '../data/exoplanets';
 import { formatNumber } from '../lib/format';
+import { useCompactViewport } from '../lib/viewport';
 import { ORBIT_STYLES, type OrbitStyle } from '../lib/planetStyle';
 import { classifyPlanet, PLANET_TYPES } from '../lib/planetType';
 import { useSettingsStore } from '../state/settings';
@@ -104,6 +105,8 @@ export function SystemOverlay() {
   const orbitStyle = useSettingsStore((s) => s.orbitStyle);
   const setSettings = useSettingsStore((s) => s.setSettings);
   const dockPanel = useGalaxyMapStore((s) => s.dockPanel);
+  const musicExpanded = useGalaxyMapStore((s) => s.musicExpanded);
+  const compact = useCompactViewport();
   const [logMode, setLogMode] = useState(false);
   const [pausedFrom, setPausedFrom] = useState<number | null>(null);
 
@@ -124,9 +127,15 @@ export function SystemOverlay() {
         </h1>
       </header>
 
+      {/*
+       * Right panels end 1rem above the expanded music player: max-h is an
+       * aesthetic choice (not data), in rem. Panel top is 4rem; the player is
+       * 3.5rem tall (measured). Below lg it sits at bottom-20: 4 + 5 + 3.5 + 1 =
+       * 13.5rem. From lg at bottom-4: 4 + 1 + 3.5 + 1 = 9.5rem.
+       */}
       <aside
         aria-label={t('system.planets')}
-        className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-5rem)] w-80 overflow-y-auto rounded-hud p-4"
+        className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-13.5rem)] lg:max-h-[calc(100%-9.5rem)] w-80 overflow-y-auto rounded-hud p-4"
       >
         <p className="mb-2 text-sm text-hud-muted">{t('system.planets')}</p>
         <fieldset className="mb-2" data-testid="planet-type-filter">
@@ -184,9 +193,10 @@ export function SystemOverlay() {
        * System View). The dock icon row is at bottom-4; bottom-20 clears it.
        * An open dock panel renders in that same band (Dock.tsx) and its
        * height varies (Options is tall), so the bar is hidden while a panel
-       * is open instead of guessing an offset that can still overlap.
+       * is open instead of guessing an offset that can still overlap. The
+       * expanded player takes the bar's band on compact viewports.
        */}
-      {!dockPanel && (
+      {!dockPanel && !(musicExpanded && compact) && (
         <HudPanel
           aria-label={t('system.timeScale')}
           className="absolute bottom-20 left-1/2 z-10 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm"

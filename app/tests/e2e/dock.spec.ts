@@ -98,7 +98,7 @@ test('dock: first gesture on a dock icon still starts the music', async ({ page 
 
 const layoutTargets = ['galaxy', 'system'] as const;
 for (const view of layoutTargets) {
-  test(`music controls sit left of the language button (${view})`, async ({ page }) => {
+  test(`music player sits bottom-right, below the top-right group (${view})`, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await openApp(page);
     await page.getByTestId('search-input').fill(view === 'galaxy' ? 'polaris' : 'trappist');
@@ -120,21 +120,10 @@ for (const view of layoutTargets) {
     expect(langBox).not.toBeNull();
     const music = musicBox!;
     const lang = langBox!;
-    expect(music.x + music.width).toBeLessThanOrEqual(lang.x);
-    expect(lang.x - (music.x + music.width)).toBeLessThanOrEqual(16);
-    expect(Math.abs(music.y + music.height / 2 - (lang.y + lang.height / 2))).toBeLessThanOrEqual(
-      4,
-    );
-    expect(music.x).toBeGreaterThanOrEqual(0);
-    expect(music.y).toBeGreaterThanOrEqual(0);
+    expect(music.x + music.width).toBeGreaterThanOrEqual(1280 - 24);
+    expect(music.y + music.height).toBeGreaterThanOrEqual(720 - 24);
     expect(music.x + music.width).toBeLessThanOrEqual(1280);
     expect(music.y + music.height).toBeLessThanOrEqual(720);
-
-    const panelBox =
-      view === 'galaxy'
-        ? await page.getByTestId('star-panel').boundingBox()
-        : await page.getByRole('complementary', { name: 'Planets' }).boundingBox();
-    expect(panelBox).not.toBeNull();
-    expect(music.y + music.height).toBeLessThanOrEqual(panelBox!.y);
+    expect(music.y).toBeGreaterThan(lang.y + lang.height);
   });
 }
