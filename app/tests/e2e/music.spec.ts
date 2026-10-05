@@ -128,14 +128,14 @@ test('collapsed state survives a reload', async ({ page }) => {
   await expect(page.getByTestId('music-expand')).toBeVisible();
 });
 
-test('shows the translated track title', async ({ page }) => {
+test('shows the track title from the file name', async ({ page }) => {
   await openApp(page);
-  await expect(page.getByTestId('music-title')).toContainText('Galaxy Map soundtrack');
+  await expect(page.getByTestId('music-title')).toContainText('Colonna sonora di Galaxy Map');
 });
 
 test.describe('italian locale', () => {
   test.use({ locale: 'it-IT' });
-  test('shows the translated track title', async ({ page }) => {
+  test('shows the track title from the file name', async ({ page }) => {
     await openApp(page);
     await expect(page.getByTestId('music-title')).toContainText('Colonna sonora di Galaxy Map');
   });

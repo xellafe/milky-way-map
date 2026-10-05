@@ -122,10 +122,7 @@
     "next": "Brano successivo",
     "collapse": "Riduci il player musicale",
     "expand": "Espandi il player musicale",
-    "nowPlaying": "In riproduzione",
-    "tracks": {
-      "soundtrack": "Colonna sonora di Galaxy Map"
-    }
+    "nowPlaying": "In riproduzione"
   },
   "options": {
     "title": "Opzioni",

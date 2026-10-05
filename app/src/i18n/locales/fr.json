@@ -122,10 +122,7 @@
     "next": "Piste suivante",
     "collapse": "Réduire le lecteur de musique",
     "expand": "Développer le lecteur de musique",
-    "nowPlaying": "En cours de lecture",
-    "tracks": {
-      "soundtrack": "Bande originale de Galaxy Map"
-    }
+    "nowPlaying": "En cours de lecture"
   },
   "options": {
     "title": "Options",

@@ -122,10 +122,7 @@
     "next": "Nächster Titel",
     "collapse": "Musikplayer einklappen",
     "expand": "Musikplayer ausklappen",
-    "nowPlaying": "Läuft gerade",
-    "tracks": {
-      "soundtrack": "Galaxy-Map-Soundtrack"
-    }
+    "nowPlaying": "Läuft gerade"
   },
   "options": {
     "title": "Optionen",

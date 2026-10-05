@@ -11,8 +11,12 @@
 ## Issue #13 — music player in basso a destra (2026-10-05, branch `feat/music-player`, commit `9dc457e`, `addb47d`, `dee1ca2`, `43f5cca`)
 
 - Costruito: `MusicPlayer` in basso a destra in Galaxy e System View, con
-  prev/next, play/pausa, volume e titolo tradotto "Galaxy Map soundtrack";
-  comprimibile; playlist di un solo brano.
+  prev/next, play/pausa, volume e titolo del brano; comprimibile.
+- Decisione (umana, dopo l'implementazione): la playlist si legge a build time
+  da `app/src/assets/musics/` (`import.meta.glob`; mp3/m4a/ogg), ordinata per
+  nome (numeric-aware); titolo = nome file senza estensione né numero iniziale
+  + separatore, `_` → spazio, non tradotto; cartella vuota = nessun player.
+  Aggiungere un brano richiede solo rebuild/redeploy (dev: reload).
 - AC1–AC6 PASS; gate completo verde (162 unit, 125 e2e), nessun flaky.
 - Decisione: con un solo brano prev/next lo riavviano; niente `loop`, a fine
   brano (`ended`) passa al successivo.
@@ -27,8 +31,9 @@
 - Limite noto: `data-music-zone` copre anche comprimi/espandi; dove l'autoplay
   è bloccato, un primo gesto lì disattiva il fallback (parcheggiato, non
   testabile in headless).
-- Limite noto: `src` fisso nel JSX e `trackIndex`/`indexRef` duplicati; da
-  rivedere con un secondo brano.
+- Limite noto: ogni numero iniziale seguito da un separatore viene tolto dal
+  titolo ("2001 Space Odyssey.mp3" → "Space Odyssey"); prefissare il nome
+  ("01 - 2001 Space Odyssey.mp3").
 - Nota test: gli e2e di overlap su desktop e del pannello stella in modalità
   compatta passano anche senza il max-h (sono solo guardie).
 

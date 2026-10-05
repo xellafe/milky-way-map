@@ -31,7 +31,17 @@ riducibile a icona.
 
 - **Playlist di un solo brano** per ora; il player è pronto per più tracce.
   Con un brano solo prev/next lo riportano all'inizio.
-- **Titolo:** "Colonna sonora di Galaxy Map", tradotto (chiave i18n).
+- **Titolo:** ~~"Colonna sonora di Galaxy Map", tradotto (chiave i18n)~~.
+  **Modificato (decisione umana, 2026-10-05, dopo l'implementazione):** la
+  playlist si legge a build time da `app/src/assets/musics/`
+  (`import.meta.glob`; mp3/m4a/ogg), in ordine di nome numeric-aware; titolo =
+  nome file senza estensione né numero iniziale + separatore (`01 - `, `01_`,
+  `01.`, `1 `), `_` → spazio, non tradotto. Cartella vuota = nessun player.
+  Limite: ogni numero iniziale seguito da un separatore è tolto
+  ("2001 Space Odyssey.mp3" → "Space Odyssey"). Il brano è ora
+  `musics/01 - Colonna sonora di Galaxy Map.mp3`; `NOTICE.md` §4 copre l'intera
+  cartella. Dove sotto si parla di titolo tradotto, `PLAYLIST` in
+  `MusicPlayer.tsx` o `music.tracks.soundtrack`, vale questa decisione.
 - **Avvio:** espanso; lo stato espanso/ridotto è ricordato tra le visite.
 - **Pannelli di destra:** si accorciano e terminano sopra il player.
 - **Modalità compatta** (viewport < 1024 px, breakpoint `lg`): il player

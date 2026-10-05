@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import musicUrl from '../assets/background-music.mp3';
-import { nextIndex, prevIndex, type Track } from '../lib/playlist';
+import { buildPlaylist, nextIndex, prevIndex } from '../lib/playlist';
 import { useCompactViewport } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 import { HudSlider } from './hud/HudInputs';
@@ -9,7 +8,14 @@ import { HudPanel } from './hud/HudPanel';
 
 const DEFAULT_VOLUME = 0.4;
 const MUSIC_SELECTOR = '[data-music-zone]';
-const PLAYLIST: [Track, ...Track[]] = [{ src: musicUrl, titleKey: 'music.tracks.soundtrack' }];
+// Files dropped in assets/musics/ become the playlist at build time.
+const PLAYLIST = buildPlaylist(
+  import.meta.glob<string>('../assets/musics/*.{mp3,m4a,ogg}', {
+    query: '?url',
+    import: 'default',
+    eager: true,
+  }),
+);
 const CONTROLS_ID = 'music-player-controls';
 
 const BUTTON_CLASS =
@@ -27,8 +33,9 @@ function useMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolumeState] = useState(DEFAULT_VOLUME);
-  const [trackIndex, setTrackIndex] = useState(0);
-  const indexRef = useRef(0);
+  const [index, setIndex] = useState(0);
+  // Set by goTo, consumed after the new src has been rendered.
+  const resumeRef = useRef(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -62,33 +69,40 @@ function useMusic() {
     if (audioRef.current) audioRef.current.volume = value;
   };
 
+  useEffect(() => {
+    if (!resumeRef.current) return;
+    resumeRef.current = false;
+    audioRef.current?.play().catch(() => {});
+  }, [index]);
+
   /**
-   * Same target index restarts the track; otherwise switch src. Resumes only
-   * if it was playing — or `forcePlay`, because an ended track reports paused.
+   * Same target index restarts the track; otherwise switch track (the src follows
+   * the index). Resumes only if it was playing — or `forcePlay`, because an ended
+   * track reports paused.
    */
-  const goTo = (index: number, forcePlay = false) => {
+  const goTo = (target: number, forcePlay = false) => {
     const audio = audioRef.current;
     if (!audio) return;
     const resume = forcePlay || !audio.paused;
-    if (index === indexRef.current) audio.currentTime = 0;
-    else {
-      indexRef.current = index;
-      setTrackIndex(index);
-      audio.src = (PLAYLIST[index] ?? PLAYLIST[0]).src;
+    if (target === index) {
+      audio.currentTime = 0;
+      if (resume) audio.play().catch(() => {});
+    } else {
+      resumeRef.current = resume;
+      setIndex(target);
     }
-    if (resume) audio.play().catch(() => {});
   };
 
   return {
     audioRef,
     playing,
     volume,
-    track: PLAYLIST[trackIndex] ?? PLAYLIST[0],
+    track: PLAYLIST[index],
     toggle,
     setVolume,
-    prev: () => goTo(prevIndex(indexRef.current, PLAYLIST.length)),
-    next: () => goTo(nextIndex(indexRef.current, PLAYLIST.length)),
-    onEnded: () => goTo(nextIndex(indexRef.current, PLAYLIST.length), true),
+    prev: () => goTo(prevIndex(index, PLAYLIST.length)),
+    next: () => goTo(nextIndex(index, PLAYLIST.length)),
+    onEnded: () => goTo(nextIndex(index, PLAYLIST.length), true),
     onPlay: () => setPlaying(true),
     onPause: () => setPlaying(false),
   };
@@ -140,6 +154,8 @@ export function MusicPlayer() {
     setExpanded(value);
   };
 
+  if (!track) return null;
+
   return (
     <HudPanel
       aria-label={t('music.label')}
@@ -152,7 +168,7 @@ export function MusicPlayer() {
     >
       <audio
         ref={audioRef}
-        src={PLAYLIST[0].src}
+        src={track.src}
         preload="none"
         data-testid="music-audio"
         onPlay={onPlay}
@@ -163,7 +179,7 @@ export function MusicPlayer() {
         <div id={CONTROLS_ID} className="flex flex-col gap-1">
           <p data-testid="music-title" className="truncate font-hud text-xs text-hud-text">
             <span className="sr-only">{t('music.nowPlaying')}: </span>
-            {t(track.titleKey)}
+            {track.title}
           </p>
           <div className="flex items-center gap-2">
             <button
