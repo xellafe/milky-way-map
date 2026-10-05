@@ -8,6 +8,21 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Zona abitabile — gradiente e piano orbitale (2026-10-05, branch `feat/host-star-surface`, richiesta umana senza issue)
+
+Commit successivo a `a3476d1`.
+
+- Costruito: l'anello HZ (limiti √L invariati, SPEC §6.7) ha un gradiente
+  termico arancione (interno, troppo caldo) → verde → azzurro (esterno, troppo
+  freddo), sfumato ai bordi, con linee di confine a larghezza costante in pixel.
+- Piano: mediana dei `pl_orbincl` dei pianeti, inclinata come le orbite.
+  Scelta di presentazione, non dato (Ω assente); senza inclinazioni l'anello
+  resta piatto come prima. Colori e opacità sono estetici.
+- AC rispettati: Vitest 184, Playwright 134, `system.spec` ×3 30/30.
+- Limite noto: per host con hot Jupiter (es. HD 209458, HZ ~1 AU contro orbita
+  0.05 AU) la distanza massima della camera non inquadra l'intero anello
+  (limite preesistente).
+
 ## Issue #16 — superficie animata della stella ospite (2026-10-05, branch `feat/host-star-surface`, commit `0f560ac`, `9c28fe4`, `4a5bf6d`)
 
 - Costruito: shader di superficie (granulazione, macchie, limb darkening) e
