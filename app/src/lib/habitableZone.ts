@@ -23,3 +23,18 @@ export function hzBoundsAU(stLumLog10: number | null): HzBounds | null {
     outerAU: Math.sqrt(lum / HZ_OUTER_FLUX),
   };
 }
+
+/**
+ * Median orbital inclination (deg) of a host's planets, used to tilt the HZ
+ * ring into the system's median plane. Presentation choice, not data: the
+ * longitude of the ascending node Ω is not in the data, so only the inclination i
+ * (tilt relative to the sky plane) is known, the same limit as the orbits (SPEC §6.7).
+ * No finite value → null (ring stays flat, never guessed).
+ */
+export function hzInclinationDeg(inclinations: readonly (number | null)[]): number | null {
+  const v = inclinations.filter((x): x is number => x !== null && Number.isFinite(x));
+  if (v.length === 0) return null;
+  v.sort((a, b) => a - b);
+  const mid = v.length >> 1;
+  return v.length % 2 ? v[mid]! : (v[mid - 1]! + v[mid]!) / 2;
+}

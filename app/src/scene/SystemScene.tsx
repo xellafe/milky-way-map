@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
 import { canvasCursor } from '../lib/canvasCursor';
-import { hzBoundsAU } from '../lib/habitableZone';
+import { hzBoundsAU, hzInclinationDeg, type HzBounds } from '../lib/habitableZone';
 import {
   nameSeed,
   ORBIT_TINT,
@@ -18,6 +18,8 @@ import { classifyPlanet, type PlanetType } from '../lib/planetType';
 import { orbitAngleDeg, orbitPathPoints, orbitPlanePosition, toSceneCoords } from '../lib/orbit';
 import orbitTrailFrag from '../shaders/orbit-trail.frag?raw';
 import orbitTrailVert from '../shaders/orbit-trail.vert?raw';
+import hzFrag from '../shaders/hz.frag?raw';
+import hzVert from '../shaders/hz.vert?raw';
 import noiseGlsl from '../shaders/noise.glsl?raw';
 import planetFrag from '../shaders/planet.frag?raw';
 import planetVert from '../shaders/planet.vert?raw';
@@ -34,6 +36,10 @@ const ORBIT_SEGMENTS = 128;
 // Hue jitter (fraction of the color wheel, ±) from the per-planet seed.
 const HUE_JITTER = 0.04;
 const HZ_COLOR = 0x2faf64;
+// Gradient ends, raw sRGB: orange = too hot (inner edge), blue = too cold
+// (outer edge). Aesthetic choice, not data.
+const HZ_HOT_COLOR = 0xe8742a;
+const HZ_COLD_COLOR = 0x4aa8e8;
 
 const urlParams = new URLSearchParams(globalThis.location?.search ?? '');
 const exposeBridge = urlParams.get('pdb') === '1';
@@ -209,12 +215,14 @@ function PlanetAnimator({
   meshes,
   angles,
   hz,
+  hzIncl,
 }: {
   planets: RenderablePlanet[];
   meshes: React.RefObject<(THREE.Mesh | null)[]>;
   /** Current orbit-plane angle per planet name (read by the trail orbits). */
   angles: React.RefObject<Map<string, number>>;
-  hz: { innerAU: number; outerAU: number } | null;
+  hz: HzBounds | null;
+  hzIncl: number | null;
 }) {
   const tDays = useRef(0);
 
@@ -240,7 +248,7 @@ function PlanetAnimator({
       (globalThis as Record<string, unknown>).__system = {
         tDays: tDays.current,
         timeScale: useGalaxyMapStore.getState().timeScaleDaysPerSecond,
-        hz,
+        hz: hz && { ...hz, inclinationDeg: hzIncl },
         planets: planets.map((p) => ({
           name: p.record.pl_name,
           schematic: p.schematic,
@@ -299,6 +307,45 @@ function GrabCursor({ overPlanet }: { overPlanet: { current: boolean } }) {
 /* eslint-enable react-hooks/immutability */
 
 /**
+ * HZ ring in the median orbital plane. ringGeometry lies in local XY; rotating
+ * about X by π/2 − i maps (x, y, 0) to (x, y·sin i, y·cos i), the same plane
+ * as `toSceneCoords`. No inclination → flat in XZ, like the schematic orbits.
+ */
+function HabitableZoneRing({
+  hz,
+  inclinationDeg,
+}: {
+  hz: HzBounds;
+  inclinationDeg: number | null;
+}) {
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: hzVert,
+        fragmentShader: hzFrag,
+        uniforms: {
+          uInner: { value: hz.innerAU },
+          uOuter: { value: hz.outerAU },
+          uHot: { value: new THREE.Color().setHex(HZ_HOT_COLOR, THREE.LinearSRGBColorSpace) },
+          uMid: { value: new THREE.Color().setHex(HZ_COLOR, THREE.LinearSRGBColorSpace) },
+          uCold: { value: new THREE.Color().setHex(HZ_COLD_COLOR, THREE.LinearSRGBColorSpace) },
+        },
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    [hz.innerAU, hz.outerAU],
+  );
+  useEffect(() => () => material.dispose(), [material]);
+  const tilt = Math.PI / 2 - THREE.MathUtils.degToRad(inclinationDeg ?? 0);
+  return (
+    <mesh rotation={[tilt, 0, 0]} material={material} raycast={() => null}>
+      <ringGeometry args={[hz.innerAU, hz.outerAU, 96]} />
+    </mesh>
+  );
+}
+
+/**
  * System View (SPEC §6.7): real-scale orbits in AU around the host star at
  * the origin; star/planet RADII are presentational (real ones would be
  * sub-pixel). Orbit-cam around the star, planets clickable for details.
@@ -336,6 +383,7 @@ export function SystemScene() {
   const maxA = Math.max(...allPlanets.map((p) => p.semiMajorAxisAU), 0.01);
   const starRadius = Math.max((host.st_rad ?? 0) * SUN_RADIUS_AU, maxA * 0.045);
   const hz = hzBoundsAU(host.st_lum);
+  const hzIncl = hzInclinationDeg(allPlanets.map((p) => p.inclinationDeg));
 
   return (
     <Canvas
@@ -350,18 +398,7 @@ export function SystemScene() {
     >
       <color attach="background" args={[0x000000]} />
       <HostStar radius={starRadius} teffK={host.st_teff} hostname={hostname} />
-      {showHz && hz && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[hz.innerAU, hz.outerAU, 96]} />
-          <meshBasicMaterial
-            color={HZ_COLOR}
-            transparent
-            opacity={0.16}
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
+      {showHz && hz && <HabitableZoneRing hz={hz} inclinationDeg={hzIncl} />}
       {planets.map((p, i) => (
         <group key={p.record.pl_name}>
           {orbitStyle === 'trail' && (
@@ -389,7 +426,7 @@ export function SystemScene() {
           </mesh>
         </group>
       ))}
-      <PlanetAnimator planets={planets} meshes={meshes} angles={angles} hz={hz} />
+      <PlanetAnimator planets={planets} meshes={meshes} angles={angles} hz={hz} hzIncl={hzIncl} />
       <GrabCursor overPlanet={overPlanet} />
       <OrbitControls
         makeDefault

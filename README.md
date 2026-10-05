@@ -36,6 +36,10 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
   corona. Realism mode keeps granulation and limb darkening but drops colour
   exaggeration, spots and pulse, and halves the corona. The animation runs in
   real time (independent of the time scale) and freezes with reduced motion.
+  The habitable-zone ring lies in the system's median orbital plane (median
+  planet inclination; flat if none is known) and is drawn as a thermal
+  gradient, orange (too hot) to green to light blue (too cold). Plane and
+  colours are presentational, not data.
 - i18n (EN/IT/ES/FR/DE) and a keyboard-accessible 2D overlay (axe-clean).
 
 ## Structure
