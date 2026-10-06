@@ -127,5 +127,26 @@ class TestExoplanetFixture:
                 for key in ("pl_orbper", "pl_orbsmax", "pl_orbincl", "in_hz"):
                     assert key in p  # present, possibly None — never missing
 
+    def test_hosts_have_advanced_star_keys(self, exoplanets):
+        keys = (
+            "st_met", "st_metlim", "st_metratio", "st_age", "st_agelim",
+            "st_mass", "st_masslim", "st_logg", "st_logglim", "st_spectype",
+            "st_rotp", "st_rotplim", "st_vsin", "st_vsinlim",
+        )  # fmt: skip
+        for name, host in exoplanets["hosts"].items():
+            for key in keys:
+                assert key in host, f"{name} lacks {key}"
+
+    def test_planets_have_advanced_keys(self, exoplanets):
+        keys = (
+            "pl_dens", "pl_denslim", "pl_insol", "pl_insollim", "pl_bmassprov",
+            "pl_bmasselim", "pl_radelim",
+            "pl_projobliq", "pl_projobliqlim", "pl_trueobliq", "pl_trueobliqlim",
+        )  # fmt: skip
+        for host in exoplanets["hosts"].values():
+            for p in host["planets"]:
+                for key in keys:
+                    assert key in p, f"{p['pl_name']} lacks {key}"
+
     def test_doi_recorded(self, exoplanets):
         assert exoplanets["source"]["doi"] == "10.26133/NEA13"

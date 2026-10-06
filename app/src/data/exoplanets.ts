@@ -1,10 +1,11 @@
 /**
- * Lazy loader for exoplanets.json (SPEC §5.2). Loaded on demand (~2 MB):
+ * Lazy loader for exoplanets.json (SPEC §5.2). Loaded on demand (~4 MB):
  * first search, or first selection of a star flagged hasExoplanets.
  * Builds a reverse map matchedIndex → hostname for panel lookups.
  */
 
 import { DATA_BASE_URL } from './starData';
+import type { Lim } from '../lib/limitedValue';
 export interface ExoplanetRecord {
   pl_name: string;
   pl_orbper: number | null;
@@ -17,6 +18,17 @@ export interface ExoplanetRecord {
   disc_year: number | null;
   pl_eqt: number | null;
   in_hz: boolean | null;
+  pl_dens: number | null;
+  pl_denslim: Lim;
+  pl_insol: number | null;
+  pl_insollim: Lim;
+  pl_bmassprov: string | null;
+  pl_bmasselim: Lim;
+  pl_radelim: Lim;
+  pl_projobliq: number | null;
+  pl_projobliqlim: Lim;
+  pl_trueobliq: number | null;
+  pl_trueobliqlim: Lim;
 }
 
 export interface ExoHost {
@@ -24,12 +36,77 @@ export interface ExoHost {
   st_teff: number | null;
   st_lum: number | null;
   st_rad: number | null;
+  st_met: number | null;
+  st_metlim: Lim;
+  st_metratio: string | null;
+  st_age: number | null;
+  st_agelim: Lim;
+  st_mass: number | null;
+  st_masslim: Lim;
+  st_logg: number | null;
+  st_logglim: Lim;
+  st_spectype: string | null;
+  st_rotp: number | null;
+  st_rotplim: Lim;
+  st_vsin: number | null;
+  st_vsinlim: Lim;
   planets: ExoplanetRecord[];
 }
 
 export interface ExoplanetsData {
   version: number;
   hosts: Record<string, ExoHost>;
+}
+
+const HOST_NEW_KEYS = [
+  'st_met',
+  'st_metlim',
+  'st_metratio',
+  'st_age',
+  'st_agelim',
+  'st_mass',
+  'st_masslim',
+  'st_logg',
+  'st_logglim',
+  'st_spectype',
+  'st_rotp',
+  'st_rotplim',
+  'st_vsin',
+  'st_vsinlim',
+] as const;
+const PLANET_NEW_KEYS = [
+  'pl_dens',
+  'pl_denslim',
+  'pl_insol',
+  'pl_insollim',
+  'pl_bmassprov',
+  'pl_bmasselim',
+  'pl_radelim',
+  'pl_projobliq',
+  'pl_projobliqlim',
+  'pl_trueobliq',
+  'pl_trueobliqlim',
+] as const;
+
+/**
+ * Fills the advanced fields with null when absent, so a stale cached
+ * exoplanets.json (older pipeline output) still loads without undefined leaks.
+ */
+export function normalizeExoplanets(raw: unknown): ExoplanetsData {
+  const d = raw as ExoplanetsData;
+  const fill = <T extends object>(o: T, keys: readonly string[]): T => {
+    const out = { ...o } as Record<string, unknown>;
+    for (const k of keys) out[k] ??= null;
+    return out as T;
+  };
+  const hosts: Record<string, ExoHost> = {};
+  for (const [name, h] of Object.entries(d.hosts)) {
+    hosts[name] = {
+      ...fill(h, HOST_NEW_KEYS),
+      planets: h.planets.map((p) => fill(p, PLANET_NEW_KEYS)),
+    };
+  }
+  return { ...d, hosts };
 }
 
 let data: ExoplanetsData | null = null;
@@ -40,7 +117,7 @@ export function loadExoplanets(baseUrl = DATA_BASE_URL): Promise<ExoplanetsData>
   loadPromise ??= (async () => {
     const resp = await fetch(`${baseUrl}exoplanets.json`);
     if (!resp.ok) throw new Error(`exoplanets fetch failed: ${resp.status}`);
-    data = (await resp.json()) as ExoplanetsData;
+    data = normalizeExoplanets(await resp.json());
     hostByIndex = new Map();
     for (const [name, host] of Object.entries(data.hosts)) {
       if (host.starRef.matched && host.starRef.matchedIndex !== null) {

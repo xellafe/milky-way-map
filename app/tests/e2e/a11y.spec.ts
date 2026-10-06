@@ -141,3 +141,29 @@ test('reduced motion: System View starts paused', async ({ page }) => {
   // The pause control reflects the paused state (offers "resume").
   await expect(page.getByTestId('time-pause')).toContainText('▶');
 });
+
+test('star panel with the advanced section open has no blocking axe violations', async ({
+  page,
+}) => {
+  await openApp(page);
+  await page.getByTestId('search-input').fill('trappist');
+  await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
+  const section = page.getByTestId('star-panel').getByTestId('star-advanced');
+  await expect(section).toBeVisible();
+  await section.locator('summary').click();
+  await expect(section).toHaveAttribute('open', '');
+  await scan(page, '[data-testid="star-panel"]');
+});
+
+test('planet panel with the advanced section open has no blocking axe violations', async ({
+  page,
+}) => {
+  await openApp(page);
+  await enterTrappist(page);
+  await page.getByTestId('planet-chip').first().click();
+  const section = page.getByTestId('planet-panel').getByTestId('planet-advanced');
+  await expect(section).toBeVisible();
+  await section.locator('summary').click();
+  await expect(section).toHaveAttribute('open', '');
+  await scan(page, '[data-testid="planet-panel"]');
+});

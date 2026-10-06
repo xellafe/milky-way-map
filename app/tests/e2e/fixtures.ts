@@ -46,3 +46,29 @@ export async function serveFixtureData(page: Page): Promise<void> {
     await route.fulfill({ status: 200, contentType, body });
   });
 }
+
+/** Parsed golden exoplanets.json (data-pipeline/fixtures), for expected values. */
+export interface FixtureExoData {
+  hosts: Record<string, Record<string, unknown> & { planets: Record<string, unknown>[] }>;
+}
+
+export function readFixtureExoplanets(): FixtureExoData {
+  return JSON.parse(
+    readFileSync(path.join(FIXTURES, 'exoplanets.json'), 'utf-8'),
+  ) as FixtureExoData;
+}
+
+/**
+ * Re-serve exoplanets.json after `mutate` edited a copy of the golden file.
+ * Call AFTER serveFixtureData: the last registered route wins.
+ */
+export async function serveMutatedExoplanets(
+  page: Page,
+  mutate: (data: FixtureExoData) => void,
+): Promise<void> {
+  const data = readFixtureExoplanets();
+  mutate(data);
+  await page.route('**/data/exoplanets.json', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) }),
+  );
+}

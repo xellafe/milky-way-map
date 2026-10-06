@@ -154,6 +154,54 @@ class TestGroupHosts:
         # planets sorted by semi-major axis
         assert [p["pl_name"] for p in hosts["X-1"]["planets"]] == ["X-1 b", "X-1 c"]
 
+    def test_new_host_fields_first_nonnull(self):
+        rows = [
+            {"hostname": "M", "pl_name": "M b", "st_met": None},
+            {"hostname": "M", "pl_name": "M c", "st_met": 0.1, "st_metlim": 0},
+        ]
+        host = group_hosts(rows)["M"]
+        assert host["st_met"] == 0.1
+        assert host["st_metlim"] == 0
+
+    def test_value_and_limit_from_same_row(self):
+        rows = [
+            {"hostname": "A", "pl_name": "A b", "st_age": None, "st_agelim": 1},
+            {"hostname": "A", "pl_name": "A c", "st_age": 5.0, "st_agelim": 0},
+        ]
+        host = group_hosts(rows)["A"]
+        assert host["st_age"] == 5.0
+        assert host["st_agelim"] == 0
+
+    def test_metallicity_ratio_from_same_row_as_value(self):
+        rows = [
+            {"hostname": "Z", "pl_name": "Z b", "st_met": None, "st_metratio": "[M/H]"},
+            {"hostname": "Z", "pl_name": "Z c", "st_met": 0.1, "st_metratio": "[Fe/H]"},
+        ]
+        assert group_hosts(rows)["Z"]["st_metratio"] == "[Fe/H]"
+
+    def test_new_planet_fields_passthrough(self):
+        rows = [
+            {
+                "hostname": "P",
+                "pl_name": "P b",
+                "pl_dens": 5.5,
+                "pl_bmassprov": "Mass",
+                "pl_bmasselim": 1,
+                "pl_radelim": -1,
+                "pl_projobliq": 10.0,
+                "pl_projobliqlim": 0,
+            },
+            {"hostname": "P", "pl_name": "P c", "pl_orbsmax": 2.0},
+        ]
+        by_name = {p["pl_name"]: p for p in group_hosts(rows)["P"]["planets"]}
+        b = by_name["P b"]
+        assert (b["pl_dens"], b["pl_bmassprov"]) == (5.5, "Mass")
+        assert (b["pl_projobliq"], b["pl_projobliqlim"]) == (10.0, 0)
+        assert (b["pl_bmasselim"], b["pl_radelim"]) == (1, -1)
+        c = by_name["P c"]
+        for key in ("pl_dens", "pl_bmassprov", "pl_bmasselim", "pl_radelim", "pl_projobliq", "pl_projobliqlim"):  # fmt: skip
+            assert c[key] is None
+
     def test_in_hz_computed_per_planet(self):
         rows = [
             {"hostname": "S", "pl_name": "S b", "pl_orbsmax": 1.0, "st_lum": 0.0},

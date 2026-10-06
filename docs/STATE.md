@@ -8,6 +8,29 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #18 — informazioni avanzate su stelle e pianeti (2026-10-06, branch `feat/advanced-info`, commit `e26897c`, `7420bfc`, `2899139`, `1099d15`)
+
+- Costruito: sezioni "Dati avanzati". Stella ospite: metallicità
+  ([Fe/H]/[M/H], dex), età, massa, log g, tipo spettrale, periodo di rotazione,
+  v sin i proiettata. Pianeta: densità, irraggiamento, provenienza della massa.
+- Composizione indicativa (Zeng et al. 2019: curve rocciosa Earth-like e 50% H₂O
+  a 300 K), solo con massa e raggio misurati, mai con limiti. Orbita vs spin
+  stellare: ψ preferito, λ se ψ manca o è un limite; ψ = 90° → n/d.
+- La riga età dell'host ancorato mostra `st_age` con "(stima incerta)".
+- AC1–AC6 PASS; pytest 103, Vitest 205, Playwright 153/154 (solo il flaky sotto).
+- AC3, non mostrati e perché: cicli solari/attività (assenti in pscomppars e
+  AT-HYG); inclinazione dell'asse e verso di rotazione del pianeta (ignoti per
+  gli esopianeti: esiste solo l'obliquità spin-orbita, mostrata come orbita vs
+  spin stellare); composizione stellare (nessun dato oltre la metallicità).
+- AC6: `data/exoplanets.json` 2.023.968 → 4.260.571 B (gzip 255.612 → 406.876 B)
+  con 23 colonne (+2 flag limite in `1099d15`, trascurabili); caricato lazy.
+- Decisione: la curva d'acqua a 300 K è una scelta di presentazione (la più
+  fredda pubblicata). I limiti si mostrano con "<"/">".
+- Decisione: in produzione i nuovi campi sono "n/d" finché il prossimo
+  data-refresh non rigenera `exoplanets.json`.
+- Limite noto: le righe base del pianeta (massa, raggio) mostrano ancora i
+  valori limite senza "<" (preesistente, fuori perimetro).
+
 ## Zona abitabile — gradiente e piano orbitale (2026-10-05, branch `feat/host-star-surface`, richiesta umana senza issue)
 
 Commit successivo a `a3476d1`.
@@ -391,6 +414,12 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 | `[CHECKPOINT 4]` | M7 | ✅ **confermato dall'umano (2026-06-12)** | TRAPPIST-1: 7 pianeti, periodi verificati dal bridge; Proxima Cen: orbite schematiche (incl. assente); HZ √L coerente coi flag in_hz; 106 unit + 33 e2e verdi ×2; spot-check reale PASS |
 | — (M8, no checkpoint) | M8 | ✅ tutti passati | cambio lingua su tutta la UI + `html lang` (e2e); menu lingua operabile da tastiera con focus management; `axe` su overlay galassia e System View → 0 serious/critical; reduced-motion → System View in pausa; 106 unit + 38 e2e verdi |
 | `[FINAL HUMAN CHECK]` | M9 | ✅ auto-verifica passata — **in attesa di ok umano** | FPS 60 a regime su 2.49M stelle (RTX 3080); bundle 354 KB / CSS 4.1 KB gzip entro budget; refresh CI cablata + rigenerazione locale end-to-end (97 pytest + validate OK, deterministica); docs complete; deploy dati = stub documentato (hosting da decidere) |
+
+## Test flaky noti
+
+- `system.spec` "orbit style: each style renders and the choice persists":
+  ~30 s da solo contro un budget di 60 s; timeout sotto carico della suite
+  completa due volte il 2026-10-06; da solo passa.
 
 ## Come riprendere
 

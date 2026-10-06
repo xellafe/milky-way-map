@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getHost, isExoplanetsReady, loadExoplanets } from '../data/exoplanets';
+import { getHost, isExoplanetsReady, loadExoplanets, type ExoHost } from '../data/exoplanets';
 import { getNamesEntry } from '../data/namesIndex';
 import { getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
@@ -12,6 +12,7 @@ import {
   hasFlag,
   spectralClassLetter,
 } from '../lib/format';
+import { formatLimited, metallicityRatioTag } from '../lib/limitedValue';
 import { useGalaxyMapStore } from '../state/store';
 import { Badge } from './hud/Badge';
 import { HudButton } from './hud/HudButton';
@@ -24,15 +25,20 @@ function Row({
   value,
   note,
   warnNote = false,
+  testId,
 }: {
   label: string;
   value: string | null;
   note?: string;
   warnNote?: boolean;
+  testId?: string;
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex justify-between gap-4 border-b border-hud-accent/20 py-1.5">
+    <div
+      className="flex justify-between gap-4 border-b border-hud-accent/20 py-1.5"
+      data-testid={testId}
+    >
       <dt className="text-hud-muted">{label}</dt>
       <dd className="text-right font-hud-mono text-hud-bright">
         {value ?? t('panel.na')}
@@ -43,6 +49,53 @@ function Row({
         )}
       </dd>
     </div>
+  );
+}
+
+/** Collapsed host-star data from the NASA Exoplanet Archive (#18); absent fields read n/a. */
+function AdvancedStarData({ host }: { host: ExoHost }) {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
+  const tag = metallicityRatioTag(host.st_metratio);
+  return (
+    <details className="mt-2 text-sm" data-testid="star-advanced">
+      <summary className="cursor-pointer py-1 text-hud-muted hover:text-hud-bright">
+        {t('panel.advancedData')}
+      </summary>
+      <dl>
+        <Row
+          label={tag ? `${t('panel.advMetallicity')} ${tag}` : t('panel.advMetallicity')}
+          value={formatLimited(host.st_met, host.st_metlim, lang, 3, t('units.dex'))}
+          testId="adv-st_met"
+        />
+        <Row
+          label={t('panel.advAge')}
+          value={formatLimited(host.st_age, host.st_agelim, lang, 3, t('units.gyr'))}
+          testId="adv-st_age"
+        />
+        <Row
+          label={t('panel.advMass')}
+          value={formatLimited(host.st_mass, host.st_masslim, lang, 3, t('units.msun'))}
+          testId="adv-st_mass"
+        />
+        <Row
+          label={t('panel.advLogg')}
+          value={formatLimited(host.st_logg, host.st_logglim, lang, 3, t('units.cgs'))}
+          testId="adv-st_logg"
+        />
+        <Row label={t('panel.advSpectype')} value={host.st_spectype} testId="adv-st_spectype" />
+        <Row
+          label={t('panel.advRotation')}
+          value={formatLimited(host.st_rotp, host.st_rotplim, lang, 3, t('units.days'))}
+          testId="adv-st_rotp"
+        />
+        <Row
+          label={t('panel.advVsini')}
+          value={formatLimited(host.st_vsin, host.st_vsinlim, lang, 3, t('units.kms'))}
+          testId="adv-st_vsin"
+        />
+      </dl>
+    </details>
   );
 }
 
@@ -59,6 +112,7 @@ function StarDetails({ index }: { index: number }) {
   const { hostname, host } = useStarHost(index);
 
   const { title, catalogIds } = useStarTitle(index);
+  const age = host?.st_age ?? null;
 
   const ids: string[] = [];
   if (entry?.hd) ids.push(`HD ${entry.hd}`);
@@ -96,8 +150,15 @@ function StarDetails({ index }: { index: number }) {
           label={t('panel.colorIndex')}
           value={details ? formatNumber(bv, lang, { maximumFractionDigits: 3 }) : null}
         />
-        {/* Age is not present in HYG/AT-HYG → always n/d in v1 (SPEC §6.6: never fabricated). */}
-        <Row label={t('panel.age')} value={null} note={t('panel.ageNote')} warnNote />
+        {/* Age is not in HYG/AT-HYG (SPEC §6.6: never fabricated); only an exoplanet host
+            can carry the archive value. */}
+        <Row
+          label={t('panel.age')}
+          value={formatLimited(age, host?.st_agelim ?? null, lang, 3, t('units.gyr'))}
+          note={t('panel.ageNote')}
+          warnNote
+          testId="star-age"
+        />
       </dl>
       <details className="mt-2 text-sm">
         <summary className="cursor-pointer py-1 text-hud-muted hover:text-hud-bright">
@@ -117,6 +178,7 @@ function StarDetails({ index }: { index: number }) {
           />
         </dl>
       </details>
+      {host && <AdvancedStarData host={host} />}
       {hasExo && (
         <div className="mt-3">
           {host && (
@@ -197,6 +259,7 @@ function HostDetails({ hostname }: { hostname: string }) {
           value={t('panel.planetsCount', { count: host.planets.length })}
         />
       </dl>
+      <AdvancedStarData host={host} />
       <ul className="mt-2 text-sm text-hud-text" data-testid="planet-list">
         {host.planets.map((p) => (
           <li key={p.pl_name} className="border-b border-hud-accent/20 py-1">

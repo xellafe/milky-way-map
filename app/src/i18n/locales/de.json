@@ -46,7 +46,15 @@
     "stLum": "Leuchtkraft des Sterns",
     "stRad": "Sternradius",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "advancedData": "Erweiterte Daten",
+    "advMetallicity": "Metallizität",
+    "advAge": "Alter",
+    "advMass": "Sternmasse",
+    "advLogg": "Oberflächenschwerkraft (log g)",
+    "advSpectype": "Spektraltyp",
+    "advRotation": "Rotationsperiode",
+    "advVsini": "Projizierte Rotationsgeschwindigkeit (v sin i)"
   },
   "view": {
     "title": "Ansichtsoptionen",
@@ -81,7 +89,14 @@
     "au": "AE",
     "days": "Tage",
     "rearth": "R⊕",
-    "mearth": "M⊕"
+    "mearth": "M⊕",
+    "gyr": "Mrd. J.",
+    "msun": "M☉",
+    "kms": "km/s",
+    "gcm3": "g/cm³",
+    "searth": "S⊕",
+    "dex": "dex",
+    "cgs": "cgs"
   },
   "errors": {
     "webgl2Required": "Galaxy Map benötigt WebGL2, das in diesem Browser nicht verfügbar ist. Bitte verwenden Sie einen aktuellen Desktop-Browser mit aktivierter Hardwarebeschleunigung.",
@@ -111,7 +126,29 @@
     "schematicOrbit": "Schematische Bahn (Neigung n. v.)",
     "type": "Typ",
     "planetTypes": "Planetentypen",
-    "orbitStyle": "Orbit-Stil"
+    "orbitStyle": "Orbit-Stil",
+    "advancedData": "Erweiterte Daten",
+    "density": "Dichte",
+    "insolation": "Einstrahlung",
+    "massProvLabel": "Herkunft der Masse",
+    "compositionLabel": "Zusammensetzung",
+    "orbitSenseLabel": "Bahn relativ zur Sternrotation",
+    "massProv": {
+      "Mass": "Gemessen",
+      "Msini": "Minimal (M sin i)",
+      "Msin(i)/sin(i)": "Abgeleitet aus M sin i und Inklination",
+      "M-R relationship": "Geschätzt (Masse-Radius-Beziehung)"
+    },
+    "composition": {
+      "rocky": "Felsig",
+      "water": "Wasserreich",
+      "gaseous": "Gasförmig"
+    },
+    "orbitSense": {
+      "prograde": "Prograd",
+      "retrograde": "Retrograd"
+    },
+    "compositionNote": "(Näherungsmodell)"
   },
   "music": {
     "label": "Musik",
