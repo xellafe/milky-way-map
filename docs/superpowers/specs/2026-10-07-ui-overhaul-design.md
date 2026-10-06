@@ -195,8 +195,8 @@ equivalente), così tastiera, screen reader e test continuano a funzionare.
 
   | Gauge | Intervallo | Tacche |
   |---|---|---|
-  | Raggio | 0,3–30 R⊕ | Terra 1, Nettuno 3,86, Giove 11,2 |
-  | Massa | 0,1–10⁴ M⊕ | Terra 1, Nettuno 17,1, Giove 318 |
+  | Raggio | 0,3–30 R⊕ | Terra 1, Nettuno 3,883, Giove 11,209 (equatoriali, convenzione NASA Exoplanet Archive) |
+  | Massa | 0,1–10⁴ M⊕ | Terra 1, Nettuno 17,15, Giove 317,83 |
   | Periodo orbitale | 0,1–10⁵ giorni | 1 giorno, 1 anno (365,25 giorni) |
   | Temperatura di equilibrio | 50–3000 K | Terra ≈ 255 K |
 
