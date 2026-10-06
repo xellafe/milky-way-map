@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getHost, type ExoplanetRecord } from '../data/exoplanets';
 import { formatNumber } from '../lib/format';
+import { limitPrefix, type Lim } from '../lib/limitedValue';
+import { orbitSense } from '../lib/orbitSense';
+import { planetComposition } from '../lib/planetComposition';
 import { useCompactViewport } from '../lib/viewport';
 import { ORBIT_STYLES, type OrbitStyle } from '../lib/planetStyle';
 import { classifyPlanet, PLANET_TYPES } from '../lib/planetType';
@@ -60,6 +63,41 @@ function PlanetDetails({ planet }: { planet: ExoplanetRecord }) {
     [t('system.inHz'), planet.in_hz === null ? na : t(planet.in_hz ? 'panel.yes' : 'panel.no')],
   ];
 
+  const limNum = (v: number | null, lim: Lim, unit: string) =>
+    v !== null ? `${limitPrefix(lim)}${num(v, 3, ` ${unit}`)}` : na;
+  const composition = planetComposition(planet.pl_bmasse, planet.pl_rade, planet.pl_bmassprov);
+  const sense = orbitSense(
+    planet.pl_trueobliq,
+    planet.pl_trueobliqlim,
+    planet.pl_projobliq,
+    planet.pl_projobliqlim,
+  );
+  const advRows: [string, string, string][] = [
+    [
+      'adv-pl_dens',
+      t('system.density'),
+      limNum(planet.pl_dens, planet.pl_denslim, t('units.gcm3')),
+    ],
+    [
+      'adv-pl_insol',
+      t('system.insolation'),
+      limNum(planet.pl_insol, planet.pl_insollim, t('units.searth')),
+    ],
+    [
+      'adv-mass-prov',
+      t('system.massProvLabel'),
+      planet.pl_bmassprov
+        ? t(`system.massProv.${planet.pl_bmassprov}`, { defaultValue: planet.pl_bmassprov })
+        : na,
+    ],
+    [
+      'adv-composition',
+      t('system.compositionLabel'),
+      composition ? t(`system.composition.${composition}`) : na,
+    ],
+    ['adv-orbit-sense', t('system.orbitSenseLabel'), sense ? t(`system.orbitSense.${sense}`) : na],
+  ];
+
   return (
     <div className="mt-2 border-t border-hud-accent/20 pt-2" data-testid="planet-panel">
       <h3 className="mb-1 font-hud text-hud-bright" data-testid="planet-panel-title">
@@ -79,6 +117,28 @@ function PlanetDetails({ planet }: { planet: ExoplanetRecord }) {
           </div>
         ))}
       </dl>
+      <details className="mt-2 text-sm" data-testid="planet-advanced">
+        <summary className="cursor-pointer py-1 text-hud-muted hover:text-hud-bright">
+          {t('system.advancedData')}
+        </summary>
+        <dl>
+          {advRows.map(([id, label, value]) => (
+            <div
+              key={id}
+              className="flex justify-between gap-3 border-b border-hud-accent/20 py-1"
+              data-testid={id}
+            >
+              <dt className="text-hud-muted">{label}</dt>
+              <dd className="text-right font-hud-mono text-hud-bright">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        {composition && (
+          <p className="mt-1 text-xs text-hud-muted" data-testid="adv-composition-note">
+            {t('system.compositionNote')}
+          </p>
+        )}
+      </details>
     </div>
   );
 }

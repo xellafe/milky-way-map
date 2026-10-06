@@ -6,8 +6,13 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expect, test } from '@playwright/test';
-import { serveFixtureData, waitForFlyToArrival } from './fixtures';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import {
+  readFixtureExoplanets,
+  serveFixtureData,
+  serveMutatedExoplanets,
+  waitForFlyToArrival,
+} from './fixtures';
 
 const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import.meta.url));
 
@@ -217,4 +222,195 @@ test('clicking empty sky keeps the selection (card and panel stay)', async ({ pa
   await expect(page.getByTestId('selection-card')).toBeVisible();
   await expect(page.getByTestId('star-panel')).toBeVisible();
   await expect(page.getByTestId('panel-title')).toHaveText('Polaris');
+});
+
+// --- Advanced star data (#18) -------------------------------------------------
+// Numbers use 3 significant digits (en); null renders as the "n/a" marker.
+const sig3 = (v: number) =>
+  new Intl.NumberFormat('en-US', { maximumSignificantDigits: 3 }).format(v);
+const ADV_FIELDS = ['st_met', 'st_age', 'st_mass', 'st_logg', 'st_spectype', 'st_rotp', 'st_vsin'];
+
+async function openAppReady(page: Page) {
+  await page.goto('/');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+}
+
+async function selectHost(page: Page, query: string, label: string) {
+  await page.getByTestId('search-input').fill(query);
+  await page.getByRole('option').filter({ hasText: label }).first().click();
+  await expect(page.getByTestId('star-panel')).toBeVisible();
+  await expect(page.getByTestId('panel-title')).toContainText(label);
+}
+
+/** Opens the section from the keyboard: focus the summary, press Enter. */
+async function openAdvanced(page: Page) {
+  const section = page.getByTestId('star-panel').getByTestId('star-advanced');
+  await expect(section).toBeVisible();
+  await expect(section).not.toHaveAttribute('open', /.*/);
+  await section.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(section).toHaveAttribute('open', '');
+  return section;
+}
+
+const advValue = (section: Locator, field: string) =>
+  section.getByTestId(`adv-${field}`).locator('dd');
+
+for (const [query, label] of [
+  ['trappist', 'TRAPPIST-1'],
+  ['proxima cen', 'Proxima Cen'],
+] as const) {
+  test(`${label}: advanced star data starts closed and shows fixture values`, async ({ page }) => {
+    const host = readFixtureExoplanets().hosts[label]!;
+    await serveFixtureData(page);
+    await openAppReady(page);
+    await selectHost(page, query, label);
+
+    const section = await openAdvanced(page);
+    for (const f of ADV_FIELDS) {
+      const v = host[f] as number | string | null;
+      const dd = advValue(section, f);
+      if (v === null) await expect(dd).toContainText('n/a');
+      else if (typeof v === 'string') await expect(dd).toContainText(v);
+      else await expect(dd).toContainText(sig3(v));
+    }
+  });
+}
+
+test('advanced data: metallicity label carries the archive ratio ([Fe/H] from the fixture)', async ({
+  page,
+}) => {
+  const host = readFixtureExoplanets().hosts['TRAPPIST-1']!;
+  await serveFixtureData(page);
+  await openAppReady(page);
+  await selectHost(page, 'trappist', 'TRAPPIST-1');
+  const section = await openAdvanced(page);
+  await expect(section.getByTestId('adv-st_met')).toContainText(host['st_metratio'] as string);
+});
+
+test('advanced data: [M/H] ratio label', async ({ page }) => {
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    d.hosts['TRAPPIST-1']!['st_metratio'] = '[M/H]';
+  });
+  await openAppReady(page);
+  await selectHost(page, 'trappist', 'TRAPPIST-1');
+  const row = (await openAdvanced(page)).getByTestId('adv-st_met');
+  await expect(row).toContainText('[M/H]');
+  await expect(row.locator('dd')).toContainText('0.052');
+});
+
+test('advanced data: plain "Metallicity" label when st_metratio is absent', async ({ page }) => {
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    d.hosts['TRAPPIST-1']!['st_metratio'] = null;
+  });
+  await openAppReady(page);
+  await selectHost(page, 'trappist', 'TRAPPIST-1');
+  const row = (await openAdvanced(page)).getByTestId('adv-st_met');
+  await expect(row.locator('dt')).toHaveText('Metallicity');
+  await expect(row.locator('dd')).toContainText('0.052');
+});
+
+test('advanced data: limit flags prefix the value with < or >', async ({ page }) => {
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    const h = d.hosts['TRAPPIST-1']!;
+    h['st_agelim'] = 1;
+    h['st_masslim'] = -1;
+  });
+  await openAppReady(page);
+  await selectHost(page, 'trappist', 'TRAPPIST-1');
+  const section = await openAdvanced(page);
+  await expect(advValue(section, 'st_age')).toHaveText(/^<\s?7\.6/);
+  await expect(advValue(section, 'st_mass')).toHaveText(/^>\s?0\.0898/);
+  await expect(advValue(section, 'st_met')).toHaveText(/^0\.052/);
+});
+
+test('advanced data: metallicity and log g carry their units', async ({ page }) => {
+  await serveFixtureData(page);
+  await openAppReady(page);
+  await selectHost(page, 'trappist', 'TRAPPIST-1');
+  const section = await openAdvanced(page);
+  await expect(advValue(section, 'st_met')).toContainText('dex');
+  await expect(advValue(section, 'st_logg')).toContainText('cgs');
+});
+
+test('Proxima Cen: base "age" row reads only n/a when st_age is null', async ({ page }) => {
+  await serveFixtureData(page);
+  await openAppReady(page);
+  await selectHost(page, 'proxima cen', 'Proxima Cen');
+  const row = page.getByTestId('star-panel').getByTestId('star-age');
+  await expect(row).toContainText('n/a');
+  await expect(row).not.toContainText('uncertain estimate');
+});
+
+test('Proxima Cen: base "age" row shows st_age with unit and the uncertainty note', async ({
+  page,
+}) => {
+  // Real fixture value borrowed from another host; Proxima Cen has none of its own.
+  const age = readFixtureExoplanets().hosts['TRAPPIST-1']!['st_age'] as number;
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    const h = d.hosts['Proxima Cen']!;
+    h['st_age'] = age;
+    h['st_agelim'] = 0;
+  });
+  await openAppReady(page);
+  await selectHost(page, 'proxima cen', 'Proxima Cen');
+  const row = page.getByTestId('star-panel').getByTestId('star-age');
+  await expect(row).toContainText(sig3(age));
+  await expect(row).toContainText('Gyr');
+  await expect(row).toContainText('uncertain estimate');
+});
+
+test('legacy exoplanets.json (new fields absent): section shows only n/a, no errors', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    const hostNew = /^st_(met|age|mass|logg|spectype|rotp|vsin)/;
+    const planetNew = /^pl_(dens|insol|bmassprov|projobliq|trueobliq)/;
+    for (const h of Object.values(d.hosts)) {
+      for (const k of Object.keys(h)) if (hostNew.test(k)) delete h[k];
+      for (const p of h.planets) for (const k of Object.keys(p)) if (planetNew.test(k)) delete p[k];
+    }
+  });
+  await openAppReady(page);
+  await selectHost(page, 'trappist', 'TRAPPIST-1');
+  const section = await openAdvanced(page);
+  for (const f of ADV_FIELDS) await expect(advValue(section, f)).toContainText('n/a');
+  expect(errors).toEqual([]);
+});
+
+test('1280x720: open advanced section keeps the panel clear of the music player, scrollable', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await serveFixtureData(page);
+  await openAppReady(page);
+  await selectHost(page, 'trappist', 'TRAPPIST-1');
+  await expect(page.getByTestId('music-collapse')).toBeVisible(); // expanded by default = tallest
+  const section = await openAdvanced(page);
+
+  const panel = page.getByTestId('star-panel');
+  const player = page.locator('[data-hud=music-player]');
+  await expect(player).toBeVisible();
+  const p = (await panel.boundingBox())!;
+  const m = (await player.boundingBox())!;
+  const overlap =
+    p.x < m.x + m.width && m.x < p.x + p.width && p.y < m.y + m.height && m.y < p.y + p.height;
+  expect(overlap).toBe(false);
+
+  await expect(panel).toHaveCSS('overflow-y', /auto|scroll/);
+  // The last row must be reachable by scrolling and end up inside the panel box.
+  const last = advValue(section, 'st_vsin');
+  await last.scrollIntoViewIfNeeded();
+  const l = (await last.boundingBox())!;
+  const p2 = (await panel.boundingBox())!;
+  expect(l.y).toBeGreaterThanOrEqual(p2.y);
+  expect(l.y + l.height).toBeLessThanOrEqual(p2.y + p2.height);
 });

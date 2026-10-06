@@ -46,7 +46,15 @@
     "stLum": "Star luminosity",
     "stRad": "Star radius",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "advancedData": "Advanced data",
+    "advMetallicity": "Metallicity",
+    "advAge": "Age",
+    "advMass": "Star mass",
+    "advLogg": "Surface gravity (log g)",
+    "advSpectype": "Spectral type",
+    "advRotation": "Rotation period",
+    "advVsini": "Rotation speed (v sin i)"
   },
   "view": {
     "title": "View options",
@@ -81,7 +89,14 @@
     "au": "AU",
     "days": "days",
     "rearth": "R⊕",
-    "mearth": "M⊕"
+    "mearth": "M⊕",
+    "gyr": "Gyr",
+    "msun": "M☉",
+    "kms": "km/s",
+    "gcm3": "g/cm³",
+    "searth": "S⊕",
+    "dex": "dex",
+    "cgs": "cgs"
   },
   "errors": {
     "webgl2Required": "Galaxy Map requires WebGL2, which is not available in this browser. Please use a recent desktop browser with hardware acceleration enabled.",
@@ -111,7 +126,29 @@
     "schematicOrbit": "Schematic orbit (inclination n/a)",
     "type": "Type",
     "planetTypes": "Planet types",
-    "orbitStyle": "Orbit style"
+    "orbitStyle": "Orbit style",
+    "advancedData": "Advanced data",
+    "density": "Density",
+    "insolation": "Irradiation",
+    "massProvLabel": "Mass provenance",
+    "compositionLabel": "Composition",
+    "orbitSenseLabel": "Orbit vs. stellar spin",
+    "massProv": {
+      "Mass": "Measured",
+      "Msini": "Minimum (M sin i)",
+      "Msin(i)/sin(i)": "Derived from M sin i and inclination",
+      "M-R relationship": "Estimated (mass-radius relation)"
+    },
+    "composition": {
+      "rocky": "Rocky",
+      "water": "Water world",
+      "gaseous": "Gaseous"
+    },
+    "orbitSense": {
+      "prograde": "Prograde",
+      "retrograde": "Retrograde"
+    },
+    "compositionNote": "(approximate model)"
   },
   "music": {
     "label": "Music",

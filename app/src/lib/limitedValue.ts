@@ -5,3 +5,8 @@ export type Lim = -1 | 0 | 1 | null;
 export function limitPrefix(lim: Lim): '<' | '>' | '' {
   return lim === 1 ? '<' : lim === -1 ? '>' : '';
 }
+
+/** Archive metallicity ratio recognised for the label; anything else is not shown. */
+export function metallicityRatioTag(ratio: string | null): '[Fe/H]' | '[M/H]' | null {
+  return ratio === '[Fe/H]' || ratio === '[M/H]' ? ratio : null;
+}

@@ -10,7 +10,10 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { serveFixtureData } from './fixtures';
+import type { Lim } from '../../src/lib/limitedValue';
+import { orbitSense } from '../../src/lib/orbitSense';
+import { planetComposition } from '../../src/lib/planetComposition';
+import { readFixtureExoplanets, serveFixtureData, serveMutatedExoplanets } from './fixtures';
 
 const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import.meta.url));
 
@@ -353,4 +356,139 @@ test('time bar is hidden while a dock panel is open so it cannot overlap it', as
 
   await page.getByTestId('options-toggle').click();
   await expect(bar).toBeVisible();
+});
+
+// --- Advanced planet data (#18) -----------------------------------------------
+const EN = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../src/i18n/locales/en.json', import.meta.url)), 'utf-8'),
+) as { system: Record<string, Record<string, string> | string> };
+const enLabel = (group: string, key: string): string => {
+  const v = (EN.system[group] as Record<string, string> | undefined)?.[key];
+  expect(v, `en.json system.${group}.${key}`).toBeTruthy();
+  return v!;
+};
+const sig3 = (v: number) =>
+  new Intl.NumberFormat('en-US', { maximumSignificantDigits: 3 }).format(v);
+// Literal on purpose: pins the user-visible English wording of each provenance.
+const MASS_PROV_EN: Record<string, string> = {
+  Mass: 'Measured',
+  Msini: 'Minimum (M sin i)',
+  'Msin(i)/sin(i)': 'Derived from M sin i and inclination',
+  'M-R relationship': 'Estimated (mass-radius relation)',
+};
+
+type Planet = Record<string, number | string | null>;
+const planetOf = (host: string, name: string) =>
+  readFixtureExoplanets().hosts[host]!.planets.find((p) => p['pl_name'] === name) as Planet;
+
+async function openPlanetAdvanced(page: Page, chip: string) {
+  await page.getByTestId('planet-chip').filter({ hasText: chip }).click();
+  const section = page.getByTestId('planet-panel').getByTestId('planet-advanced');
+  await expect(section).toBeVisible();
+  await expect(section).not.toHaveAttribute('open', /.*/);
+  await section.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(section).toHaveAttribute('open', '');
+  return section;
+}
+
+test('TRAPPIST-1 b: advanced planet data from the fixture, composition model note', async ({
+  page,
+}) => {
+  const p = planetOf('TRAPPIST-1', 'TRAPPIST-1 b');
+  const comp = planetComposition(
+    p['pl_bmasse'] as number,
+    p['pl_rade'] as number,
+    p['pl_bmassprov'] as string,
+  );
+  const sense = orbitSense(
+    p['pl_trueobliq'] as number | null,
+    p['pl_trueobliqlim'] as Lim,
+    p['pl_projobliq'] as number | null,
+    p['pl_projobliqlim'] as Lim,
+  );
+  expect(comp).not.toBeNull();
+  expect(sense).not.toBeNull();
+
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  const section = await openPlanetAdvanced(page, 'TRAPPIST-1 b');
+
+  await expect(section.getByTestId('adv-pl_dens')).toContainText(sig3(p['pl_dens'] as number));
+  await expect(section.getByTestId('adv-pl_insol')).toContainText(sig3(p['pl_insol'] as number));
+  await expect(section.getByTestId('adv-mass-prov')).toContainText(
+    MASS_PROV_EN[p['pl_bmassprov'] as string]!,
+  );
+  const compRow = section.getByTestId('adv-composition');
+  await expect(compRow).toContainText(enLabel('composition', comp!));
+  const note = EN.system['compositionNote'];
+  expect(note, 'en.json system.compositionNote').toBeTruthy();
+  await expect(section.getByTestId('adv-composition-note')).toHaveText(note as string);
+  await expect(section.getByTestId('adv-orbit-sense').locator('dt')).toHaveText(
+    'Orbit vs. stellar spin',
+  );
+  await expect(section.getByTestId('adv-orbit-sense')).toContainText(enLabel('orbitSense', sense!));
+});
+
+test('TRAPPIST-1 c: no obliquity in the fixture -> orbit sense n/a', async ({ page }) => {
+  const p = planetOf('TRAPPIST-1', 'TRAPPIST-1 c');
+  expect(p['pl_projobliq']).toBeNull();
+  expect(p['pl_trueobliq']).toBeNull();
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  const section = await openPlanetAdvanced(page, 'TRAPPIST-1 c');
+  await expect(section.getByTestId('adv-orbit-sense').locator('dd')).toContainText('n/a');
+});
+
+test('Proxima Cen d: Msini mass provenance, composition n/a without a note', async ({ page }) => {
+  const p = planetOf('Proxima Cen', 'Proxima Cen d');
+  expect(p['pl_bmassprov']).toBe('Msini');
+  await openApp(page);
+  await enterSystem(page, 'proxima cen', 'Proxima Cen');
+  const section = await openPlanetAdvanced(page, 'Proxima Cen d');
+  await expect(section.getByTestId('adv-pl_dens')).toContainText(sig3(p['pl_dens'] as number));
+  await expect(section.getByTestId('adv-mass-prov')).toContainText(MASS_PROV_EN['Msini']!);
+  await expect(section.getByTestId('adv-composition').locator('dd')).toContainText('n/a');
+  await expect(section.getByTestId('adv-composition-note')).toHaveCount(0);
+});
+
+test('planet limit flag prefixes density with < ', async ({ page }) => {
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    const pl = d.hosts['TRAPPIST-1']!.planets.find((q) => q['pl_name'] === 'TRAPPIST-1 b')!;
+    pl['pl_denslim'] = 1;
+  });
+  await page.goto('/?pdb=1');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  const section = await openPlanetAdvanced(page, 'TRAPPIST-1 b');
+  await expect(section.getByTestId('adv-pl_dens').locator('dd')).toHaveText(/^<\s?5\.44/);
+});
+
+test('legacy exoplanets.json (new fields absent): planet section shows only n/a, no errors', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    const planetNew = /^pl_(dens|insol|bmassprov|projobliq|trueobliq)/;
+    for (const h of Object.values(d.hosts))
+      for (const pl of h.planets)
+        for (const k of Object.keys(pl)) if (planetNew.test(k)) delete pl[k];
+  });
+  await page.goto('/?pdb=1');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  const section = await openPlanetAdvanced(page, 'TRAPPIST-1 b');
+  for (const id of [
+    'adv-pl_dens',
+    'adv-pl_insol',
+    'adv-mass-prov',
+    'adv-composition',
+    'adv-orbit-sense',
+  ])
+    await expect(section.getByTestId(id).locator('dd')).toContainText('n/a');
+  expect(errors).toEqual([]);
 });

@@ -46,7 +46,15 @@
     "stLum": "Luminosidad de la estrella",
     "stRad": "Radio de la estrella",
     "yes": "Sí",
-    "no": "No"
+    "no": "No",
+    "advancedData": "Datos avanzados",
+    "advMetallicity": "Metalicidad",
+    "advAge": "Edad",
+    "advMass": "Masa de la estrella",
+    "advLogg": "Gravedad superficial (log g)",
+    "advSpectype": "Tipo espectral",
+    "advRotation": "Periodo de rotación",
+    "advVsini": "Velocidad de rotación (v sin i)"
   },
   "view": {
     "title": "Opciones de vista",
@@ -81,7 +89,14 @@
     "au": "UA",
     "days": "días",
     "rearth": "R⊕",
-    "mearth": "M⊕"
+    "mearth": "M⊕",
+    "gyr": "Ga",
+    "msun": "M☉",
+    "kms": "km/s",
+    "gcm3": "g/cm³",
+    "searth": "S⊕",
+    "dex": "dex",
+    "cgs": "cgs"
   },
   "errors": {
     "webgl2Required": "Galaxy Map requiere WebGL2, que no está disponible en este navegador. Usa un navegador de escritorio reciente con la aceleración por hardware activada.",
@@ -111,7 +126,29 @@
     "schematicOrbit": "Órbita esquemática (inclinación n/d)",
     "type": "Tipo",
     "planetTypes": "Tipos de planeta",
-    "orbitStyle": "Estilo de órbitas"
+    "orbitStyle": "Estilo de órbitas",
+    "advancedData": "Datos avanzados",
+    "density": "Densidad",
+    "insolation": "Irradiación",
+    "massProvLabel": "Origen de la masa",
+    "compositionLabel": "Composición",
+    "orbitSenseLabel": "Órbita respecto al giro de la estrella",
+    "massProv": {
+      "Mass": "Medida",
+      "Msini": "Mínima (M sin i)",
+      "Msin(i)/sin(i)": "Derivada de M sin i y la inclinación",
+      "M-R relationship": "Estimada (relación masa-radio)"
+    },
+    "composition": {
+      "rocky": "Rocoso",
+      "water": "Mundo acuático",
+      "gaseous": "Gaseoso"
+    },
+    "orbitSense": {
+      "prograde": "Prógrada",
+      "retrograde": "Retrógrada"
+    },
+    "compositionNote": "(modelo aproximado)"
   },
   "music": {
     "label": "Música",

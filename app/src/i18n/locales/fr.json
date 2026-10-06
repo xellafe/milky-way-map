@@ -46,7 +46,15 @@
     "stLum": "Luminosité de l'étoile",
     "stRad": "Rayon de l'étoile",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "advancedData": "Données avancées",
+    "advMetallicity": "Métallicité",
+    "advAge": "Âge",
+    "advMass": "Masse de l'étoile",
+    "advLogg": "Gravité de surface (log g)",
+    "advSpectype": "Type spectral",
+    "advRotation": "Période de rotation",
+    "advVsini": "Vitesse de rotation (v sin i)"
   },
   "view": {
     "title": "Options d'affichage",
@@ -81,7 +89,14 @@
     "au": "UA",
     "days": "jours",
     "rearth": "R⊕",
-    "mearth": "M⊕"
+    "mearth": "M⊕",
+    "gyr": "Ga",
+    "msun": "M☉",
+    "kms": "km/s",
+    "gcm3": "g/cm³",
+    "searth": "S⊕",
+    "dex": "dex",
+    "cgs": "cgs"
   },
   "errors": {
     "webgl2Required": "Galaxy Map nécessite WebGL2, qui n'est pas disponible dans ce navigateur. Veuillez utiliser un navigateur de bureau récent avec l'accélération matérielle activée.",
@@ -111,7 +126,29 @@
     "schematicOrbit": "Orbite schématique (inclinaison n/d)",
     "type": "Type",
     "planetTypes": "Types de planète",
-    "orbitStyle": "Style des orbites"
+    "orbitStyle": "Style des orbites",
+    "advancedData": "Données avancées",
+    "density": "Densité",
+    "insolation": "Irradiation",
+    "massProvLabel": "Origine de la masse",
+    "compositionLabel": "Composition",
+    "orbitSenseLabel": "Orbite par rapport à la rotation de l'étoile",
+    "massProv": {
+      "Mass": "Mesurée",
+      "Msini": "Minimale (M sin i)",
+      "Msin(i)/sin(i)": "Dérivée de M sin i et de l'inclinaison",
+      "M-R relationship": "Estimée (relation masse-rayon)"
+    },
+    "composition": {
+      "rocky": "Rocheuse",
+      "water": "Monde aquatique",
+      "gaseous": "Gazeuse"
+    },
+    "orbitSense": {
+      "prograde": "Prograde",
+      "retrograde": "Rétrograde"
+    },
+    "compositionNote": "(modèle approximatif)"
   },
   "music": {
     "label": "Musique",
