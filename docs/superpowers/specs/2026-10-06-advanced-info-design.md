@@ -148,3 +148,12 @@ già i valori fabbricati; questa issue aggiunge solo dati presenti nella fonte).
 - AC4: l'app funziona con un `exoplanets.json` senza i nuovi campi.
 - AC5: stringhe in 5 lingue; `axe` pulito; gate completo + pytest verdi.
 - AC6: crescita di `exoplanets.json` misurata e riportata in `STATE.md`.
+
+**Modificato (decisione del controller durante l'implementazione, 2026-10-06):**
+(a) §5, riga età: la premessa "oggi sempre n/d con la nota" era errata (la
+nota non compariva mai con n/d); implementato come da SPEC §6.6: nota con il
+valore, `n/d` semplice se assente. (b) §4, `orbitSense`: una ψ con flag di
+limite ricade su λ (un limite non è una misura); una ψ misurata = 90 → `null`.
+(c) §3: la composizione richiede anche `pl_bmasselim = pl_radelim = 0` (due
+colonne in più); l'etichetta di classe è "ricco d'acqua". (d) §8: l'helper è
+`formatLimited` + `limitPrefix`.
