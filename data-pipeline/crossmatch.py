@@ -56,9 +56,32 @@ PLANET_FIELDS = [
     "discoverymethod",
     "disc_year",
     "pl_eqt",
+    "pl_dens",
+    "pl_denslim",
+    "pl_insol",
+    "pl_insollim",
+    "pl_bmassprov",
+    "pl_projobliq",
+    "pl_projobliqlim",
+    "pl_trueobliq",
+    "pl_trueobliqlim",
 ]
 
 HOST_STAR_FIELDS = ["st_teff", "st_lum", "st_rad", "ra", "dec", "sy_dist"]
+
+# Value-driven star fields: "first non-null" is decided on the value, and the
+# companion columns are copied from that same row so a limit flag never
+# describes a value from a different row. `lim` convention (NASA): 1 = upper
+# limit, -1 = lower limit, 0/null = measurement.
+HOST_LIMITED_FIELDS = {
+    "st_met": ("st_metlim", "st_metratio"),
+    "st_age": ("st_agelim",),
+    "st_mass": ("st_masslim",),
+    "st_logg": ("st_logglim",),
+    "st_rotp": ("st_rotplim",),
+    "st_vsin": ("st_vsinlim",),
+    "st_spectype": (),
+}
 
 
 def digits_of(value: object) -> str | None:
@@ -189,11 +212,17 @@ def group_hosts(rows: list[dict[str, object]]) -> dict[str, dict[str, object]]:
         host = hosts.setdefault(
             hostname,
             {f: None for f in HOST_STAR_FIELDS}
+            | {f: None for v, extra in HOST_LIMITED_FIELDS.items() for f in (v, *extra)}
             | {"gaia_dr3_id": None, "hd_name": None, "hip_name": None, "planets": []},
         )
         for f in HOST_STAR_FIELDS + ["gaia_dr3_id", "hd_name", "hip_name"]:
             if host[f] is None and row.get(f) is not None:
                 host[f] = row[f]
+        for value, extra in HOST_LIMITED_FIELDS.items():
+            if host[value] is None and row.get(value) is not None:
+                host[value] = row[value]
+                for f in extra:
+                    host[f] = row.get(f)
         planet = {f: row.get(f) for f in PLANET_FIELDS}
         planet["in_hz"] = compute_in_hz(host["st_lum"] or row.get("st_lum"), row.get("pl_orbsmax"))
         host["planets"].append(planet)
@@ -269,6 +298,7 @@ def main(argv: list[str] | None = None) -> int:
             "st_teff": host["st_teff"],
             "st_lum": host["st_lum"],
             "st_rad": host["st_rad"],
+            **{f: host[f] for v, extra in HOST_LIMITED_FIELDS.items() for f in (v, *extra)},
             "planets": host["planets"],
         }
 
