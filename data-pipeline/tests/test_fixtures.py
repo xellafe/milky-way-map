@@ -140,6 +140,7 @@ class TestExoplanetFixture:
     def test_planets_have_advanced_keys(self, exoplanets):
         keys = (
             "pl_dens", "pl_denslim", "pl_insol", "pl_insollim", "pl_bmassprov",
+            "pl_bmasselim", "pl_radelim",
             "pl_projobliq", "pl_projobliqlim", "pl_trueobliq", "pl_trueobliqlim",
         )  # fmt: skip
         for host in exoplanets["hosts"].values():

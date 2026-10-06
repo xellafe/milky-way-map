@@ -23,6 +23,8 @@ export interface ExoplanetRecord {
   pl_insol: number | null;
   pl_insollim: Lim;
   pl_bmassprov: string | null;
+  pl_bmasselim: Lim;
+  pl_radelim: Lim;
   pl_projobliq: number | null;
   pl_projobliqlim: Lim;
   pl_trueobliq: number | null;
@@ -78,6 +80,8 @@ const PLANET_NEW_KEYS = [
   'pl_insol',
   'pl_insollim',
   'pl_bmassprov',
+  'pl_bmasselim',
+  'pl_radelim',
   'pl_projobliq',
   'pl_projobliqlim',
   'pl_trueobliq',

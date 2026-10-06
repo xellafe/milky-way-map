@@ -186,6 +186,8 @@ class TestGroupHosts:
                 "pl_name": "P b",
                 "pl_dens": 5.5,
                 "pl_bmassprov": "Mass",
+                "pl_bmasselim": 1,
+                "pl_radelim": -1,
                 "pl_projobliq": 10.0,
                 "pl_projobliqlim": 0,
             },
@@ -195,8 +197,9 @@ class TestGroupHosts:
         b = by_name["P b"]
         assert (b["pl_dens"], b["pl_bmassprov"]) == (5.5, "Mass")
         assert (b["pl_projobliq"], b["pl_projobliqlim"]) == (10.0, 0)
+        assert (b["pl_bmasselim"], b["pl_radelim"]) == (1, -1)
         c = by_name["P c"]
-        for key in ("pl_dens", "pl_bmassprov", "pl_projobliq", "pl_projobliqlim"):
+        for key in ("pl_dens", "pl_bmassprov", "pl_bmasselim", "pl_radelim", "pl_projobliq", "pl_projobliqlim"):  # fmt: skip
             assert c[key] is None
 
     def test_in_hz_computed_per_planet(self):

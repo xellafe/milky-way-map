@@ -54,7 +54,7 @@
     "advLogg": "Gravité de surface (log g)",
     "advSpectype": "Type spectral",
     "advRotation": "Période de rotation",
-    "advVsini": "Vitesse de rotation (v sin i)"
+    "advVsini": "Vitesse de rotation projetée (v sin i)"
   },
   "view": {
     "title": "Options d'affichage",
@@ -141,7 +141,7 @@
     },
     "composition": {
       "rocky": "Rocheuse",
-      "water": "Monde aquatique",
+      "water": "Riche en eau",
       "gaseous": "Gazeuse"
     },
     "orbitSense": {

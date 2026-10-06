@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getHost, type ExoplanetRecord } from '../data/exoplanets';
 import { formatNumber } from '../lib/format';
-import { limitPrefix, type Lim } from '../lib/limitedValue';
+import { formatLimited } from '../lib/limitedValue';
 import { orbitSense } from '../lib/orbitSense';
 import { planetComposition } from '../lib/planetComposition';
 import { useCompactViewport } from '../lib/viewport';
@@ -63,9 +63,13 @@ function PlanetDetails({ planet }: { planet: ExoplanetRecord }) {
     [t('system.inHz'), planet.in_hz === null ? na : t(planet.in_hz ? 'panel.yes' : 'panel.no')],
   ];
 
-  const limNum = (v: number | null, lim: Lim, unit: string) =>
-    v !== null ? `${limitPrefix(lim)}${num(v, 3, ` ${unit}`)}` : na;
-  const composition = planetComposition(planet.pl_bmasse, planet.pl_rade, planet.pl_bmassprov);
+  const composition = planetComposition(
+    planet.pl_bmasse,
+    planet.pl_rade,
+    planet.pl_bmassprov,
+    planet.pl_bmasselim,
+    planet.pl_radelim,
+  );
   const sense = orbitSense(
     planet.pl_trueobliq,
     planet.pl_trueobliqlim,
@@ -76,12 +80,12 @@ function PlanetDetails({ planet }: { planet: ExoplanetRecord }) {
     [
       'adv-pl_dens',
       t('system.density'),
-      limNum(planet.pl_dens, planet.pl_denslim, t('units.gcm3')),
+      formatLimited(planet.pl_dens, planet.pl_denslim, lang, 3, t('units.gcm3')) ?? na,
     ],
     [
       'adv-pl_insol',
       t('system.insolation'),
-      limNum(planet.pl_insol, planet.pl_insollim, t('units.searth')),
+      formatLimited(planet.pl_insol, planet.pl_insollim, lang, 3, t('units.searth')) ?? na,
     ],
     [
       'adv-mass-prov',

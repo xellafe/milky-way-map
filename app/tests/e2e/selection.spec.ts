@@ -228,6 +228,7 @@ test('clicking empty sky keeps the selection (card and panel stay)', async ({ pa
 // Numbers use 3 significant digits (en); null renders as the "n/a" marker.
 const sig3 = (v: number) =>
   new Intl.NumberFormat('en-US', { maximumSignificantDigits: 3 }).format(v);
+const trappistHost = () => readFixtureExoplanets().hosts['TRAPPIST-1']!;
 const ADV_FIELDS = ['st_met', 'st_age', 'st_mass', 'st_logg', 'st_spectype', 'st_rotp', 'st_vsin'];
 
 async function openAppReady(page: Page) {
@@ -297,7 +298,7 @@ test('advanced data: [M/H] ratio label', async ({ page }) => {
   await selectHost(page, 'trappist', 'TRAPPIST-1');
   const row = (await openAdvanced(page)).getByTestId('adv-st_met');
   await expect(row).toContainText('[M/H]');
-  await expect(row.locator('dd')).toContainText('0.052');
+  await expect(row.locator('dd')).toContainText(sig3(trappistHost()['st_met'] as number));
 });
 
 test('advanced data: plain "Metallicity" label when st_metratio is absent', async ({ page }) => {
@@ -309,7 +310,7 @@ test('advanced data: plain "Metallicity" label when st_metratio is absent', asyn
   await selectHost(page, 'trappist', 'TRAPPIST-1');
   const row = (await openAdvanced(page)).getByTestId('adv-st_met');
   await expect(row.locator('dt')).toHaveText('Metallicity');
-  await expect(row.locator('dd')).toContainText('0.052');
+  await expect(row.locator('dd')).toContainText(sig3(trappistHost()['st_met'] as number));
 });
 
 test('advanced data: limit flags prefix the value with < or >', async ({ page }) => {
@@ -322,9 +323,22 @@ test('advanced data: limit flags prefix the value with < or >', async ({ page })
   await openAppReady(page);
   await selectHost(page, 'trappist', 'TRAPPIST-1');
   const section = await openAdvanced(page);
-  await expect(advValue(section, 'st_age')).toHaveText(/^<\s?7\.6/);
-  await expect(advValue(section, 'st_mass')).toHaveText(/^>\s?0\.0898/);
-  await expect(advValue(section, 'st_met')).toHaveText(/^0\.052/);
+  const h = trappistHost();
+  const starts = (prefix: string, v: unknown) =>
+    new RegExp(`^${prefix}\\s?${sig3(v as number).replace(/[.]/g, '\\.')}`);
+  await expect(advValue(section, 'st_age')).toHaveText(starts('<', h['st_age']));
+  await expect(advValue(section, 'st_mass')).toHaveText(starts('>', h['st_mass']));
+  await expect(advValue(section, 'st_met')).toHaveText(starts('', h['st_met']));
+});
+
+test('advanced data: v sin i row is labelled as a projected rotation speed', async ({ page }) => {
+  await serveFixtureData(page);
+  await openAppReady(page);
+  await selectHost(page, 'trappist', 'TRAPPIST-1');
+  const section = await openAdvanced(page);
+  await expect(section.getByTestId('adv-st_vsin').locator('dt')).toHaveText(
+    'Projected rotation speed (v sin i)',
+  );
 });
 
 test('advanced data: metallicity and log g carry their units', async ({ page }) => {

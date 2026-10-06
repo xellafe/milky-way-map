@@ -61,6 +61,8 @@ PLANET_FIELDS = [
     "pl_insol",
     "pl_insollim",
     "pl_bmassprov",
+    "pl_bmasselim",
+    "pl_radelim",
     "pl_projobliq",
     "pl_projobliqlim",
     "pl_trueobliq",

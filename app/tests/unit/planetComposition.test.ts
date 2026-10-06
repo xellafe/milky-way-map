@@ -20,6 +20,18 @@ describe('planetComposition', () => {
     expect(planetComposition(5, r, null)).toBeNull();
   });
 
+  it('returns null when mass or radius is a limit, never a measurement', () => {
+    const rocky = 0.95 * rockyRadius(5);
+    const gas = 1.1 * water50Radius(5);
+    expect(planetComposition(5, rocky, 'Mass', 0, 0)).toBe('rocky');
+    expect(planetComposition(5, rocky, 'Mass', 1)).toBeNull();
+    expect(planetComposition(5, rocky, 'Mass', -1)).toBeNull();
+    expect(planetComposition(5, rocky, 'Mass', 0, 1)).toBeNull();
+    expect(planetComposition(5, rocky, 'Mass', null, -1)).toBeNull();
+    expect(planetComposition(5, gas, 'Mass', 1)).toBeNull();
+    expect(planetComposition(5, gas, 'Mass', 0, -1)).toBeNull();
+  });
+
   it('returns null for missing or invalid mass or radius', () => {
     for (const bad of [null, 0, -1, NaN]) {
       expect(planetComposition(bad, 1, 'Mass')).toBeNull();

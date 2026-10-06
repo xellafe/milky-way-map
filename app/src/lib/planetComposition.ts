@@ -7,8 +7,11 @@
  *    (Earth-like rocky, 32.5% Fe + 67.5% MgSiO3), subset 0.1-100 Earth masses;
  *  - water: https://lweb.cfa.harvard.edu/~lzeng/tables/massradius_50percentH2O_300K_1mbar.txt
  *    (50% H2O by mass over an Earth-like core, 300 K, 1 mbar radius), whole
- *    table (0.5-64 Earth masses).
+ *    table (0.5-64 Earth masses). Presentation choice, not data: the 300 K
+ *    curve is the coldest published one, used as the water-rich boundary.
  */
+
+import type { Lim } from './limitedValue';
 
 export type Composition = 'rocky' | 'water' | 'gaseous';
 
@@ -103,16 +106,21 @@ export function water50Radius(massEarth: number): number {
 }
 
 /**
- * Composition class of a planet with a measured true mass. Msini and
- * Msini is only a minimum mass, and a mass from a mass-radius relationship is
- * derived from the radius, so the result would be circular; both give null.
+ * Composition class of a planet with a measured true mass. Msini is only a
+ * minimum mass, and a mass from a mass-radius relationship is derived from the
+ * radius, so the result would be circular; both give null. A limit-flagged mass
+ * or radius is never a measurement, so it gives null too (the provenance
+ * column alone does not rule that out).
  */
 export function planetComposition(
   massEarth: number | null,
   radiusEarth: number | null,
   massProv: string | null,
+  massLim: Lim = null,
+  radiusLim: Lim = null,
 ): Composition | null {
   if (massProv !== 'Mass') return null;
+  if (massLim || radiusLim) return null;
   if (massEarth === null || radiusEarth === null) return null;
   if (!(massEarth > 0) || !(radiusEarth > 0)) return null;
   if (radiusEarth <= rockyRadius(massEarth)) return 'rocky';

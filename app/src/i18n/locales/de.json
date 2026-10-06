@@ -54,7 +54,7 @@
     "advLogg": "Oberflächenschwerkraft (log g)",
     "advSpectype": "Spektraltyp",
     "advRotation": "Rotationsperiode",
-    "advVsini": "Rotationsgeschwindigkeit (v sin i)"
+    "advVsini": "Projizierte Rotationsgeschwindigkeit (v sin i)"
   },
   "view": {
     "title": "Ansichtsoptionen",
@@ -141,7 +141,7 @@
     },
     "composition": {
       "rocky": "Felsig",
-      "water": "Wasserwelt",
+      "water": "Wasserreich",
       "gaseous": "Gasförmig"
     },
     "orbitSense": {

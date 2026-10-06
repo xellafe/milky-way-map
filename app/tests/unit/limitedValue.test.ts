@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { limitPrefix, metallicityRatioTag } from '../../src/lib/limitedValue';
+import { formatLimited, limitPrefix, metallicityRatioTag } from '../../src/lib/limitedValue';
 
 describe('limitPrefix', () => {
   it('maps limit flags to prefixes', () => {
@@ -19,5 +19,23 @@ describe('metallicityRatioTag', () => {
     expect(metallicityRatioTag(null)).toBeNull();
     expect(metallicityRatioTag('')).toBeNull();
     expect(metallicityRatioTag('[X/H]')).toBeNull();
+  });
+});
+
+describe('formatLimited', () => {
+  it('formats a measured value with the requested significant digits', () => {
+    expect(formatLimited(0.05234, 0, 'en-US', 3)).toBe('0.0523');
+    expect(formatLimited(7.61, null, 'en-US', 2)).toBe('7.6');
+  });
+  it('prefixes upper and lower limits', () => {
+    expect(formatLimited(7.6, 1, 'en-US', 3)).toBe('<7.6');
+    expect(formatLimited(7.6, -1, 'en-US', 3)).toBe('>7.6');
+  });
+  it('appends the unit', () => {
+    expect(formatLimited(7.6, 1, 'en-US', 3, 'Gyr')).toBe('<7.6 Gyr');
+  });
+  it('returns null for a missing or non-finite value', () => {
+    expect(formatLimited(null, 1, 'en-US', 3, 'Gyr')).toBeNull();
+    expect(formatLimited(NaN, 0, 'en-US', 3)).toBeNull();
   });
 });

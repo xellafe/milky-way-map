@@ -400,6 +400,8 @@ test('TRAPPIST-1 b: advanced planet data from the fixture, composition model not
     p['pl_bmasse'] as number,
     p['pl_rade'] as number,
     p['pl_bmassprov'] as string,
+    p['pl_bmasselim'] as Lim,
+    p['pl_radelim'] as Lim,
   );
   const sense = orbitSense(
     p['pl_trueobliq'] as number | null,
@@ -428,6 +430,10 @@ test('TRAPPIST-1 b: advanced planet data from the fixture, composition model not
     'Orbit vs. stellar spin',
   );
   await expect(section.getByTestId('adv-orbit-sense')).toContainText(enLabel('orbitSense', sense!));
+});
+
+test('composition class labels do not overstate the water class', () => {
+  expect(enLabel('composition', 'water')).toBe('Water-rich');
 });
 
 test('TRAPPIST-1 c: no obliquity in the fixture -> orbit sense n/a', async ({ page }) => {
@@ -462,7 +468,10 @@ test('planet limit flag prefixes density with < ', async ({ page }) => {
   await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
   await enterSystem(page, 'trappist', 'TRAPPIST-1');
   const section = await openPlanetAdvanced(page, 'TRAPPIST-1 b');
-  await expect(section.getByTestId('adv-pl_dens').locator('dd')).toHaveText(/^<\s?5\.44/);
+  const p = planetOf('TRAPPIST-1', 'TRAPPIST-1 b');
+  await expect(section.getByTestId('adv-pl_dens').locator('dd')).toHaveText(
+    new RegExp(`^<\\s?${sig3(p['pl_dens'] as number).replace('.', '\\.')}`),
+  );
 });
 
 test('legacy exoplanets.json (new fields absent): planet section shows only n/a, no errors', async ({

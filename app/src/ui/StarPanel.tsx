@@ -12,7 +12,7 @@ import {
   hasFlag,
   spectralClassLetter,
 } from '../lib/format';
-import { limitPrefix, metallicityRatioTag, type Lim } from '../lib/limitedValue';
+import { formatLimited, metallicityRatioTag } from '../lib/limitedValue';
 import { useGalaxyMapStore } from '../state/store';
 import { Badge } from './hud/Badge';
 import { HudButton } from './hud/HudButton';
@@ -52,19 +52,6 @@ function Row({
   );
 }
 
-/** Number with its archive limit prefix ("<"/">"), or null when absent. */
-function limited(
-  v: number | null,
-  lim: Lim,
-  lang: string,
-  digits: number,
-  unit?: string,
-): string | null {
-  if (v === null) return null;
-  const n = formatNumber(v, lang, { maximumSignificantDigits: digits });
-  return `${limitPrefix(lim)}${n}${unit ? ` ${unit}` : ''}`;
-}
-
 /** Collapsed host-star data from the NASA Exoplanet Archive (#18); absent fields read n/a. */
 function AdvancedStarData({ host }: { host: ExoHost }) {
   const { t, i18n } = useTranslation();
@@ -78,33 +65,33 @@ function AdvancedStarData({ host }: { host: ExoHost }) {
       <dl>
         <Row
           label={tag ? `${t('panel.advMetallicity')} ${tag}` : t('panel.advMetallicity')}
-          value={limited(host.st_met, host.st_metlim, lang, 3, t('units.dex'))}
+          value={formatLimited(host.st_met, host.st_metlim, lang, 3, t('units.dex'))}
           testId="adv-st_met"
         />
         <Row
           label={t('panel.advAge')}
-          value={limited(host.st_age, host.st_agelim, lang, 3, t('units.gyr'))}
+          value={formatLimited(host.st_age, host.st_agelim, lang, 3, t('units.gyr'))}
           testId="adv-st_age"
         />
         <Row
           label={t('panel.advMass')}
-          value={limited(host.st_mass, host.st_masslim, lang, 3, t('units.msun'))}
+          value={formatLimited(host.st_mass, host.st_masslim, lang, 3, t('units.msun'))}
           testId="adv-st_mass"
         />
         <Row
           label={t('panel.advLogg')}
-          value={limited(host.st_logg, host.st_logglim, lang, 3, t('units.cgs'))}
+          value={formatLimited(host.st_logg, host.st_logglim, lang, 3, t('units.cgs'))}
           testId="adv-st_logg"
         />
         <Row label={t('panel.advSpectype')} value={host.st_spectype} testId="adv-st_spectype" />
         <Row
           label={t('panel.advRotation')}
-          value={limited(host.st_rotp, host.st_rotplim, lang, 3, t('units.days'))}
+          value={formatLimited(host.st_rotp, host.st_rotplim, lang, 3, t('units.days'))}
           testId="adv-st_rotp"
         />
         <Row
           label={t('panel.advVsini')}
-          value={limited(host.st_vsin, host.st_vsinlim, lang, 3, t('units.kms'))}
+          value={formatLimited(host.st_vsin, host.st_vsinlim, lang, 3, t('units.kms'))}
           testId="adv-st_vsin"
         />
       </dl>
@@ -167,7 +154,7 @@ function StarDetails({ index }: { index: number }) {
             can carry the archive value. */}
         <Row
           label={t('panel.age')}
-          value={limited(age, host?.st_agelim ?? null, lang, 3, t('units.gyr'))}
+          value={formatLimited(age, host?.st_agelim ?? null, lang, 3, t('units.gyr'))}
           note={t('panel.ageNote')}
           warnNote
           testId="star-age"
