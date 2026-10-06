@@ -59,3 +59,15 @@ aggiunto va elencato qui con autore e licenza.
 - **Autore:** Federico Xella, titolare dei diritti; incluso nell'app per sua scelta.
 - **Licenza:** tutti i diritti riservati all'autore. **Non** è coperto dalla
   licenza MIT del codice né dalla CC BY-SA dei dati.
+
+## 5. Modelli massa-raggio — Zeng et al. 2019
+
+- **Riferimento:** Li Zeng et al., "Growth model interpretation of planet size
+  distribution", PNAS 116 (20), 9723–9728 (2019),
+  [doi:10.1073/pnas.1812905116](https://doi.org/10.1073/pnas.1812905116).
+- **Fonte:** tabelle dal sito dell'autore, https://lweb.cfa.harvard.edu/~lzeng/planetmodels.html
+  (`massradiusEarthlikeRocky.txt` e `massradius_50percentH2O_300K_1mbar.txt`).
+- **Licenza:** nessuna dichiarata dall'autore; punti usati con citazione.
+- **Natura:** modello teorico, non dato osservativo.
+- **Uso:** punti copiati in `app/src/lib/planetComposition.ts` per
+  classificare i pianeti (roccioso / ricco d'acqua / gassoso).
