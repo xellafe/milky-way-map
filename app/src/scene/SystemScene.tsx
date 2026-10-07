@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
 import { canvasCursor } from '../lib/canvasCursor';
+import { approachTarget, followStep } from '../lib/follow';
+import { prefersReducedMotion } from '../lib/motion';
 import { hzBoundsAU, hzInclinationDeg, type HzBounds } from '../lib/habitableZone';
 import {
   nameSeed,
@@ -225,6 +227,7 @@ function PlanetAnimator({
   hzIncl: number | null;
 }) {
   const tDays = useRef(0);
+  const controls = useThree((s) => s.controls) as { target: THREE.Vector3 } | null;
 
   useFrame((_, delta) => {
     tDays.current += delta * useGalaxyMapStore.getState().timeScaleDaysPerSecond;
@@ -247,10 +250,12 @@ function PlanetAnimator({
     if (exposeBridge) {
       (globalThis as Record<string, unknown>).__system = {
         tDays: tDays.current,
+        cameraTarget: controls?.target.toArray() ?? null,
         timeScale: useGalaxyMapStore.getState().timeScaleDaysPerSecond,
         hz: hz && { ...hz, inclinationDeg: hzIncl },
         planets: planets.map((p) => ({
           name: p.record.pl_name,
+          position: meshes.current[planets.indexOf(p)]?.position.toArray() ?? null,
           schematic: p.schematic,
           semiMajorAxisAU: p.semiMajorAxisAU,
           periodDays: p.record.pl_orbper,
@@ -263,6 +268,54 @@ function PlanetAnimator({
     }
   });
 
+  return null;
+}
+
+/** Seconds the controls target takes to reach a newly selected planet (aesthetic choice, not data). */
+const FOLLOW_APPROACH_S = 1;
+
+/**
+ * Keeps the orbit target on the selected planet (#10): eased approach, then a
+ * per-frame lock with the camera translated by the same delta. Must be mounted
+ * after PlanetAnimator so it reads this frame's planet positions.
+ */
+function PlanetFollow({
+  planets,
+  meshes,
+}: {
+  planets: RenderablePlanet[];
+  meshes: React.RefObject<(THREE.Mesh | null)[]>;
+}) {
+  const controls = useThree((s) => s.controls) as { target: THREE.Vector3 } | null;
+  const camera = useThree((s) => s.camera);
+  const run = useRef<{ name: string; start: THREE.Vector3; elapsed: number } | null>(null);
+
+  useFrame((_, delta) => {
+    const name = useGalaxyMapStore.getState().selectedPlanet;
+    const mesh = name ? meshes.current[planets.findIndex((p) => p.record.pl_name === name)] : null;
+    if (!controls || !name || !mesh) {
+      run.current = null;
+      return;
+    }
+    if (run.current?.name !== name) {
+      run.current = { name, start: controls.target.clone(), elapsed: 0 };
+    }
+    const r = run.current;
+    r.elapsed += delta;
+    const dur = prefersReducedMotion() ? 0 : FOLLOW_APPROACH_S;
+    const t = dur === 0 ? 1 : Math.min(r.elapsed / dur, 1);
+    const pos = mesh.position.toArray();
+    const next = t < 1 ? approachTarget(r.start.toArray(), pos, t) : pos;
+    const moved = followStep(camera.position.toArray(), controls.target.toArray(), next);
+    camera.position.set(...moved.camera);
+    controls.target.set(...moved.target);
+    if (exposeBridge) {
+      const bridge = (globalThis as Record<string, unknown>).__system as {
+        cameraTarget?: number[];
+      };
+      if (bridge) bridge.cameraTarget = [...moved.target];
+    }
+  });
   return null;
 }
 
@@ -416,7 +469,7 @@ export function SystemScene() {
             }}
             onClick={(e) => {
               e.stopPropagation();
-              selectPlanet(p.record.pl_name);
+              selectPlanet({ name: p.record.pl_name, type: p.type });
             }}
             onPointerOver={() => (overPlanet.current = true)}
             onPointerOut={() => (overPlanet.current = false)}
@@ -427,6 +480,7 @@ export function SystemScene() {
         </group>
       ))}
       <PlanetAnimator planets={planets} meshes={meshes} angles={angles} hz={hz} hzIncl={hzIncl} />
+      <PlanetFollow planets={planets} meshes={meshes} />
       <GrabCursor overPlanet={overPlanet} />
       <OrbitControls
         makeDefault

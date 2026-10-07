@@ -21,8 +21,10 @@ interface SystemBridge {
   tDays: number;
   timeScale: number;
   hz: { innerAU: number; outerAU: number; inclinationDeg: number | null } | null;
+  cameraTarget: [number, number, number];
   planets: {
     name: string;
+    position: [number, number, number];
     schematic: boolean;
     semiMajorAxisAU: number;
     periodDays: number | null;
@@ -512,4 +514,33 @@ test('legacy exoplanets.json (new fields absent): planet section shows only n/a,
   ])
     await expect(section.getByTestId(id).locator('dd')).toContainText('n/a');
   expect(errors).toEqual([]);
+});
+
+test('camera follows the selected planet', async ({ page }) => {
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+
+  await page.getByTestId('planet-chip').filter({ hasText: 'TRAPPIST-1 b' }).click();
+  await page.waitForTimeout(1_500); // approach tween (1 s) done
+
+  const sample = async () => {
+    const s = await bridge(page);
+    return { target: s.cameraTarget, planet: s.planets.find((p) => p.name === 'TRAPPIST-1 b')! };
+  };
+  const first = await sample();
+  await page.waitForTimeout(500);
+  const second = await sample();
+
+  const dist = (a: number[], b: number[]) =>
+    Math.hypot(a[0]! - b[0]!, a[1]! - b[1]!, a[2]! - b[2]!);
+  expect(dist(first.target, first.planet.position)).toBeLessThan(1e-6);
+  expect(dist(second.target, second.planet.position)).toBeLessThan(1e-6);
+  expect(dist(first.target, second.target)).toBeGreaterThan(0); // the planet moves
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('planet-panel')).toHaveCount(0);
+  const still1 = (await bridge(page)).cameraTarget;
+  await page.waitForTimeout(500);
+  const still2 = (await bridge(page)).cameraTarget;
+  expect(dist(still1, still2)).toBe(0);
 });

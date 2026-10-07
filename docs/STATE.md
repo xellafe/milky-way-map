@@ -428,6 +428,9 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
   until a manual drag": fallito una volta nella run completa (deriva della
   distanza 0,119 contro < 0,05); da solo passa. Visto sul branch
   `feat/ui-overhaul`, issue #23.
+- `starcloud.spec` (riga 6) "renders the star cloud from the fixture data":
+  fallito una volta nella run completa (conteggio stelle 0 dopo il timeout di
+  15 s); da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
 
 ## Come riprendere
 

@@ -81,7 +81,7 @@ describe('galaxy map store', () => {
     expect(s.view).toBe('system');
     expect(s.systemHostname).toBe('Proxima Cen');
     expect(s.selectedPlanet).toBeNull();
-    useGalaxyMapStore.getState().selectPlanet('Proxima Cen b');
+    useGalaxyMapStore.getState().selectPlanet({ name: 'Proxima Cen b', type: 'rocky' });
     useGalaxyMapStore.getState().exitSystemView();
     s = useGalaxyMapStore.getState();
     expect(s.view).toBe('galaxy');
@@ -107,6 +107,18 @@ describe('galaxy map store', () => {
     useGalaxyMapStore.getState().togglePlanetType('giant');
     expect(useGalaxyMapStore.getState().visiblePlanetTypes.giant).toBe(false);
     expect(useGalaxyMapStore.getState().visiblePlanetTypes.rocky).toBe(true);
+  });
+
+  it('hiding the type of the selected planet closes the selection', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().selectPlanet({ name: 'X b', type: 'rocky' });
+    expect(s().selectedPlanet).toBe('X b');
+    expect(s().selectedPlanetType).toBe('rocky');
+    s().togglePlanetType('giant');
+    expect(s().selectedPlanet).toBe('X b');
+    s().togglePlanetType('rocky');
+    expect(s().selectedPlanet).toBeNull();
+    expect(s().selectedPlanetType).toBeNull();
   });
 
   it('dock: one panel at a time, toggle closes', () => {

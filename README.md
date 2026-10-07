@@ -28,6 +28,10 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
   shared time-scale slider (time bar above the dock), habitable-zone overlay
   (approximate √L model), planet type filter and selectable orbit style
   (trail / thick / simple), all in the dock's View tab.
+  Clicking a planet (in the scene or its chip) selects it: the camera flies to
+  it, then follows it along its orbit keeping your distance and angle. ✕, Esc
+  or a click on empty space stops following (the camera stays put); hiding the
+  selected planet's type in the filter closes the selection.
   Planet sizes and looks are **presentational, not data**: the catalog has no
   planet colors or surfaces, so each planet gets a procedural look from its
   size class (rocky / sub-Neptune / giant / unknown, from radius or mass) plus

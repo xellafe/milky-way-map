@@ -42,6 +42,7 @@ export interface GalaxyMapState {
   systemHostname: string | null;
   /** Planet selected in the System View (pl_name), for the details panel. */
   selectedPlanet: string | null;
+  selectedPlanetType: PlanetType | null;
   showNames: boolean;
   showConstellations: boolean;
   showHabitableZone: boolean;
@@ -93,7 +94,7 @@ export interface GalaxyMapState {
   setView: (view: ViewMode) => void;
   enterSystemView: (hostname: string) => void;
   exitSystemView: () => void;
-  selectPlanet: (planetName: string | null) => void;
+  selectPlanet: (planet: { name: string; type: PlanetType } | null) => void;
   toggleNames: () => void;
   toggleConstellations: () => void;
   toggleHabitableZone: () => void;
@@ -111,6 +112,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   view: 'galaxy',
   systemHostname: null,
   selectedPlanet: null,
+  selectedPlanetType: null,
   showNames: false,
   showConstellations: false,
   showHabitableZone: false,
@@ -174,14 +176,22 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       view: 'system',
       systemHostname: hostname,
       selectedPlanet: null,
+      selectedPlanetType: null,
       dockPanel: null,
       ...(prefersReducedMotion() ? { timeScaleDaysPerSecond: 0 } : {}),
     }),
   // The galaxy selection survives: leaving the system brings back the same
   // star card (and the galaxy camera pose is restored from its holder).
   exitSystemView: () =>
-    set({ view: 'galaxy', systemHostname: null, selectedPlanet: null, dockPanel: null }),
-  selectPlanet: (planetName) => set({ selectedPlanet: planetName }),
+    set({
+      view: 'galaxy',
+      systemHostname: null,
+      selectedPlanet: null,
+      selectedPlanetType: null,
+      dockPanel: null,
+    }),
+  selectPlanet: (planet) =>
+    set({ selectedPlanet: planet?.name ?? null, selectedPlanetType: planet?.type ?? null }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),
   toggleConstellations: () => set((s) => ({ showConstellations: !s.showConstellations })),
   toggleHabitableZone: () => set((s) => ({ showHabitableZone: !s.showHabitableZone })),
@@ -189,6 +199,10 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   togglePlanetType: (type) =>
     set((s) => ({
       visiblePlanetTypes: { ...s.visiblePlanetTypes, [type]: !s.visiblePlanetTypes[type] },
+      // Hiding the selected planet's class must not leave an invisible selection.
+      ...(s.visiblePlanetTypes[type] && s.selectedPlanetType === type
+        ? { selectedPlanet: null, selectedPlanetType: null }
+        : {}),
     })),
   toggleDockPanel: (id) =>
     set((s) => {

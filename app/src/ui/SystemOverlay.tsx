@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getHost, type ExoplanetRecord } from '../data/exoplanets';
 import { formatNumber } from '../lib/format';
@@ -128,6 +129,20 @@ export function SystemOverlay() {
   const exitSystemView = useGalaxyMapStore((s) => s.exitSystemView);
   const visibleTypes = useGalaxyMapStore((s) => s.visiblePlanetTypes);
 
+  // Esc deselects the planet unless something else used it: a dock panel (marks
+  // the event handled), the search box or a dialog.
+  useEffect(() => {
+    if (selectedPlanet === null) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      if (event.target instanceof Element && event.target.closest('dialog')) return;
+      if (useGalaxyMapStore.getState().dockPanel) return;
+      useGalaxyMapStore.getState().selectPlanet(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedPlanet]);
+
   const host = hostname ? getHost(hostname) : null;
   if (!hostname || !host) return null;
   const shownPlanets = host.planets.filter((p) => visibleTypes[classifyPlanet(p)]);
@@ -172,7 +187,13 @@ export function SystemOverlay() {
               type="button"
               data-testid="planet-chip"
               aria-pressed={selectedPlanet === p.pl_name}
-              onClick={() => selectPlanet(selectedPlanet === p.pl_name ? null : p.pl_name)}
+              onClick={() =>
+                selectPlanet(
+                  selectedPlanet === p.pl_name
+                    ? null
+                    : { name: p.pl_name, type: classifyPlanet(p) },
+                )
+              }
               className={`rounded-hud border px-2 py-1 font-hud text-xs ${
                 selectedPlanet === p.pl_name
                   ? 'border-hud-accent/60 bg-hud-accent/20 text-hud-bright'
