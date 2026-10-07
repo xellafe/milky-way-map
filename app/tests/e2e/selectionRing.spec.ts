@@ -154,6 +154,6 @@ test('card border has the same stroke as the callout; other panels keep theirs',
   expect(Math.abs(card.a - m.calloutOpacity)).toBeLessThanOrEqual(0.02);
   card.rgb.forEach((v, i) => expect(Math.abs(v - stroke.rgb[i]!)).toBeLessThanOrEqual(2));
   expect(m.panelWidth).toBe(1);
-  // Generic .hud-panel border alpha (35%), untouched by the card override.
-  expect(Math.abs(parse(m.panelColor).a - 0.35)).toBeLessThanOrEqual(0.02);
+  // Generic .hud-card border alpha (18%, #23), untouched by the selection-card override.
+  expect(Math.abs(parse(m.panelColor).a - 0.18)).toBeLessThanOrEqual(0.02);
 });

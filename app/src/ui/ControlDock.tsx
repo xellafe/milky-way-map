@@ -76,7 +76,7 @@ export function ControlDock() {
             badge:
               visibleCount !== null ? (
                 <span
-                  className="rounded border border-hud-accent/40 bg-black/70 px-1 font-hud-mono text-[10px] text-hud-muted"
+                  className="rounded-hud border border-hud-accent/40 bg-black/70 px-1 font-hud-mono text-[10px] text-hud-muted"
                   data-testid="visible-count"
                 >
                   {formatNumber(visibleCount, i18n.language)}

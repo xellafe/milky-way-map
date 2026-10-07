@@ -5,7 +5,7 @@ const toneClass = {
   warn: 'border-hud-warn/50 text-hud-warn bg-hud-warn/10',
 };
 
-/** Compact rounded label, used for badges like "N planets" or "estimate". */
+/** Compact square label, used for badges like "N planets" or "estimate". */
 export function Badge({
   tone = 'accent',
   children,
@@ -17,7 +17,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-block rounded border px-1.5 py-0.5 font-hud-mono text-xs ${toneClass[tone]}`}
+      className={`inline-block rounded-hud border px-1.5 py-0.5 font-hud-mono text-xs ${toneClass[tone]}`}
       {...rest}
     >
       {children}

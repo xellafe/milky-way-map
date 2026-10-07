@@ -3,7 +3,7 @@ import { formatNumber } from '../lib/format';
 import { isDefaultSettings, type Settings, useSettingsStore } from '../state/settings';
 import { HudButton } from './hud/HudButton';
 import { HudCheckbox, HudSlider } from './hud/HudInputs';
-import { HudPanel } from './hud/HudPanel';
+import { HudCard } from './hud/HudCard';
 
 type NumericKey = {
   [K in keyof Settings]: Settings[K] extends number ? K : never;
@@ -64,11 +64,12 @@ export function OptionsPanel() {
   const settings = useSettingsStore();
 
   return (
-    <HudPanel
+    <HudCard
+      as="section"
       id="dock-panel-options"
       aria-label={t('options.title')}
       data-testid="options-panel"
-      className="max-h-[60vh] w-72 overflow-y-auto text-sm"
+      className="max-h-[60vh] w-72 overflow-y-auto p-3 text-sm"
     >
       <SliderSetting
         id="moveSpeedLyPerS"
@@ -131,6 +132,6 @@ export function OptionsPanel() {
       >
         {t('options.reset')}
       </HudButton>
-    </HudPanel>
+    </HudCard>
   );
 }

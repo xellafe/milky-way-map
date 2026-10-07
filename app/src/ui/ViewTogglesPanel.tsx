@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useGalaxyMapStore } from '../state/store';
 import { HudCheckbox } from './hud/HudInputs';
-import { HudPanel } from './hud/HudPanel';
+import { HudCard } from './hud/HudCard';
 
 /**
  * View toggles (SPEC §6.2): always-on star names and constellation lines.
@@ -17,11 +17,12 @@ export function ViewTogglesPanel() {
   const toggleConstellations = useGalaxyMapStore((s) => s.toggleConstellations);
 
   return (
-    <HudPanel
+    <HudCard
+      as="section"
       id="dock-panel-view"
       aria-label={t('view.title')}
       data-testid="view-toggles"
-      className="flex flex-col gap-1"
+      className="flex flex-col gap-1 p-3"
     >
       <HudCheckbox
         label={t('view.showNames')}
@@ -35,6 +36,6 @@ export function ViewTogglesPanel() {
         data-testid="toggle-constellations"
         onChange={toggleConstellations}
       />
-    </HudPanel>
+    </HudCard>
   );
 }

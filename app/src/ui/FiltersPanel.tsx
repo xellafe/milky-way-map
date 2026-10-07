@@ -4,7 +4,7 @@ import { formatNumber } from '../lib/format';
 import { useGalaxyMapStore } from '../state/store';
 import { HudButton } from './hud/HudButton';
 import { HudCheckbox } from './hud/HudInputs';
-import { HudPanel } from './hud/HudPanel';
+import { HudCard } from './hud/HudCard';
 
 const SPECTRAL_LABELS = ['O', 'B', 'A', 'F', 'G', 'K', 'M'];
 
@@ -55,7 +55,7 @@ function RangeFilter({
             value={Number(lo.toFixed(decimals))}
             data-testid={`filter-${id}-min`}
             onChange={(e) => apply(e.target.valueAsNumber, hi)}
-            className="w-full rounded border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud-mono text-sm text-hud-text disabled:opacity-40"
+            className="w-full rounded-hud border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud-mono text-sm text-hud-text disabled:opacity-40"
           />
         </label>
         <span className="text-hud-muted">–</span>
@@ -67,7 +67,7 @@ function RangeFilter({
             value={Number(hi.toFixed(decimals))}
             data-testid={`filter-${id}-max`}
             onChange={(e) => apply(lo, e.target.valueAsNumber)}
-            className="w-full rounded border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud-mono text-sm text-hud-text disabled:opacity-40"
+            className="w-full rounded-hud border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud-mono text-sm text-hud-text disabled:opacity-40"
           />
         </label>
       </div>
@@ -100,11 +100,12 @@ export function FiltersPanel() {
     setFilters({ [key]: e.target.checked });
 
   return (
-    <HudPanel
+    <HudCard
+      as="section"
       id="dock-panel-filters"
       aria-label={t('filters.title')}
       data-testid="filters-panel"
-      className="max-h-[60vh] w-80 overflow-y-auto"
+      className="max-h-[60vh] w-80 overflow-y-auto p-3"
     >
       <fieldset>
         <legend className="font-hud text-xs text-hud-muted">{t('filters.spectralClass')}</legend>
@@ -182,6 +183,6 @@ export function FiltersPanel() {
       >
         {t('filters.reset')}
       </HudButton>
-    </HudPanel>
+    </HudCard>
   );
 }

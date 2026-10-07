@@ -15,42 +15,13 @@ import {
 import { formatLimited, metallicityRatioTag } from '../lib/limitedValue';
 import { useGalaxyMapStore } from '../state/store';
 import { Badge } from './hud/Badge';
+import { CloseButton } from './hud/CloseButton';
+import { DataRow } from './hud/DataRow';
 import { HudButton } from './hud/HudButton';
+import { HudCard } from './hud/HudCard';
 import { StarStatTiles } from './StarStatTiles';
 import { useStarHost } from './useStarHost';
 import { useStarTitle } from './useStarTitle';
-
-function Row({
-  label,
-  value,
-  note,
-  warnNote = false,
-  testId,
-}: {
-  label: string;
-  value: string | null;
-  note?: string;
-  warnNote?: boolean;
-  testId?: string;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div
-      className="flex justify-between gap-4 border-b border-hud-accent/20 py-1.5"
-      data-testid={testId}
-    >
-      <dt className="text-hud-muted">{label}</dt>
-      <dd className="text-right font-hud-mono text-hud-bright">
-        {value ?? t('panel.na')}
-        {note && value !== null && (
-          <span className={`ml-1 text-xs ${warnNote ? 'text-hud-warn' : 'text-hud-muted'}`}>
-            {note}
-          </span>
-        )}
-      </dd>
-    </div>
-  );
-}
 
 /** Collapsed host-star data from the NASA Exoplanet Archive (#18); absent fields read n/a. */
 function AdvancedStarData({ host }: { host: ExoHost }) {
@@ -63,33 +34,33 @@ function AdvancedStarData({ host }: { host: ExoHost }) {
         {t('panel.advancedData')}
       </summary>
       <dl>
-        <Row
+        <DataRow
           label={tag ? `${t('panel.advMetallicity')} ${tag}` : t('panel.advMetallicity')}
           value={formatLimited(host.st_met, host.st_metlim, lang, 3, t('units.dex'))}
           testId="adv-st_met"
         />
-        <Row
+        <DataRow
           label={t('panel.advAge')}
           value={formatLimited(host.st_age, host.st_agelim, lang, 3, t('units.gyr'))}
           testId="adv-st_age"
         />
-        <Row
+        <DataRow
           label={t('panel.advMass')}
           value={formatLimited(host.st_mass, host.st_masslim, lang, 3, t('units.msun'))}
           testId="adv-st_mass"
         />
-        <Row
+        <DataRow
           label={t('panel.advLogg')}
           value={formatLimited(host.st_logg, host.st_logglim, lang, 3, t('units.cgs'))}
           testId="adv-st_logg"
         />
-        <Row label={t('panel.advSpectype')} value={host.st_spectype} testId="adv-st_spectype" />
-        <Row
+        <DataRow label={t('panel.advSpectype')} value={host.st_spectype} testId="adv-st_spectype" />
+        <DataRow
           label={t('panel.advRotation')}
           value={formatLimited(host.st_rotp, host.st_rotplim, lang, 3, t('units.days'))}
           testId="adv-st_rotp"
         />
-        <Row
+        <DataRow
           label={t('panel.advVsini')}
           value={formatLimited(host.st_vsin, host.st_vsinlim, lang, 3, t('units.kms'))}
           testId="adv-st_vsin"
@@ -140,19 +111,19 @@ function StarDetails({ index }: { index: number }) {
       </p>
       <StarStatTiles index={index} />
       <dl className="mt-3 text-sm">
-        <Row
+        <DataRow
           label={t('panel.absoluteMagnitude')}
           value={
             details ? formatNumber(details.absMag[index], lang, { maximumFractionDigits: 2 }) : null
           }
         />
-        <Row
+        <DataRow
           label={t('panel.colorIndex')}
           value={details ? formatNumber(bv, lang, { maximumFractionDigits: 3 }) : null}
         />
         {/* Age is not in HYG/AT-HYG (SPEC §6.6: never fabricated); only an exoplanet host
             can carry the archive value. */}
-        <Row
+        <DataRow
           label={t('panel.age')}
           value={formatLimited(age, host?.st_agelim ?? null, lang, 3, t('units.gyr'))}
           note={t('panel.ageNote')}
@@ -165,14 +136,14 @@ function StarDetails({ index }: { index: number }) {
           {t('panel.moreData')}
         </summary>
         <dl>
-          <Row label={t('panel.catalogIds')} value={ids.length > 0 ? ids.join(' · ') : null} />
+          <DataRow label={t('panel.catalogIds')} value={ids.length > 0 ? ids.join(' · ') : null} />
           {/* Luminosity class is not in the data contract (SPEC §5.1) → n/d, never guessed. */}
-          <Row label={t('panel.msClass')} value={null} />
-          <Row
+          <DataRow label={t('panel.msClass')} value={null} />
+          <DataRow
             label={t('panel.variable')}
             value={t(hasFlag(flags, FLAG_VARIABLE) ? 'panel.yes' : 'panel.no')}
           />
-          <Row
+          <DataRow
             label={t('panel.multiple')}
             value={t(hasFlag(flags, FLAG_MULTIPLE) ? 'panel.yes' : 'panel.no')}
           />
@@ -236,7 +207,7 @@ function HostDetails({ hostname }: { hostname: string }) {
       </p>
       <p className="mb-1 text-sm text-hud-muted">{t('panel.hostStar')}</p>
       <dl className="text-sm">
-        <Row
+        <DataRow
           label={t('panel.stTeff')}
           value={
             host.st_teff !== null
@@ -244,17 +215,17 @@ function HostDetails({ hostname }: { hostname: string }) {
               : null
           }
         />
-        <Row
+        <DataRow
           label={t('panel.stLum')}
           value={formatNumber(lumLinear, lang, { maximumSignificantDigits: 3 })}
           note={t('units.lsun')}
         />
-        <Row
+        <DataRow
           label={t('panel.stRad')}
           value={formatNumber(host.st_rad, lang, { maximumFractionDigits: 2 })}
           note={t('units.rsun')}
         />
-        <Row
+        <DataRow
           label={t('panel.exoplanets')}
           value={t('panel.planetsCount', { count: host.planets.length })}
         />
@@ -291,28 +262,25 @@ export function StarPanel() {
     // max-h ends 1rem above the expanded music player (aesthetic choice, not data;
     // rem). Panel top is 4rem; the player is 3.5rem tall (measured). Below lg it sits
     // at bottom-20: 4 + 5 + 3.5 + 1 = 13.5rem. From lg at bottom-4: 4 + 1 + 3.5 + 1 = 9.5rem.
-    <aside
+    <HudCard
+      as="aside"
       role="region"
       aria-label={t('panel.regionLabel')}
       data-testid="star-panel"
       data-hud="star-panel"
-      className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-13.5rem)] lg:max-h-[calc(100%-9.5rem)] w-80 overflow-y-auto rounded-hud p-4"
+      className="absolute top-16 right-4 z-10 max-h-[calc(100%-13.5rem)] lg:max-h-[calc(100%-9.5rem)] w-80 overflow-y-auto p-4"
     >
-      <button
-        type="button"
+      <CloseButton
         onClick={() => selectStar(null)}
-        aria-label={t('panel.close')}
-        data-testid="panel-close"
-        data-hud="panel-close"
-        className="absolute top-2 right-2 rounded px-2 py-0.5 text-hud-muted hover:bg-white/10 hover:text-hud-bright"
-      >
-        ✕
-      </button>
+        label={t('panel.close')}
+        testId="panel-close"
+        hud="panel-close"
+      />
       {selection.kind === 'star' ? (
         <StarDetails index={selection.index} />
       ) : selection.kind === 'host' ? (
         <HostDetails hostname={selection.hostname} />
       ) : null}
-    </aside>
+    </HudCard>
   );
 }

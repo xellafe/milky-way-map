@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useGalaxyMapStore, type DockPanelId } from '../../state/store';
+import { HudCard } from './HudCard';
 
 export interface DockItem {
   id: DockPanelId;
@@ -50,11 +51,12 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
           <div className="w-full max-w-md">{activeItem.content}</div>
         </div>
       )}
-      <nav
+      <HudCard
+        as="nav"
         aria-label={label}
         data-testid="dock"
         data-hud="dock"
-        className="hud-panel absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-hud px-2 py-2"
+        className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 px-2 py-2"
       >
         {items.map((item) => (
           <button
@@ -69,7 +71,7 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
             aria-describedby={item.badge ? `dock-badge-${item.id}` : undefined}
             data-testid={item.testId}
             onClick={() => toggleDockPanel(item.id)}
-            className="relative flex h-9 w-9 items-center justify-center rounded border border-hud-accent/30 bg-white/5 text-hud-text hover:bg-white/10"
+            className="relative flex h-9 w-9 items-center justify-center rounded-hud border border-hud-accent/30 bg-white/5 text-hud-text hover:bg-white/10"
           >
             {item.icon}
             {item.badge && (
@@ -82,7 +84,7 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
             )}
           </button>
         ))}
-      </nav>
+      </HudCard>
     </>
   );
 }

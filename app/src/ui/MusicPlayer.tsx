@@ -4,7 +4,7 @@ import { buildPlaylist, nextIndex, prevIndex } from '../lib/playlist';
 import { useCompactViewport } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 import { HudSlider } from './hud/HudInputs';
-import { HudPanel } from './hud/HudPanel';
+import { HudCard } from './hud/HudCard';
 
 const DEFAULT_VOLUME = 0.4;
 const MUSIC_SELECTOR = '[data-music-zone]';
@@ -19,7 +19,7 @@ const PLAYLIST = buildPlaylist(
 const CONTROLS_ID = 'music-player-controls';
 
 const BUTTON_CLASS =
-  'rounded border border-hud-accent/30 bg-white/5 px-1.5 py-0.5 font-hud text-sm text-hud-text hover:bg-white/10';
+  'rounded-hud border border-hud-accent/30 bg-white/5 px-1.5 py-0.5 font-hud text-sm text-hud-text hover:bg-white/10';
 
 /**
  * Playlist playback: play/pause, volume, prev/next, and the
@@ -157,14 +157,14 @@ export function MusicPlayer() {
   if (!track) return null;
 
   return (
-    <HudPanel
+    <HudCard
+      as="section"
       aria-label={t('music.label')}
       data-hud="music-player"
       data-testid="music-control"
       data-music-zone
       data-expanded={expanded}
-      padding="px-2 py-1"
-      className={`absolute bottom-4 right-4 z-20 ${expanded ? 'w-64 max-lg:bottom-20 max-lg:max-w-[calc(100%-2rem)]' : ''}`}
+      className={`absolute bottom-4 right-4 z-20 px-2 py-1 ${expanded ? 'w-64 max-lg:bottom-20 max-lg:max-w-[calc(100%-2rem)]' : ''}`}
     >
       <audio
         ref={audioRef}
@@ -247,6 +247,6 @@ export function MusicPlayer() {
           <span aria-hidden>♪</span>
         </button>
       )}
-    </HudPanel>
+    </HudCard>
   );
 }

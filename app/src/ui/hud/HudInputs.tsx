@@ -28,7 +28,7 @@ export function HudSlider({ className = '', ...rest }: InputHTMLAttributes<HTMLI
 export function HudSelect({ className = '', ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`rounded border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud text-sm text-hud-text ${className}`}
+      className={`rounded-hud border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud text-sm text-hud-text ${className}`}
       {...rest}
     />
   );

@@ -8,8 +8,9 @@
   --color-hud-text: #f4f8ff;
   --color-hud-warn: #ff9f5f;
   --color-hud-bg: rgb(10 16 30 / 0.82);
-  /* Corner radius of every HUD box and stat tile: human design choice (3 px), not data. */
-  --radius-hud: 3px;
+  /* Corner radius of every HUD box, tile, button and input: human design choice
+   * (#23, square corners), not data. */
+  --radius-hud: 0;
   --font-hud: 'Segoe UI', system-ui, sans-serif;
   --font-hud-mono: Consolas, 'Cascadia Mono', ui-monospace, monospace;
 }
@@ -36,16 +37,42 @@
     font-size: 0.75rem;
   }
 
-  /* HUD panel: dark translucent card, thin accent border, inner glow,
-   * and native scrollbars tinted to match instead of the default white. */
-  .hud-panel {
-    background-color: var(--color-hud-bg);
-    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 35%, transparent);
-    box-shadow: inset 0 0 20px color-mix(in srgb, var(--color-hud-accent) 12%, transparent);
+  /* HUD card (#23): dark translucent blurred card, thin accent border, corner
+   * brackets (top-left / bottom-right), and native scrollbars tinted to match.
+   * Opacity, blur and bracket size are human choices (#23), not data. The brackets
+   * are background layers (default attachment: they stay on the box, not on the
+   * scrolling content); each L is two 10 px x 1.5 px bars. `relative` anchors
+   * absolutely positioned children (CloseButton); position utilities
+   * (absolute/fixed) still win because they live in a later layer. A <dialog>
+   * must add `fixed` (this rule overrides its UA position). */
+  .hud-card {
+    position: relative;
+    background:
+      linear-gradient(var(--color-hud-accent), var(--color-hud-accent)) top left / 10px 1.5px
+        no-repeat,
+      linear-gradient(var(--color-hud-accent), var(--color-hud-accent)) top left / 1.5px 10px
+        no-repeat,
+      linear-gradient(var(--color-hud-accent), var(--color-hud-accent)) bottom right / 10px 1.5px
+        no-repeat,
+      linear-gradient(var(--color-hud-accent), var(--color-hud-accent)) bottom right / 1.5px 10px
+        no-repeat,
+      rgb(8 14 28 / 0.72);
+    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 18%, transparent);
+    backdrop-filter: blur(6px);
     font-family: var(--font-hud);
     color: var(--color-hud-text);
     scrollbar-color: color-mix(in srgb, var(--color-hud-accent) 40%, transparent) transparent;
     scrollbar-width: thin;
+  }
+
+  /* Small mono caption for section titles and stat labels; 9 px and 0.12 em are a
+   * human choice (#23), not data. */
+  .hud-label {
+    font-family: var(--font-hud-mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-hud-muted);
   }
 
   /* Selection overlay card (#3): right of the star; SelectionTracker flips

@@ -16,6 +16,8 @@ import {
 import { setSelectionAnchor } from '../scene/selectionAnchor';
 import { useGalaxyMapStore } from '../state/store';
 import { Badge } from './hud/Badge';
+import { CloseButton } from './hud/CloseButton';
+import { HudCard } from './hud/HudCard';
 import { StarStatTiles } from './StarStatTiles';
 import { useStarHost } from './useStarHost';
 import { useStarTitle } from './useStarTitle';
@@ -127,7 +129,8 @@ function Overlay({ index }: { index: number }) {
         </div>
         {/* The card blocks the pointer: UI must not let hover, click or wheel
             reach the stars drawn behind it. */}
-        <section
+        <HudCard
+          as="section"
           data-testid="selection-card"
           data-hud="selection-card"
           aria-label={t('overlay.label')}
@@ -139,17 +142,9 @@ function Overlay({ index }: { index: number }) {
               '--card-stroke-alpha': `${CALLOUT_OPACITY * 100}%`,
             } as CSSProperties
           }
-          className="hud-panel selection-card pointer-events-auto absolute w-56 motion-safe:animate-[hud-unfold_250ms_ease-out_700ms_backwards] rounded-hud p-2"
+          className="selection-card pointer-events-auto absolute w-56 motion-safe:animate-[hud-unfold_250ms_ease-out_700ms_backwards] p-2"
         >
-          <button
-            type="button"
-            onClick={close}
-            aria-label={t('overlay.close')}
-            data-testid="overlay-close"
-            className="absolute top-1 right-1 rounded px-1.5 text-hud-muted hover:bg-white/10 hover:text-hud-bright"
-          >
-            ✕
-          </button>
+          <CloseButton onClick={close} label={t('overlay.close')} testId="overlay-close" />
           <h3 className="mb-2 pr-6 font-hud text-sm text-hud-bright">{title}</h3>
           <StarStatTiles index={index} compact />
           {host && (
@@ -159,7 +154,7 @@ function Overlay({ index }: { index: number }) {
               </Badge>
             </p>
           )}
-        </section>
+        </HudCard>
       </div>
     </div>
   );

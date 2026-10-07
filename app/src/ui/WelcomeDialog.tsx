@@ -38,7 +38,7 @@ export function WelcomeDialog() {
       ref={ref}
       data-testid="welcome-dialog"
       aria-labelledby="welcome-title"
-      className="hud-panel rounded-hud m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto p-6"
+      className="hud-card fixed m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto p-6"
       onClose={() => {
         setWelcomeDismissed(dontShow);
         setOpen(false);

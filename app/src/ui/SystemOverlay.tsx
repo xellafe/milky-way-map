@@ -16,7 +16,7 @@ import {
 } from '../state/store';
 import { HudButton } from './hud/HudButton';
 import { HudCheckbox, HudSelect, HudSlider } from './hud/HudInputs';
-import { HudPanel } from './hud/HudPanel';
+import { HudCard } from './hud/HudCard';
 
 const SLIDER_STEPS = 1000;
 const LOG_MIN = Math.log10(TIME_SCALE_MIN_DAYS_PER_SECOND);
@@ -197,9 +197,10 @@ export function SystemOverlay() {
        * 3.5rem tall (measured). Below lg it sits at bottom-20: 4 + 5 + 3.5 + 1 =
        * 13.5rem. From lg at bottom-4: 4 + 1 + 3.5 + 1 = 9.5rem.
        */}
-      <aside
+      <HudCard
+        as="aside"
         aria-label={t('system.planets')}
-        className="hud-panel absolute top-16 right-4 z-10 max-h-[calc(100%-13.5rem)] lg:max-h-[calc(100%-9.5rem)] w-80 overflow-y-auto rounded-hud p-4"
+        className="absolute top-16 right-4 z-10 max-h-[calc(100%-13.5rem)] lg:max-h-[calc(100%-9.5rem)] w-80 overflow-y-auto p-4"
       >
         <p className="mb-2 text-sm text-hud-muted">{t('system.planets')}</p>
         <fieldset className="mb-2" data-testid="planet-type-filter">
@@ -238,7 +239,7 @@ export function SystemOverlay() {
               data-testid="planet-chip"
               aria-pressed={selectedPlanet === p.pl_name}
               onClick={() => selectPlanet(selectedPlanet === p.pl_name ? null : p.pl_name)}
-              className={`rounded border px-2 py-1 font-hud text-xs ${
+              className={`rounded-hud border px-2 py-1 font-hud text-xs ${
                 selectedPlanet === p.pl_name
                   ? 'border-hud-accent/60 bg-hud-accent/20 text-hud-bright'
                   : 'border-hud-accent/30 bg-white/5 text-hud-text hover:bg-white/10'
@@ -250,7 +251,7 @@ export function SystemOverlay() {
         </div>
         {planet && <PlanetDetails planet={planet} />}
         <p className="mt-3 text-xs text-hud-muted">{t('system.scaleNote')}</p>
-      </aside>
+      </HudCard>
 
       {/*
        * Sits above the dock (#3: the dock shows only Options in the
@@ -261,9 +262,10 @@ export function SystemOverlay() {
        * expanded player takes the bar's band on compact viewports.
        */}
       {!dockPanel && !(musicExpanded && compact) && (
-        <HudPanel
+        <HudCard
+          as="section"
           aria-label={t('system.timeScale')}
-          className="absolute bottom-20 left-1/2 z-10 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm"
+          className="absolute bottom-20 left-1/2 z-10 p-3 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm"
         >
           <div className="flex items-center justify-between gap-2">
             <span>{t('system.timeScale')}</span>
@@ -326,7 +328,7 @@ export function SystemOverlay() {
               onChange={toggleHz}
             />
           </div>
-        </HudPanel>
+        </HudCard>
       )}
     </>
   );
