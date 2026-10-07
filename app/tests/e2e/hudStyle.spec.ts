@@ -26,9 +26,7 @@ test('HUD cards share the refined style', async ({ page }) => {
     const cards = [...document.querySelectorAll('[data-hud-card]')].filter(visible);
     const tiles = [...document.querySelectorAll('[data-testid^="stat-"]')].filter(visible);
     const button = document.querySelector('[data-testid="language-button"]');
-    const closes = [
-      ...document.querySelectorAll('[data-testid="panel-close"], [data-testid="overlay-close"]'),
-    ].filter(visible);
+    const closes = [...document.querySelectorAll('[data-testid="overlay-close"]')].filter(visible);
     return {
       cards: cards.map((c) => ({
         blur: getComputedStyle(c).backdropFilter,

@@ -120,7 +120,6 @@ test('music keeps playing across the switch to System View', async ({ page }) =>
 
   await page.getByTestId('search-input').fill('trappist');
   await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
-  await page.getByTestId('view-system-button').click();
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
   await expect(page.getByTestId('music-control')).toBeVisible();
   expect(await paused()).toBe(false);
@@ -159,10 +158,9 @@ for (const view of layoutTargets) {
       .first()
       .click();
     if (view === 'system') {
-      await page.getByTestId('view-system-button').click();
       await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
     } else {
-      await expect(page.getByTestId('star-panel')).toBeVisible();
+      await expect(page.getByTestId('selection-card')).toBeVisible();
     }
 
     const musicBox = await page.getByTestId('music-control').boundingBox();

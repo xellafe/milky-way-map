@@ -59,9 +59,13 @@ async function enterSystem(page: Page, query: string, optionText: string) {
   await input.click();
   await input.fill(query);
   await page.getByRole('option').filter({ hasText: optionText }).first().click();
-  const button = page.getByTestId('view-system-button');
-  await expect(button).toBeEnabled({ timeout: 10_000 });
-  await button.click();
+  // #23: unanchored hosts (TRAPPIST-1) open the System View straight from the search;
+  // anchored ones go through the card button.
+  if (optionText !== 'TRAPPIST-1') {
+    const button = page.getByTestId('view-system-button');
+    await expect(button).toBeEnabled({ timeout: 10_000 });
+    await button.click();
+  }
   await expect(page.getByTestId('system-title')).toHaveText(optionText);
   await expect.poll(async () => (await bridge(page)) !== undefined).toBe(true);
 }
@@ -299,12 +303,13 @@ test('Proxima Cen: schematic orbits without inclination + planet details panel',
 
 test('back button returns to the galaxy with the selection intact', async ({ page }) => {
   await openApp(page);
-  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  // #23: Proxima Cen (anchored) keeps its card; TRAPPIST-1 has none to keep.
+  await enterSystem(page, 'proxima cen', 'Proxima Cen');
 
   await page.getByTestId('system-back').click();
   await expect(page.getByTestId('search-input')).toBeVisible();
-  await expect(page.getByTestId('star-panel')).toBeVisible();
-  await expect(page.getByTestId('panel-title')).toHaveText('TRAPPIST-1');
+  await expect(page.getByTestId('selection-card')).toBeVisible();
+  await expect(page.getByTestId('panel-title')).toContainText('Proxima');
   await expect(page.getByTestId('system-title')).toHaveCount(0);
 });
 

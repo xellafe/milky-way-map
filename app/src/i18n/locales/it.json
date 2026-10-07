@@ -12,14 +12,10 @@
     "searchUnanchored": "solo sistema"
   },
   "overlay": {
-    "close": "Chiudi riepilogo stella",
-    "label": "Riepilogo della stella selezionata"
+    "close": "Chiudi scheda della stella"
   },
   "panel": {
-    "regionLabel": "Dettagli stella",
-    "close": "Chiudi pannello",
     "na": "n/d",
-    "constellation": "Costellazione",
     "catalogIds": "ID di catalogo",
     "spectralClass": "Tipo spettrale",
     "msClass": "Classe di luminosità",
@@ -30,30 +26,23 @@
     "luminosity": "Luminosità",
     "teff": "Temperatura",
     "estimate": "stima",
-    "moreData": "Altri dati e ID catalogo",
     "age": "Età stimata",
     "ageNote": "(stima incerta)",
     "variable": "Stella variabile",
     "multiple": "Sistema multiplo",
-    "exoplanets": "Esopianeti",
-    "planetsCount_one": "{{count}} pianeta noto",
-    "planetsCount_other": "{{count}} pianeti noti",
     "viewSystem": "Vedi sistema",
     "notAnchored": "Non agganciato a una stella di catalogo — raggiungibile solo via ricerca",
-    "hostStar": "Dati della stella ospite (NASA Exoplanet Archive)",
-    "stTeff": "Temperatura della stella",
-    "stLum": "Luminosità della stella",
-    "stRad": "Raggio della stella",
     "yes": "Sì",
     "no": "No",
-    "advancedData": "Dati avanzati",
     "advMetallicity": "Metallicità",
     "advAge": "Età",
     "advMass": "Massa della stella",
     "advLogg": "Gravità superficiale (log g)",
     "advSpectype": "Tipo spettrale",
     "advRotation": "Periodo di rotazione",
-    "advVsini": "Velocità di rotazione proiettata (v sin i)"
+    "advVsini": "Velocità di rotazione proiettata (v sin i)",
+    "viewSystemCount_one": "{{count}} pianeta noto · Vedi sistema →",
+    "viewSystemCount_other": "{{count}} pianeti noti · Vedi sistema →"
   },
   "gauge": {
     "nakedEye": "occhio nudo",
@@ -219,7 +208,7 @@
       },
       "system": {
         "action": "Vedi il sistema planetario",
-        "command": "Pulsante \"Vedi sistema\" nel pannello della stella"
+        "command": "Pulsante \"Vedi sistema\" sulla scheda della stella"
       },
       "dock": {
         "action": "Filtri, opzioni di vista e impostazioni",
@@ -229,5 +218,12 @@
     "dontShowAgain": "Non mostrare più",
     "start": "Inizia a esplorare",
     "helpButton": "Mostra la guida di benvenuto"
+  },
+  "card": {
+    "base": "Base",
+    "advanced": "Avanzata",
+    "modeLabel": "Livello di dettaglio",
+    "sectionCatalog": "Catalogo",
+    "sectionArchive": "NASA Exoplanet Archive"
   }
 }

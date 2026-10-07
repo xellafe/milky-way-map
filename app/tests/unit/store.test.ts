@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  CARD_ADVANCED_KEY,
   DEFAULT_TIME_SCALE_DAYS_PER_SECOND,
   MUSIC_COLLAPSED_KEY,
   useGalaxyMapStore,
@@ -36,24 +37,15 @@ describe('galaxy map store', () => {
     expect(useGalaxyMapStore.getState().selection).toBeNull();
   });
 
-  it('selects an unmatched exoplanet host (e.g. TRAPPIST-1)', () => {
-    useGalaxyMapStore.getState().selectHost('TRAPPIST-1');
-    expect(useGalaxyMapStore.getState().selection).toEqual({
-      kind: 'host',
-      hostname: 'TRAPPIST-1',
-    });
+  // #23: unanchored hosts open the System View directly, so a selection is always a star.
+  it('has no host selection any more', () => {
+    expect('selectHost' in useGalaxyMapStore.getState()).toBe(false);
   });
 
   it('locking a star switches the camera to orbit; deselecting releases it (SPEC §6.3)', () => {
     useGalaxyMapStore.getState().selectStar(42);
     expect(useGalaxyMapStore.getState().cameraMode).toBe('orbit');
     useGalaxyMapStore.getState().selectStar(null);
-    expect(useGalaxyMapStore.getState().cameraMode).toBe('free-fly');
-  });
-
-  it('selecting a host (not in the cloud) does NOT orbit', () => {
-    useGalaxyMapStore.getState().selectStar(42);
-    useGalaxyMapStore.getState().selectHost('TRAPPIST-1');
     expect(useGalaxyMapStore.getState().cameraMode).toBe('free-fly');
   });
 
@@ -138,14 +130,20 @@ describe('galaxy map store', () => {
     expect(s().dockPanel).toBeNull();
   });
 
-  it('overlay reopens on every star selection, even the same star', () => {
+  // #23: card closed = no selection, so the overlay flags are gone.
+  it('has no separate overlay-open state', () => {
+    const state = useGalaxyMapStore.getState() as unknown as Record<string, unknown>;
+    expect('selectionOverlayOpen' in state).toBe(false);
+    expect('closeSelectionOverlay' in state).toBe(false);
+  });
+
+  it('closing the card is deselecting; the same star can be selected again', () => {
     const s = () => useGalaxyMapStore.getState();
     s().selectStar(7);
-    expect(s().selectionOverlayOpen).toBe(true);
-    s().closeSelectionOverlay();
-    expect(s().selectionOverlayOpen).toBe(false);
+    s().selectStar(null);
+    expect(s().selection).toBeNull();
     s().selectStar(7);
-    expect(s().selectionOverlayOpen).toBe(true);
+    expect(s().selection).toEqual({ kind: 'star', index: 7 });
   });
 
   it('selecting the same star twice bumps selectionEpoch', () => {
@@ -156,13 +154,12 @@ describe('galaxy map store', () => {
     expect(s().selectionEpoch).toBeGreaterThan(before);
   });
 
-  it('overlay state survives the System View round trip', () => {
+  it('selection survives the System View round trip', () => {
     const s = () => useGalaxyMapStore.getState();
     s().selectStar(7);
-    s().closeSelectionOverlay();
     s().enterSystemView('X');
     s().exitSystemView();
-    expect(s().selectionOverlayOpen).toBe(false);
+    expect(s().selection).toEqual({ kind: 'star', index: 7 });
   });
 
   it('setWelcomeOpen toggles welcomeOpen', () => {
@@ -171,6 +168,44 @@ describe('galaxy map store', () => {
     expect(s().welcomeOpen).toBe(false);
     s().setWelcomeOpen(true);
     expect(s().welcomeOpen).toBe(true);
+  });
+
+  describe('card mode', () => {
+    const s = () => useGalaxyMapStore.getState();
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('persists the advanced flag under its key', () => {
+      const data = new Map<string, string>();
+      vi.stubGlobal('localStorage', {
+        getItem: (k: string) => data.get(k) ?? null,
+        setItem: (k: string, v: string) => void data.set(k, v),
+        removeItem: (k: string) => void data.delete(k),
+      } as unknown as Storage);
+      expect(CARD_ADVANCED_KEY).toBe('galaxy-map-card-advanced');
+      s().setCardMode('advanced');
+      expect(s().cardMode).toBe('advanced');
+      expect(data.get('galaxy-map-card-advanced')).toBe('1');
+      s().setCardMode('base');
+      expect(s().cardMode).toBe('base');
+      expect(data.get('galaxy-map-card-advanced')).toBeUndefined();
+    });
+
+    it('still switches when localStorage throws', () => {
+      vi.stubGlobal('localStorage', {
+        getItem: () => null,
+        setItem: () => {
+          throw new Error('quota');
+        },
+        removeItem: () => {
+          throw new Error('quota');
+        },
+      } as unknown as Storage);
+      expect(() => s().setCardMode('advanced')).not.toThrow();
+      expect(s().cardMode).toBe('advanced');
+    });
   });
 
   describe('music player state', () => {

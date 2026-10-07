@@ -197,7 +197,7 @@ test('search by HD id finds the star and flies to it', async ({ page }) => {
   await expect(page.getByTestId('panel-title')).toHaveText('Polaris');
 
   // Fly-to centered the star: hovering the canvas center names Polaris.
-  await page.getByTestId('panel-close').click();
+  await page.getByTestId('overlay-close').click();
   await waitForFlyToArrival(page);
   const box = (await page.locator('canvas').boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -210,7 +210,7 @@ test('filtered-out stars are not pickable', async ({ page }) => {
   // Center Polaris, hide class F (Polaris) → hover at center finds nothing.
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
-  await page.getByTestId('panel-close').click();
+  await page.getByTestId('overlay-close').click();
   await waitForFlyToArrival(page);
 
   await page.getByTestId('filter-class-F').click();

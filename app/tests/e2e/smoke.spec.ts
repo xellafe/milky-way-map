@@ -51,5 +51,5 @@ test('HUD panels stay positioned inside the viewport', async ({ page }) => {
 
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
-  await expectInsideViewport('star-panel');
+  await expectInsideViewport('selection-card');
 });

@@ -223,7 +223,7 @@ test('clicking a star flies to the fixed arrival distance', async ({ page }) => 
   const arrived = await cam(page);
   expect(distanceTo(arrived, target)).toBeGreaterThan(ARRIVE_DISTANCE_LY - 0.5);
   expect(arrived.mode).toBe('orbit');
-  await expect(page.getByTestId('star-panel')).toBeVisible();
+  await expect(page.getByTestId('selection-card')).toBeVisible();
 });
 
 test('orbit lock: drag circles the star keeping it centered, wheel zooms, movement key releases', async ({
@@ -267,5 +267,5 @@ test('orbit lock: drag circles the star keeping it centered, wheel zooms, moveme
   await page.waitForTimeout(300);
   await page.keyboard.up('KeyW');
   await expect.poll(async () => (await cam(page)).mode).toBe('free-fly');
-  await expect(page.getByTestId('star-panel')).toBeVisible();
+  await expect(page.getByTestId('selection-card')).toBeAttached();
 });

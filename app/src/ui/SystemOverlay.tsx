@@ -6,6 +6,7 @@ import { orbitSense } from '../lib/orbitSense';
 import { planetComposition } from '../lib/planetComposition';
 import { classifyPlanet } from '../lib/planetType';
 import { useGalaxyMapStore } from '../state/store';
+import { Badge } from './hud/Badge';
 import { HudButton } from './hud/HudButton';
 import { HudCard } from './hud/HudCard';
 
@@ -134,13 +135,22 @@ export function SystemOverlay() {
 
   return (
     <>
-      <header className="absolute top-4 left-4 z-10 flex items-center gap-3">
+      <header
+        data-hud="system-header"
+        className="absolute top-4 left-4 z-10 flex items-center gap-3"
+      >
         <HudButton variant="secondary" onClick={exitSystemView} data-testid="system-back">
           ← {t('system.back')}
         </HudButton>
         <h1 className="font-hud text-lg text-hud-bright" data-testid="system-title">
           {hostname}
         </h1>
+        {/* Deliberate simplification: badge in the header; upgrade when the System View star panel exists (#23). */}
+        {!host.starRef.matched && (
+          <Badge tone="warn" data-testid="not-anchored-badge">
+            {t('panel.notAnchored')}
+          </Badge>
+        )}
       </header>
 
       {/*

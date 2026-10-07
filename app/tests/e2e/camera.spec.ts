@@ -84,12 +84,12 @@ test('a clean click (no drag) still selects a star after the controls change', a
   await openApp(page);
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
-  await page.getByTestId('panel-close').click();
+  await page.getByTestId('overlay-close').click();
   await waitForFlyToArrival(page);
 
   const box = (await page.locator('canvas').boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(page.getByTestId('star-panel')).toBeVisible();
+  await expect(page.getByTestId('selection-card')).toBeVisible();
   await expect(page.getByTestId('panel-title')).toHaveText('Polaris');
 });
 

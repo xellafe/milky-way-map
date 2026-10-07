@@ -23,7 +23,6 @@ async function selectStar(page: Page, lang?: 'it', query = 'polaris', name = 'Po
   await page.getByTestId('search-input').fill(query);
   await page.getByRole('option').filter({ hasText: name }).first().click();
   await expect(page.getByTestId('selection-card')).toBeVisible();
-  await expect(page.getByTestId('star-panel')).toBeVisible();
   await waitForFlyToArrival(page);
 }
 
@@ -36,48 +35,47 @@ const EXPECTED: Record<string, (lang: 'en' | 'it') => string[]> = {
 };
 
 for (const lang of ['en', 'it'] as const) {
-  test(`Polaris (${lang}): scale labels in card and panel, inside their tile`, async ({ page }) => {
+  test(`Polaris (${lang}): scale labels in the card, inside their tile`, async ({ page }) => {
     await selectStar(page, lang === 'it' ? 'it' : undefined);
-    for (const root of ['selection-card', 'star-panel']) {
-      // One round trip per root: text and rects of every stat tile and label.
-      const data = await page.getByTestId(root).evaluate(
-        (el, ids) =>
-          Object.fromEntries(
-            ids.map((id) => {
-              const tile = el.querySelector(`[data-testid="${id}"]`)!;
-              const t = tile.getBoundingClientRect();
-              const labels = [...tile.querySelectorAll('[data-gauge-label="tick"]')]
-                .filter((l) => /\S/.test(l.textContent ?? ''))
-                .map((l) => {
-                  const b = l.getBoundingClientRect();
-                  return { text: (l.textContent ?? '').trim(), x: b.x, right: b.right };
-                });
-              return [id, { x: t.x, right: t.right, text: tile.textContent ?? '', labels }];
-            }),
-          ),
-        [...STATS],
-      );
-      for (const id of STATS) {
-        const { x, right, labels } = data[id]!;
-        const texts = labels.map((l) => l.text);
-        for (const want of EXPECTED[id]!(lang)) expect(texts, `${root} ${id}`).toContain(want);
-        for (const l of labels) {
-          expect(l.x, `${root} ${id} left`).toBeGreaterThanOrEqual(x - 0.5);
-          expect(l.right, `${root} ${id} right`).toBeLessThanOrEqual(right + 0.5);
-        }
-        const sorted = [...labels].sort((p, q) => p.x - q.x);
-        sorted.slice(1).forEach((l, i) => {
-          const prev = sorted[i]!;
-          expect(l.x, `${root} ${id}: "${prev.text}" overlaps "${l.text}"`).toBeGreaterThanOrEqual(
-            prev.right,
-          );
-        });
+    const root = 'selection-card';
+    // One round trip per root: text and rects of every stat tile and label.
+    const data = await page.getByTestId(root).evaluate(
+      (el, ids) =>
+        Object.fromEntries(
+          ids.map((id) => {
+            const tile = el.querySelector(`[data-testid="${id}"]`)!;
+            const t = tile.getBoundingClientRect();
+            const labels = [...tile.querySelectorAll('[data-gauge-label="tick"]')]
+              .filter((l) => /\S/.test(l.textContent ?? ''))
+              .map((l) => {
+                const b = l.getBoundingClientRect();
+                return { text: (l.textContent ?? '').trim(), x: b.x, right: b.right };
+              });
+            return [id, { x: t.x, right: t.right, text: tile.textContent ?? '', labels }];
+          }),
+        ),
+      [...STATS],
+    );
+    for (const id of STATS) {
+      const { x, right, labels } = data[id]!;
+      const texts = labels.map((l) => l.text);
+      for (const want of EXPECTED[id]!(lang)) expect(texts, `${root} ${id}`).toContain(want);
+      for (const l of labels) {
+        expect(l.x, `${root} ${id} left`).toBeGreaterThanOrEqual(x - 0.5);
+        expect(l.right, `${root} ${id} right`).toBeLessThanOrEqual(right + 0.5);
       }
-      expect(data['stat-appmag']!.labels.map((l) => l.text)).not.toContain('10');
-      const teff = data['stat-teff']!.text;
-      expect(teff).toContain(lang === 'it' ? 'Temperatura' : 'Temperature');
-      expect(teff).not.toMatch(lang === 'it' ? /efficace/i : /effective/i);
+      const sorted = [...labels].sort((p, q) => p.x - q.x);
+      sorted.slice(1).forEach((l, i) => {
+        const prev = sorted[i]!;
+        expect(l.x, `${root} ${id}: "${prev.text}" overlaps "${l.text}"`).toBeGreaterThanOrEqual(
+          prev.right,
+        );
+      });
     }
+    expect(data['stat-appmag']!.labels.map((l) => l.text)).not.toContain('10');
+    const teff = data['stat-teff']!.text;
+    expect(teff).toContain(lang === 'it' ? 'Temperatura' : 'Temperature');
+    expect(teff).not.toMatch(lang === 'it' ? /efficace/i : /effective/i);
   });
 }
 
@@ -94,20 +92,21 @@ test('card stays inside the viewport and above the dock (Polaris, taller card)',
   expect(card.y + card.height).toBeLessThanOrEqual(vp.height);
   expect(card.y + card.height).toBeLessThanOrEqual(dock.y);
   const noHScroll = await page
-    .getByTestId('star-panel')
+    .getByTestId('selection-card')
     .evaluate((el) => el.scrollWidth <= el.clientWidth);
   expect(noHScroll).toBe(true);
 });
 
-test('selection card and star panel have no blocking axe violations', async ({ page }) => {
+test('selection card has no blocking axe violations', async ({ page }) => {
   await selectStar(page);
-  for (const include of ['[data-testid="selection-card"]', '[data-testid="star-panel"]']) {
-    const results = await new AxeBuilder({ page }).exclude('canvas').include(include).analyze();
-    const blocking = results.violations.filter(
-      (v) => v.impact === 'serious' || v.impact === 'critical',
-    );
-    expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
-  }
+  const results = await new AxeBuilder({ page })
+    .exclude('canvas')
+    .include('[data-testid="selection-card"]')
+    .analyze();
+  const blocking = results.violations.filter(
+    (v) => v.impact === 'serious' || v.impact === 'critical',
+  );
+  expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
 });
 
 const en = JSON.parse(

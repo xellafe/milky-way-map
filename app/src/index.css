@@ -206,21 +206,17 @@
     color: var(--color-hud-muted);
   }
 
-  /* Selection overlay card (#3): right of the star; SelectionTracker flips
-   * data-side to "left" when it would run under the detail panel. --card-gap
-   * is set inline from CARD_GAP_PX (lib/selectionGeometry). The border matches
-   * the callout stroke (width and alpha set inline from the same constants);
-   * human design choice, not data. */
-  .selection-card {
-    border-width: var(--card-stroke);
-    border-color: color-mix(in srgb, var(--color-hud-accent) var(--card-stroke-alpha), transparent);
+  /* Selection card slot (#3): right of the star; SelectionTracker flips
+   * data-side to "left" when the card does not fit. --card-gap is set inline from
+   * CARD_GAP_PX (lib/selectionGeometry). */
+  .selection-slot {
     left: var(--card-gap);
     /* The card opens from the callout side: the hidden edge is set per side. */
     --unfold-r: 100%;
     --unfold-l: 0px;
   }
 
-  [data-side='left'] .selection-card {
+  [data-side='left'] .selection-slot {
     left: auto;
     right: var(--card-gap);
     --unfold-r: 0px;
@@ -238,7 +234,85 @@
     scale: -1 1;
   }
 
-  /* B6 ring + overlay close animations (#3; durations are human choices). */
+  /* The border matches the callout stroke (width and alpha set inline on the slot
+   * from the same constants); human design choice, not data. Widths are human
+   * choices (#23). */
+  .object-card {
+    width: 224px;
+    max-height: var(--card-max-h, none);
+    border-width: var(--card-stroke);
+    border-color: color-mix(in srgb, var(--color-hud-accent) var(--card-stroke-alpha), transparent);
+  }
+
+  .object-card[data-mode='advanced'] {
+    width: 470px;
+  }
+
+  /* Base -> Advanced: widen 250 ms, then fade the column in 200 ms. Advanced -> Base
+   * (data-leaving, until ObjectCard sees card-narrow end): fade out 200 ms, then
+   * narrow 250 ms. Aesthetic choices (not data); none with reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    /* The opening unfold (250 ms after 700 ms, human choice #3) belongs to a card
+     * anchored to a star. */
+    .selection-slot .object-card {
+      animation: hud-unfold 250ms ease-out 700ms backwards;
+    }
+
+    .object-card[data-mode='advanced'] {
+      animation: card-widen 250ms ease-out;
+    }
+
+    .selection-slot .object-card[data-mode='advanced'] {
+      animation:
+        hud-unfold 250ms ease-out 700ms backwards,
+        card-widen 250ms ease-out;
+    }
+
+    .object-card[data-leaving] {
+      animation: card-narrow 250ms ease-out 200ms forwards;
+    }
+
+    /* Keeps the finished unfold in the list: dropping it would replay it. */
+    .selection-slot .object-card[data-leaving] {
+      animation:
+        hud-unfold 250ms ease-out 700ms backwards,
+        card-narrow 250ms ease-out 200ms forwards;
+    }
+
+    .card-advanced {
+      animation: card-fade 200ms ease-out 250ms both;
+    }
+
+    .object-card[data-leaving] .card-advanced {
+      animation: card-fade-out 200ms ease-out forwards;
+    }
+  }
+
+  @keyframes card-widen {
+    from {
+      width: 224px;
+    }
+  }
+
+  @keyframes card-narrow {
+    to {
+      width: 224px;
+    }
+  }
+
+  @keyframes card-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes card-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* B6 ring animations (#3; durations are human choices). */
   @keyframes hud-spin {
     to {
       transform: rotate(360deg);
@@ -281,27 +355,6 @@
     to {
       clip-path: inset(0);
       opacity: 1;
-    }
-  }
-
-  @keyframes hud-flicker {
-    0% {
-      opacity: 1;
-    }
-    20% {
-      opacity: 0.2;
-    }
-    40% {
-      opacity: 0.9;
-    }
-    60% {
-      opacity: 0.1;
-    }
-    80% {
-      opacity: 0.6;
-    }
-    100% {
-      opacity: 0;
     }
   }
 }

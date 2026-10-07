@@ -16,9 +16,6 @@ async function enterTrappist(page: Page) {
   await input.click();
   await input.fill('trappist');
   await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
-  const button = page.getByTestId('view-system-button');
-  await expect(button).toBeEnabled({ timeout: 10_000 });
-  await button.click();
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
 }
 

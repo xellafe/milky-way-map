@@ -12,14 +12,10 @@
     "searchUnanchored": "système seul"
   },
   "overlay": {
-    "close": "Fermer le résumé de l'étoile",
-    "label": "Résumé de l'étoile sélectionnée"
+    "close": "Fermer la carte de l'étoile"
   },
   "panel": {
-    "regionLabel": "Détails de l'étoile",
-    "close": "Fermer le panneau",
     "na": "n/d",
-    "constellation": "Constellation",
     "catalogIds": "ID de catalogue",
     "spectralClass": "Type spectral",
     "msClass": "Classe de luminosité",
@@ -30,30 +26,23 @@
     "luminosity": "Luminosité",
     "teff": "Température",
     "estimate": "estimation",
-    "moreData": "Plus de données et identifiants de catalogue",
     "age": "Âge estimé",
     "ageNote": "(estimation incertaine)",
     "variable": "Étoile variable",
     "multiple": "Système multiple",
-    "exoplanets": "Exoplanètes",
-    "planetsCount_one": "{{count}} planète connue",
-    "planetsCount_other": "{{count}} planètes connues",
     "viewSystem": "Voir le système",
     "notAnchored": "Non rattaché à une étoile du catalogue — accessible uniquement par la recherche",
-    "hostStar": "Données de l'étoile hôte (NASA Exoplanet Archive)",
-    "stTeff": "Température de l'étoile",
-    "stLum": "Luminosité de l'étoile",
-    "stRad": "Rayon de l'étoile",
     "yes": "Oui",
     "no": "Non",
-    "advancedData": "Données avancées",
     "advMetallicity": "Métallicité",
     "advAge": "Âge",
     "advMass": "Masse de l'étoile",
     "advLogg": "Gravité de surface (log g)",
     "advSpectype": "Type spectral",
     "advRotation": "Période de rotation",
-    "advVsini": "Vitesse de rotation projetée (v sin i)"
+    "advVsini": "Vitesse de rotation projetée (v sin i)",
+    "viewSystemCount_one": "{{count}} planète connue · Voir le système →",
+    "viewSystemCount_other": "{{count}} planètes connues · Voir le système →"
   },
   "gauge": {
     "nakedEye": "œil nu",
@@ -219,7 +208,7 @@
       },
       "system": {
         "action": "Voir le système planétaire",
-        "command": "Bouton « Voir le système » dans le panneau de l'étoile"
+        "command": "Bouton « Voir le système » sur la carte de l'étoile"
       },
       "dock": {
         "action": "Filtres, options d'affichage et réglages",
@@ -229,5 +218,12 @@
     "dontShowAgain": "Ne plus afficher",
     "start": "Commencer l'exploration",
     "helpButton": "Afficher le guide de bienvenue"
+  },
+  "card": {
+    "base": "Base",
+    "advanced": "Avancé",
+    "modeLabel": "Niveau de détail",
+    "sectionCatalog": "Catalogue",
+    "sectionArchive": "NASA Exoplanet Archive"
   }
 }

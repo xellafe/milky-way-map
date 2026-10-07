@@ -20,14 +20,7 @@ test('every visible HUD panel owns the pointer at its center', async ({ page }) 
   await expect(page.getByTestId('selection-card')).toBeVisible();
 
   const result = await page.evaluate(() =>
-    [
-      'search-input',
-      'dock',
-      'star-panel',
-      'selection-card',
-      'music-control',
-      'language-button',
-    ].map((id) => {
+    ['search-input', 'dock', 'selection-card', 'music-control', 'language-button'].map((id) => {
       const el = document.querySelector(`[data-testid="${id}"]`);
       if (!el) return { id, ok: false, why: 'missing' };
       const r = el.getBoundingClientRect();
@@ -48,7 +41,7 @@ test('clicking the selection card keeps the selection', async ({ page }) => {
 
 test('moving from a hovered star onto a panel clears hover label and cursor', async ({ page }) => {
   await openAndSelectPolaris(page);
-  await page.getByTestId('panel-close').click();
+  await page.getByTestId('overlay-close').click();
 
   const canvas = page.locator('canvas');
   const box = (await canvas.boundingBox())!;

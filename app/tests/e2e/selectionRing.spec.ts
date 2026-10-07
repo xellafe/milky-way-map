@@ -125,11 +125,13 @@ test('card border has the same stroke as the callout; other panels keep theirs',
   page,
 }) => {
   await openAndSelect(page);
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
   const m = await page.evaluate(() => {
     const cs = (sel: string) => getComputedStyle(document.querySelector(sel)!);
     const card = cs('[data-hud=selection-card]');
     const callout = cs('[data-hud=callout]');
-    const panel = cs('[data-testid=star-panel]');
+    const panel = cs('[data-testid=dock-panel]');
     return {
       cardWidth: parseFloat(card.borderTopWidth),
       cardColor: card.borderTopColor,

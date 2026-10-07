@@ -49,7 +49,7 @@ export function SearchBox() {
   }, [query]);
   const inputRef = useRef<HTMLInputElement>(null);
   const selectStar = useGalaxyMapStore((s) => s.selectStar);
-  const selectHost = useGalaxyMapStore((s) => s.selectHost);
+  const enterSystemView = useGalaxyMapStore((s) => s.enterSystemView);
   const requestFlyTo = useGalaxyMapStore((s) => s.requestFlyTo);
 
   const results = useMemo<ResultItem[]>(() => {
@@ -89,7 +89,8 @@ export function SearchBox() {
 
   const choose = (item: ResultItem) => {
     if (item.kind === 'host' && item.unanchored && item.hostname) {
-      selectHost(item.hostname);
+      // No catalog star to anchor a card to (#23): straight to the System View.
+      enterSystemView(item.hostname);
     } else if (item.starIndex !== null) {
       selectStar(item.starIndex);
       const core = getStarCore();

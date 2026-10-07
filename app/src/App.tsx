@@ -18,7 +18,6 @@ import { MusicPlayer } from './ui/MusicPlayer';
 import { SearchBox } from './ui/SearchBox';
 import { SelectionOverlay } from './ui/SelectionOverlay';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
-import { StarPanel } from './ui/StarPanel';
 import { SystemOverlay } from './ui/SystemOverlay';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 
@@ -91,8 +90,6 @@ export default function App() {
           <GalaxyScene />
           <StarLabelsLayer />
           <SearchBox />
-          <StarPanel />
-          {/* After the panel: its ✕ is not the first Tab stop after the search box. */}
           <SelectionOverlay />
           <HoverLabel />
         </>

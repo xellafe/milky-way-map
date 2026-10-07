@@ -424,6 +424,10 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
   overlay": fallito una volta nella run completa (`selection-overlay` ancora
   presente 1000 ms dopo `overlay-close`); da solo passa. Visto sul branch
   `feat/ui-overhaul`, issue #23.
+- `orbit.spec` (riga 175) "ambient auto-orbit revolves around the locked star
+  until a manual drag": fallito una volta nella run completa (deriva della
+  distanza 0,119 contro < 0,05); da solo passa. Visto sul branch
+  `feat/ui-overhaul`, issue #23.
 
 ## Come riprendere
 
