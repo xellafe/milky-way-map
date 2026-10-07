@@ -3,13 +3,15 @@
  * panel share StarStatTiles) and the "Temperature" label. Scale labels are the
  * 9px aria-hidden spans of the Gauge.
  */
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { serveFixtureData, waitForFlyToArrival } from './fixtures';
 
 const STATS = ['stat-distance', 'stat-teff', 'stat-luminosity', 'stat-appmag'] as const;
 
-async function selectPolaris(page: Page, lang?: 'it') {
+async function selectStar(page: Page, lang?: 'it', query = 'polaris', name = 'Polaris') {
   await serveFixtureData(page);
   await page.goto('/');
   await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
@@ -18,8 +20,8 @@ async function selectPolaris(page: Page, lang?: 'it') {
     await page.getByTestId(`language-option-${lang}`).click();
     await expect(page.locator('html')).toHaveAttribute('lang', lang);
   }
-  await page.getByTestId('search-input').fill('polaris');
-  await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
+  await page.getByTestId('search-input').fill(query);
+  await page.getByRole('option').filter({ hasText: name }).first().click();
   await expect(page.getByTestId('selection-card')).toBeVisible();
   await expect(page.getByTestId('star-panel')).toBeVisible();
   await waitForFlyToArrival(page);
@@ -29,13 +31,13 @@ const EXPECTED: Record<string, (lang: 'en' | 'it') => string[]> = {
   'stat-distance': (l) => ['1', '10', '100', l === 'it' ? '1.000' : '1,000'],
   'stat-teff': () => ['M', 'K', 'G', 'F', 'A', 'B'],
   'stat-luminosity': () => ['10⁻³', '1', '10³'],
-  // The 10 tick is mark-only (no label); naked eye is the i18n word label.
-  'stat-appmag': (l) => ['0', '20', l === 'it' ? 'occhio nudo' : 'naked eye'],
+  // Inverted axis (#23): 20 at the left end, −1 at the right end.
+  'stat-appmag': () => ['20', '9', '6', '−1'],
 };
 
 for (const lang of ['en', 'it'] as const) {
   test(`Polaris (${lang}): scale labels in card and panel, inside their tile`, async ({ page }) => {
-    await selectPolaris(page, lang === 'it' ? 'it' : undefined);
+    await selectStar(page, lang === 'it' ? 'it' : undefined);
     for (const root of ['selection-card', 'star-panel']) {
       // One round trip per root: text and rects of every stat tile and label.
       const data = await page.getByTestId(root).evaluate(
@@ -44,7 +46,7 @@ for (const lang of ['en', 'it'] as const) {
             ids.map((id) => {
               const tile = el.querySelector(`[data-testid="${id}"]`)!;
               const t = tile.getBoundingClientRect();
-              const labels = [...tile.querySelectorAll('[class*="text-[9px]"][aria-hidden="true"]')]
+              const labels = [...tile.querySelectorAll('[data-gauge-label="tick"]')]
                 .filter((l) => /\S/.test(l.textContent ?? ''))
                 .map((l) => {
                   const b = l.getBoundingClientRect();
@@ -82,7 +84,7 @@ for (const lang of ['en', 'it'] as const) {
 test('card stays inside the viewport and above the dock (Polaris, taller card)', async ({
   page,
 }) => {
-  await selectPolaris(page);
+  await selectStar(page);
   const card = (await page.getByTestId('selection-card').boundingBox())!;
   const dock = (await page.getByTestId('dock').boundingBox())!;
   const vp = page.viewportSize()!;
@@ -98,7 +100,7 @@ test('card stays inside the viewport and above the dock (Polaris, taller card)',
 });
 
 test('selection card and star panel have no blocking axe violations', async ({ page }) => {
-  await selectPolaris(page);
+  await selectStar(page);
   for (const include of ['[data-testid="selection-card"]', '[data-testid="star-panel"]']) {
     const results = await new AxeBuilder({ page }).exclude('canvas').include(include).analyze();
     const blocking = results.violations.filter(
@@ -107,3 +109,63 @@ test('selection card and star panel have no blocking axe violations', async ({ p
     expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
   }
 });
+
+const en = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../src/i18n/locales/en.json', import.meta.url)), 'utf8'),
+) as {
+  gauge: Record<string, string>;
+};
+
+// pos(v) on the inverted magnitude axis: 20 → 0, −1 → 1.
+const pos = (m: number) => (20 - m) / 21;
+
+async function markerFraction(page: Page): Promise<number> {
+  const tile = page.getByTestId('selection-card').getByTestId('stat-appmag');
+  const meter = (await tile.getByRole('meter').boundingBox())!;
+  const marker = (await tile.getByTestId('gauge-marker').boundingBox())!;
+  return (marker.x + marker.width / 2 - meter.x) / meter.width;
+}
+
+test('Polaris: naked-eye verdict, marker right of the naked-eye zone start', async ({ page }) => {
+  await selectStar(page);
+  const verdict = page.getByTestId('selection-card').getByTestId('stat-appmag-verdict');
+  await expect(verdict).toHaveText(en.gauge.verdictNakedEye!);
+  expect(await markerFraction(page)).toBeGreaterThan(pos(6));
+});
+
+test('Proxima Cen: telescope verdict, marker left of the binocular zone start', async ({
+  page,
+}) => {
+  await selectStar(page, undefined, 'proxima', 'Proxima Cen');
+  const verdict = page.getByTestId('selection-card').getByTestId('stat-appmag-verdict');
+  await expect(verdict).toHaveText(en.gauge.verdictTelescope!);
+  expect(await markerFraction(page)).toBeLessThan(pos(9));
+});
+
+const ZONE_LABELS = { en: ['naked eye', 'binoculars'], it: ['occhio nudo', 'binocolo'] } as const;
+
+for (const lang of ['en', 'it'] as const) {
+  test(`Polaris (${lang}): zone labels sit inside the tile and do not touch`, async ({ page }) => {
+    await selectStar(page, lang === 'it' ? 'it' : undefined);
+    const tile = page.getByTestId('selection-card').getByTestId('stat-appmag');
+    const [nakedText, binoText] = ZONE_LABELS[lang];
+    const t = (await tile.boundingBox())!;
+    const naked = (await tile
+      .locator('[data-gauge-label="zone"]')
+      .getByText(nakedText, { exact: true })
+      .first()
+      .boundingBox())!;
+    const bino = (await tile
+      .locator('[data-gauge-label="zone"]')
+      .getByText(binoText, { exact: true })
+      .first()
+      .boundingBox())!;
+    for (const b of [naked, bino]) {
+      expect(b.x).toBeGreaterThanOrEqual(t.x - 0.5);
+      expect(b.x + b.width).toBeLessThanOrEqual(t.x + t.width + 0.5);
+      expect(b.y).toBeGreaterThanOrEqual(t.y - 0.5);
+      expect(b.y + b.height).toBeLessThanOrEqual(t.y + t.height + 0.5);
+    }
+    expect(bino.x + bino.width).toBeLessThan(naked.x);
+  });
+}

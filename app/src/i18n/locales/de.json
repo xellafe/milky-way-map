@@ -31,7 +31,6 @@
     "teff": "Temperatur",
     "estimate": "Schätzung",
     "moreData": "Weitere Daten und Katalog-IDs",
-    "nakedEye": "bloßes Auge",
     "age": "Geschätztes Alter",
     "ageNote": "(unsichere Schätzung)",
     "variable": "Veränderlicher Stern",
@@ -55,6 +54,13 @@
     "advSpectype": "Spektraltyp",
     "advRotation": "Rotationsperiode",
     "advVsini": "Projizierte Rotationsgeschwindigkeit (v sin i)"
+  },
+  "gauge": {
+    "nakedEye": "bloßes Auge",
+    "binocular": "Fernglas",
+    "verdictNakedEye": "Mit bloßem Auge sichtbar",
+    "verdictBinocular": "Mit Fernglas sichtbar",
+    "verdictTelescope": "Teleskop nötig"
   },
   "view": {
     "title": "Ansichtsoptionen",

@@ -2,13 +2,16 @@ import { describe, expect, it } from 'vitest';
 import {
   DISTANCE_TICKS,
   LUMINOSITY_TICKS,
+  BINOCULAR_LIMIT_MAG,
   MAGNITUDE_TICKS,
-  NAKED_EYE_AT,
+  MAGNITUDE_ZONES,
+  NAKED_EYE_LIMIT_MAG,
   TEMPERATURE_TICKS,
   distanceScale,
   luminosityScale,
   magnitudeScale,
   temperatureScale,
+  visibilityVerdict,
 } from '../../src/lib/gaugeScale';
 
 describe('gaugeScale', () => {
@@ -34,10 +37,35 @@ describe('gaugeScale', () => {
     expect(luminosityScale(1000)).toBe(1);
     expect(luminosityScale(0)).toBe(0);
   });
-  it('magnitude: linear −1→20, naked-eye tick at 6', () => {
-    expect(magnitudeScale(-1)).toBe(0);
-    expect(magnitudeScale(20)).toBe(1);
-    expect(NAKED_EYE_AT).toBeCloseTo(1 / 3);
+  it('magnitude: inverted linear axis, 20 → 0, −1 → 1 (#23)', () => {
+    expect(magnitudeScale(20)).toBe(0);
+    expect(magnitudeScale(-1)).toBe(1);
+    expect(magnitudeScale(6)).toBeCloseTo(2 / 3, 9);
+  });
+
+  it('visibility limits are 6 (naked eye) and 9 (binoculars)', () => {
+    expect(NAKED_EYE_LIMIT_MAG).toBe(6);
+    expect(BINOCULAR_LIMIT_MAG).toBe(9);
+  });
+
+  it('magnitude zones: naked eye pos(6)..pos(−1), binocular pos(9)..pos(6)', () => {
+    expect(MAGNITUDE_ZONES).toHaveLength(2);
+    const naked = MAGNITUDE_ZONES.find((z) => z.kind === 'nakedEye')!;
+    const bino = MAGNITUDE_ZONES.find((z) => z.kind === 'binocular')!;
+    expect(naked.from).toBeCloseTo(magnitudeScale(6) as number, 9);
+    expect(naked.to).toBeCloseTo(magnitudeScale(-1) as number, 9);
+    expect(bino.from).toBeCloseTo(magnitudeScale(9) as number, 9);
+    expect(bino.to).toBeCloseTo(magnitudeScale(6) as number, 9);
+  });
+
+  it('visibilityVerdict thresholds', () => {
+    expect(visibilityVerdict(6)).toBe('nakedEye');
+    expect(visibilityVerdict(6.01)).toBe('binocular');
+    expect(visibilityVerdict(9)).toBe('binocular');
+    expect(visibilityVerdict(9.01)).toBe('telescope');
+    expect(visibilityVerdict(null)).toBeNull();
+    expect(visibilityVerdict(undefined)).toBeNull();
+    expect(visibilityVerdict(NaN)).toBeNull();
   });
 
   describe('ticks', () => {
@@ -50,8 +78,6 @@ describe('gaugeScale', () => {
           expect(t.at).toBeLessThanOrEqual(1);
         }
       }
-      expect(NAKED_EYE_AT).toBeGreaterThan(0);
-      expect(NAKED_EYE_AT).toBeLessThan(1);
     });
 
     it('distance: 1, 10, 100, 1000 ly at 0, 1/3, 2/3, 1, all marked', () => {
@@ -66,9 +92,9 @@ describe('gaugeScale', () => {
       expect(LUMINOSITY_TICKS.every((t) => t.mark)).toBe(true);
     });
 
-    it('magnitude: 0 and 20 labelled, 10 mark-only, all marked', () => {
-      expect(MAGNITUDE_TICKS.map((t) => t.label)).toEqual(['0', undefined, '20']);
-      [0, 10, 20].forEach((m, i) =>
+    it('magnitude: ticks 20, 10, 9, 6, −1 on the inverted axis, all marked, 10 unlabelled', () => {
+      expect(MAGNITUDE_TICKS.map((t) => t.label)).toEqual(['20', undefined, '9', '6', '−1']);
+      [20, 10, 9, 6, -1].forEach((m, i) =>
         expect(MAGNITUDE_TICKS[i]!.at).toBeCloseTo(magnitudeScale(m) as number),
       );
       expect(MAGNITUDE_TICKS.every((t) => t.mark)).toBe(true);

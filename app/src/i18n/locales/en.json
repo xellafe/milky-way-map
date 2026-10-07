@@ -31,7 +31,6 @@
     "teff": "Temperature",
     "estimate": "estimate",
     "moreData": "More data and catalog IDs",
-    "nakedEye": "naked eye",
     "age": "Estimated age",
     "ageNote": "(uncertain estimate)",
     "variable": "Variable star",
@@ -55,6 +54,13 @@
     "advSpectype": "Spectral type",
     "advRotation": "Rotation period",
     "advVsini": "Projected rotation speed (v sin i)"
+  },
+  "gauge": {
+    "nakedEye": "naked eye",
+    "binocular": "binoculars",
+    "verdictNakedEye": "Visible to the naked eye",
+    "verdictBinocular": "Visible with binoculars",
+    "verdictTelescope": "Needs a telescope"
   },
   "view": {
     "title": "View options",

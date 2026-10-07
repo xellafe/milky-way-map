@@ -31,7 +31,6 @@
     "teff": "Temperatura",
     "estimate": "stima",
     "moreData": "Altri dati e ID catalogo",
-    "nakedEye": "occhio nudo",
     "age": "Età stimata",
     "ageNote": "(stima incerta)",
     "variable": "Stella variabile",
@@ -55,6 +54,13 @@
     "advSpectype": "Tipo spettrale",
     "advRotation": "Periodo di rotazione",
     "advVsini": "Velocità di rotazione proiettata (v sin i)"
+  },
+  "gauge": {
+    "nakedEye": "occhio nudo",
+    "binocular": "binocolo",
+    "verdictNakedEye": "Visibile a occhio nudo",
+    "verdictBinocular": "Visibile con il binocolo",
+    "verdictTelescope": "Serve un telescopio"
   },
   "view": {
     "title": "Opzioni vista",

@@ -31,8 +31,9 @@ export const temperatureScale = logScale(2400, 30000);
 /** Solar luminosities, log, 0.001..1000 (aesthetic choice, not data). */
 export const luminosityScale = logScale(0.001, 1000);
 
-/** Apparent magnitude, linear, -1..20 (aesthetic choice, not data). */
-export const magnitudeScale = linearScale(-1, 20);
+/** Apparent magnitude, linear, inverted: 20 at the left end, -1 at the right,
+ * so brighter stars sit further right like the other gauges (human choice, #23). */
+export const magnitudeScale = linearScale(20, -1);
 
 /** Gauge scale mark: `at` is a 0..1 position, `mark` draws a vertical tick. */
 export interface Tick {
@@ -70,12 +71,40 @@ export const LUMINOSITY_TICKS: readonly Tick[] = [
   { at: pos(luminosityScale, 1000), label: '10³', mark: true },
 ];
 
-/** The 10 tick is mark-only: its label would collide with the naked-eye label. */
-export const MAGNITUDE_TICKS: readonly Tick[] = [0, 10, 20].map((m) => ({
+/** Naked-eye limit, magnitude ~6 (convention, dark sky). */
+export const NAKED_EYE_LIMIT_MAG = 6;
+/** Binocular limit, magnitude ~9 (approximate convention: depends on instrument and sky). */
+export const BINOCULAR_LIMIT_MAG = 9;
+
+/** The 10 tick is mark-only: 10 and 9 are ~10 px apart and their labels would collide. */
+export const MAGNITUDE_TICKS: readonly Tick[] = [20, 10, 9, 6, -1].map((m) => ({
   at: pos(magnitudeScale, m),
-  ...(m === 10 ? {} : { label: String(m) }),
+  ...(m === 10 ? {} : { label: String(m).replace('-', '−') }),
   mark: true,
 }));
 
-/** Naked-eye limit, magnitude ~6 (conventional dark-sky threshold). */
-export const NAKED_EYE_AT = pos(magnitudeScale, 6);
+export type VisibilityZone = 'nakedEye' | 'binocular';
+
+export const MAGNITUDE_ZONES: readonly { from: number; to: number; kind: VisibilityZone }[] = [
+  {
+    from: pos(magnitudeScale, NAKED_EYE_LIMIT_MAG),
+    to: pos(magnitudeScale, -1),
+    kind: 'nakedEye',
+  },
+  {
+    from: pos(magnitudeScale, BINOCULAR_LIMIT_MAG),
+    to: pos(magnitudeScale, NAKED_EYE_LIMIT_MAG),
+    kind: 'binocular',
+  },
+];
+
+export function visibilityVerdict(
+  mag: number | null | undefined,
+): VisibilityZone | 'telescope' | null {
+  if (mag == null || !Number.isFinite(mag)) return null;
+  return mag <= NAKED_EYE_LIMIT_MAG
+    ? 'nakedEye'
+    : mag <= BINOCULAR_LIMIT_MAG
+      ? 'binocular'
+      : 'telescope';
+}
