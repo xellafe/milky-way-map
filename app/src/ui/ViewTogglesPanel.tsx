@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useGalaxyMapStore } from '../state/store';
-import { HudCheckbox } from './hud/HudInputs';
+import { HudSwitch } from './hud/HudInputs';
 import { HudCard } from './hud/HudCard';
 
 /**
@@ -24,13 +24,13 @@ export function ViewTogglesPanel() {
       data-testid="view-toggles"
       className="flex flex-col gap-1 p-3"
     >
-      <HudCheckbox
+      <HudSwitch
         label={t('view.showNames')}
         checked={showNames}
         data-testid="toggle-names"
         onChange={toggleNames}
       />
-      <HudCheckbox
+      <HudSwitch
         label={t('view.showConstellations')}
         checked={showConstellations}
         data-testid="toggle-constellations"

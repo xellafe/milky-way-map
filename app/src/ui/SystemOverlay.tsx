@@ -15,7 +15,7 @@ import {
   useGalaxyMapStore,
 } from '../state/store';
 import { HudButton } from './hud/HudButton';
-import { HudCheckbox, HudSelect, HudSlider } from './hud/HudInputs';
+import { HudSwitch, HudSelect, HudSlider } from './hud/HudInputs';
 import { HudCard } from './hud/HudCard';
 
 const SLIDER_STEPS = 1000;
@@ -207,7 +207,7 @@ export function SystemOverlay() {
           <legend className="font-hud text-xs text-hud-muted">{t('system.planetTypes')}</legend>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {PLANET_TYPES.map((type) => (
-              <HudCheckbox
+              <HudSwitch
                 key={type}
                 label={t(`planetType.${type}`)}
                 checked={visibleTypes[type]}
@@ -303,7 +303,7 @@ export function SystemOverlay() {
               onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
               className="flex-1"
             />
-            <HudCheckbox
+            <HudSwitch
               // The wrapping label bakes in text-sm; a same-specificity text-xs in
               // className would conflict with it by stylesheet order, not intent, so
               // the smaller size is set on the label text itself instead.
@@ -315,7 +315,7 @@ export function SystemOverlay() {
             />
           </div>
           <div className="mt-2 flex items-center gap-2">
-            <HudCheckbox
+            <HudSwitch
               label={
                 <>
                   {t('system.habitableZone')}{' '}

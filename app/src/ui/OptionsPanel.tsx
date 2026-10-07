@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../lib/format';
 import { isDefaultSettings, type Settings, useSettingsStore } from '../state/settings';
 import { HudButton } from './hud/HudButton';
-import { HudCheckbox, HudSlider } from './hud/HudInputs';
+import { HudSwitch, HudSlider } from './hud/HudInputs';
 import { HudCard } from './hud/HudCard';
 
 type NumericKey = {
@@ -81,7 +81,7 @@ export function OptionsPanel() {
         suffix={` ${t('units.ly')}/s`}
       />
       <div className="mt-3">
-        <HudCheckbox
+        <HudSwitch
           label={t('options.autoOrbit')}
           checked={settings.autoOrbit}
           data-testid="option-autoOrbit"
@@ -89,7 +89,7 @@ export function OptionsPanel() {
         />
       </div>
       <div className="mt-1">
-        <HudCheckbox
+        <HudSwitch
           label={t('options.realism')}
           checked={settings.realism}
           data-testid="option-realism"

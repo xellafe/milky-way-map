@@ -1,79 +1,14 @@
 import { useTranslation } from 'react-i18next';
-import { isDefaultFilters, type Filters, type Range } from '../lib/filterMask';
-import { formatNumber } from '../lib/format';
+import { isDefaultFilters, type Filters } from '../lib/filterMask';
+import { spectralChipColor, type SpectralLetter } from '../lib/spectralChip';
 import { useGalaxyMapStore } from '../state/store';
 import { HudButton } from './hud/HudButton';
-import { HudCheckbox } from './hud/HudInputs';
+import { HudSwitch } from './hud/HudInputs';
 import { HudCard } from './hud/HudCard';
+import { RangeSlider } from './hud/RangeSlider';
+import { ToggleChip } from './hud/ToggleChip';
 
-const SPECTRAL_LABELS = ['O', 'B', 'A', 'F', 'G', 'K', 'M'];
-
-function RangeFilter({
-  id,
-  label,
-  bounds,
-  value,
-  decimals,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  bounds: Range | null;
-  value: Range | null;
-  decimals: number;
-  onChange: (range: Range | null) => void;
-}) {
-  const { t, i18n } = useTranslation();
-  const disabled = bounds === null;
-  const lo = value?.[0] ?? bounds?.[0] ?? 0;
-  const hi = value?.[1] ?? bounds?.[1] ?? 0;
-  const step = 10 ** -decimals;
-
-  const apply = (nextLo: number, nextHi: number) => {
-    if (!bounds) return;
-    if (Number.isNaN(nextLo) || Number.isNaN(nextHi)) return;
-    onChange([Math.min(nextLo, nextHi), Math.max(nextLo, nextHi)]);
-  };
-
-  return (
-    <fieldset className="mt-2" data-testid={`filter-${id}`} disabled={disabled}>
-      <legend className="font-hud text-xs text-hud-muted">
-        {label}
-        {bounds && (
-          <span className="ml-1 text-hud-muted">
-            ({formatNumber(bounds[0], i18n.language, { maximumFractionDigits: decimals })} –{' '}
-            {formatNumber(bounds[1], i18n.language, { maximumFractionDigits: decimals })})
-          </span>
-        )}
-      </legend>
-      <div className="mt-1 flex items-center gap-2">
-        <label className="flex-1">
-          <span className="sr-only">{t('filters.min')}</span>
-          <input
-            type="number"
-            step={step}
-            value={Number(lo.toFixed(decimals))}
-            data-testid={`filter-${id}-min`}
-            onChange={(e) => apply(e.target.valueAsNumber, hi)}
-            className="w-full rounded-hud border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud-mono text-sm text-hud-text disabled:opacity-40"
-          />
-        </label>
-        <span className="text-hud-muted">–</span>
-        <label className="flex-1">
-          <span className="sr-only">{t('filters.max')}</span>
-          <input
-            type="number"
-            step={step}
-            value={Number(hi.toFixed(decimals))}
-            data-testid={`filter-${id}-max`}
-            onChange={(e) => apply(lo, e.target.valueAsNumber)}
-            className="w-full rounded-hud border border-hud-accent/30 bg-black/40 px-2 py-1 font-hud-mono text-sm text-hud-text disabled:opacity-40"
-          />
-        </label>
-      </div>
-    </fieldset>
-  );
-}
+const SPECTRAL_LABELS: SpectralLetter[] = ['O', 'B', 'A', 'F', 'G', 'K', 'M'];
 
 /**
  * Runtime filters panel (SPEC §6.5) — GPU mask only, no data reload.
@@ -111,24 +46,27 @@ export function FiltersPanel() {
         <legend className="font-hud text-xs text-hud-muted">{t('filters.spectralClass')}</legend>
         <div className="mt-1 flex flex-wrap gap-2">
           {SPECTRAL_LABELS.map((letter, code) => (
-            <HudCheckbox
+            <ToggleChip
               key={letter}
               label={letter}
-              checked={filters.spectralClasses[code] === true}
-              data-testid={`filter-class-${letter}`}
-              onChange={() => toggleClass(code)}
+              pressed={filters.spectralClasses[code] === true}
+              color={spectralChipColor(letter)}
+              testId={`filter-class-${letter}`}
+              onToggle={() => toggleClass(code)}
             />
           ))}
-          <HudCheckbox
-            label={t('filters.unknown')}
-            checked={filters.spectralClasses[7] === true}
-            data-testid="filter-class-unknown"
-            onChange={() => toggleClass(7)}
+          <ToggleChip
+            label="?"
+            ariaLabel={t('filters.unknown')}
+            color="var(--color-hud-muted)"
+            pressed={filters.spectralClasses[7] === true}
+            testId="filter-class-unknown"
+            onToggle={() => toggleClass(7)}
           />
         </div>
       </fieldset>
 
-      <RangeFilter
+      <RangeSlider
         id="distance"
         label={`${t('filters.distance')} (${t('units.ly')})`}
         bounds={bounds?.distanceLy ?? null}
@@ -136,7 +74,7 @@ export function FiltersPanel() {
         decimals={0}
         onChange={(range) => setFilters({ distanceLy: range })}
       />
-      <RangeFilter
+      <RangeSlider
         id="appmag"
         label={t('filters.appMag')}
         bounds={bounds?.appMag ?? null}
@@ -144,7 +82,7 @@ export function FiltersPanel() {
         decimals={1}
         onChange={(range) => setFilters({ appMag: range })}
       />
-      <RangeFilter
+      <RangeSlider
         id="absmag"
         label={t('filters.absMag')}
         bounds={bounds?.absMag ?? null}
@@ -154,19 +92,19 @@ export function FiltersPanel() {
       />
 
       <div className="mt-3 flex flex-col gap-1">
-        <HudCheckbox
+        <HudSwitch
           label={t('filters.onlyExoplanets')}
           checked={filters.onlyExoplanets}
           data-testid="filter-exoplanets"
           onChange={setToggle('onlyExoplanets')}
         />
-        <HudCheckbox
+        <HudSwitch
           label={t('filters.onlyMultiple')}
           checked={filters.onlyMultiple}
           data-testid="filter-multiple"
           onChange={setToggle('onlyMultiple')}
         />
-        <HudCheckbox
+        <HudSwitch
           label={t('filters.onlyVariable')}
           checked={filters.onlyVariable}
           data-testid="filter-variable"

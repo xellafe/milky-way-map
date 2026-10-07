@@ -22,6 +22,11 @@ test('default configuration: both toggles off, no labels in the way', async ({ p
   await expect(page.getByTestId('star-label')).toHaveCount(0);
 });
 
+test('view toggles are switches', async ({ page }) => {
+  await openApp(page);
+  await expect(page.getByTestId('toggle-names')).toHaveAttribute('role', 'switch');
+});
+
 test('names toggle shows culled labels (1..MAX) and hides them again', async ({ page }) => {
   await openApp(page);
   await page.getByTestId('toggle-names').click();

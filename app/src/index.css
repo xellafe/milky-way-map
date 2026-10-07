@@ -65,6 +65,137 @@
     scrollbar-width: thin;
   }
 
+  /* Switch: 28x14 px track, 8 px knob; sizes are aesthetic choices (#23). */
+  .hud-switch {
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 28px;
+    height: 14px;
+  }
+  .hud-switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .hud-switch-track {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 40%, transparent);
+    background: rgb(0 0 0 / 0.4);
+  }
+  .hud-switch-track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 8px;
+    height: 8px;
+    background: var(--color-hud-muted);
+  }
+  /* 120 ms: aesthetic choice (not data, #23); skipped for reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hud-switch-track::after {
+      transition: transform 120ms;
+    }
+  }
+  .hud-switch input:checked + .hud-switch-track {
+    border-color: var(--color-hud-accent);
+    background: color-mix(in srgb, var(--color-hud-accent) 25%, transparent);
+  }
+  .hud-switch input:checked + .hud-switch-track::after {
+    transform: translateX(14px);
+    background: var(--color-hud-accent);
+  }
+  .hud-switch input:focus-visible + .hud-switch-track {
+    outline: 2px solid var(--color-hud-accent);
+    outline-offset: 2px;
+  }
+  .hud-switch input:disabled {
+    cursor: not-allowed;
+  }
+  .hud-switch input:disabled + .hud-switch-track {
+    opacity: 0.4;
+  }
+
+  /* Range: 2 px track, 2x12 px bar thumb with glow (aesthetic choices, #23). */
+  .hud-range {
+    appearance: none;
+    height: 12px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .hud-range::-webkit-slider-runnable-track {
+    height: 2px;
+    background: color-mix(in srgb, var(--color-hud-accent) 35%, transparent);
+  }
+  .hud-range::-moz-range-track {
+    height: 2px;
+    background: color-mix(in srgb, var(--color-hud-accent) 35%, transparent);
+  }
+  .hud-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 2px;
+    height: 12px;
+    margin-top: -5px;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-hud-accent);
+    box-shadow: 0 0 6px var(--color-hud-accent);
+  }
+  .hud-range::-moz-range-thumb {
+    width: 2px;
+    height: 12px;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-hud-accent);
+    box-shadow: 0 0 6px var(--color-hud-accent);
+  }
+  .hud-range:focus-visible {
+    outline: 1px solid var(--color-hud-accent);
+    outline-offset: 2px;
+  }
+  .hud-range:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  /* Two stacked ranges: only the thumbs may take the pointer. */
+  .hud-range-dual .hud-range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    pointer-events: none;
+  }
+  .hud-range-dual .hud-range::-webkit-slider-thumb {
+    pointer-events: auto;
+  }
+  .hud-range-dual .hud-range::-moz-range-thumb {
+    pointer-events: auto;
+  }
+
+  /* Aesthetic choice (not data, #23). Colors are copied from the palette: a data
+   * URI and <option> cannot use the translucent var. */
+  .hud-select {
+    appearance: none;
+    padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 30%, transparent);
+    border-radius: var(--radius-hud);
+    background: rgb(0 0 0 / 0.4)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%239ec8ff'/%3E%3C/svg%3E")
+      no-repeat right 0.5rem center;
+    font-family: var(--font-hud);
+    font-size: 0.875rem;
+    color: var(--color-hud-text);
+  }
+  .hud-select option {
+    background: #0a101e;
+  }
+
   /* Small mono caption for section titles and stat labels; 9 px and 0.12 em are a
    * human choice (#23), not data. */
   .hud-label {
