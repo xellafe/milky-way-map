@@ -420,6 +420,10 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - `system.spec` "orbit style: each style renders and the choice persists":
   ~30 s da solo contro un budget di 60 s; timeout sotto carico della suite
   completa due volte il 2026-10-06; da solo passa.
+- `overlay.spec` (riga 142) "clicking the SAME star again reopens a closed
+  overlay": fallito una volta nella run completa (`selection-overlay` ancora
+  presente 1000 ms dopo `overlay-close`); da solo passa. Visto sul branch
+  `feat/ui-overhaul`, issue #23.
 
 ## Come riprendere
 

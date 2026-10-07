@@ -65,7 +65,8 @@
     "label": "Commandes",
     "filters": "Filtres",
     "view": "Vue",
-    "options": "Options"
+    "options": "Options",
+    "visibleOf": "{{visible}} sur {{total}} visibles"
   },
   "filters": {
     "title": "Filtres",
@@ -169,7 +170,9 @@
     "twinkleSpeed": "Fréquence du scintillement",
     "twinkleAmplitude": "Intensité du scintillement",
     "sizeGamma": "Contraste de taille des étoiles",
-    "reset": "Réinitialiser les options"
+    "reset": "Réinitialiser les options",
+    "sectionCamera": "Caméra",
+    "sectionStars": "Étoiles"
   },
   "planetType": {
     "rocky": "Rocheuse",

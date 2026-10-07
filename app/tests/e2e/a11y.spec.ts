@@ -107,7 +107,7 @@ for (const [id, toggle] of dockPanels) {
     await openApp(page);
     await page.getByTestId(toggle).click();
     await expect(page.getByTestId(toggle)).toHaveAttribute('aria-expanded', 'true');
-    await scan(page, `#dock-panel-${id}`);
+    await scan(page, '#dock-panel');
   });
 }
 

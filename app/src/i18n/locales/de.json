@@ -65,7 +65,8 @@
     "label": "Bedienelemente",
     "filters": "Filter",
     "view": "Ansicht",
-    "options": "Optionen"
+    "options": "Optionen",
+    "visibleOf": "{{visible}} von {{total}} sichtbar"
   },
   "filters": {
     "title": "Filter",
@@ -169,7 +170,9 @@
     "twinkleSpeed": "Funkelfrequenz",
     "twinkleAmplitude": "Funkelintensität",
     "sizeGamma": "Größenkontrast der Sterne",
-    "reset": "Optionen zurücksetzen"
+    "reset": "Optionen zurücksetzen",
+    "sectionCamera": "Kamera",
+    "sectionStars": "Sterne"
   },
   "planetType": {
     "rocky": "Gesteinsplanet",

@@ -9,7 +9,7 @@ import { isWebGL2Available } from './lib/webgl';
 import { GalaxyScene } from './scene/GalaxyScene';
 import { SystemScene } from './scene/SystemScene';
 import { useGalaxyMapStore } from './state/store';
-import { ControlDock } from './ui/ControlDock';
+import { BottomStack } from './ui/BottomStack';
 import { HelpButton } from './ui/HelpButton';
 import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
@@ -102,7 +102,7 @@ export default function App() {
           <SystemOverlay />
         </>
       )}
-      <ControlDock />
+      <BottomStack />
       {/* Outside the view switch: the <audio> and playback survive view changes. */}
       <MusicPlayer />
       <div className="absolute top-4 right-4 z-40 flex items-center gap-2">

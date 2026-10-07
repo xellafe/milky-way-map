@@ -1,46 +1,13 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getHost, type ExoplanetRecord } from '../data/exoplanets';
 import { formatNumber } from '../lib/format';
 import { formatLimited } from '../lib/limitedValue';
 import { orbitSense } from '../lib/orbitSense';
 import { planetComposition } from '../lib/planetComposition';
-import { useCompactViewport } from '../lib/viewport';
-import { ORBIT_STYLES, type OrbitStyle } from '../lib/planetStyle';
-import { classifyPlanet, PLANET_TYPES } from '../lib/planetType';
-import { useSettingsStore } from '../state/settings';
-import {
-  TIME_SCALE_MAX_DAYS_PER_SECOND,
-  TIME_SCALE_MIN_DAYS_PER_SECOND,
-  useGalaxyMapStore,
-} from '../state/store';
+import { classifyPlanet } from '../lib/planetType';
+import { useGalaxyMapStore } from '../state/store';
 import { HudButton } from './hud/HudButton';
-import { HudSwitch, HudSelect, HudSlider } from './hud/HudInputs';
 import { HudCard } from './hud/HudCard';
-
-const SLIDER_STEPS = 1000;
-const LOG_MIN = Math.log10(TIME_SCALE_MIN_DAYS_PER_SECOND);
-const LOG_MAX = Math.log10(TIME_SCALE_MAX_DAYS_PER_SECOND);
-
-function toSlider(value: number, log: boolean): number {
-  const v = Math.min(
-    Math.max(value, TIME_SCALE_MIN_DAYS_PER_SECOND),
-    TIME_SCALE_MAX_DAYS_PER_SECOND,
-  );
-  const f = log
-    ? (Math.log10(v) - LOG_MIN) / (LOG_MAX - LOG_MIN)
-    : (v - TIME_SCALE_MIN_DAYS_PER_SECOND) /
-      (TIME_SCALE_MAX_DAYS_PER_SECOND - TIME_SCALE_MIN_DAYS_PER_SECOND);
-  return Math.round(f * SLIDER_STEPS);
-}
-
-function fromSlider(slider: number, log: boolean): number {
-  const f = slider / SLIDER_STEPS;
-  return log
-    ? 10 ** (LOG_MIN + f * (LOG_MAX - LOG_MIN))
-    : TIME_SCALE_MIN_DAYS_PER_SECOND +
-        f * (TIME_SCALE_MAX_DAYS_PER_SECOND - TIME_SCALE_MIN_DAYS_PER_SECOND);
-}
 
 function PlanetDetails({ planet }: { planet: ExoplanetRecord }) {
   const { t, i18n } = useTranslation();
@@ -149,36 +116,21 @@ function PlanetDetails({ planet }: { planet: ExoplanetRecord }) {
 
 /**
  * DOM overlay of the System View (SPEC §6.7): back to galaxy, planet list +
- * details (keyboard reachable, SPEC §6.9), shared time-scale slider with
- * optional log mode, HZ toggle (disabled without stellar luminosity, never
- * guessed), and the real-scale disclaimer.
+ * details (keyboard reachable, SPEC §6.9) and the real-scale disclaimer. The
+ * time bar and the view controls live in BottomStack/DockPanel.
  */
 export function SystemOverlay() {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language;
+  const { t } = useTranslation();
   const hostname = useGalaxyMapStore((s) => s.systemHostname);
   const selectedPlanet = useGalaxyMapStore((s) => s.selectedPlanet);
   const selectPlanet = useGalaxyMapStore((s) => s.selectPlanet);
   const exitSystemView = useGalaxyMapStore((s) => s.exitSystemView);
-  const timeScale = useGalaxyMapStore((s) => s.timeScaleDaysPerSecond);
-  const setTimeScale = useGalaxyMapStore((s) => s.setTimeScale);
-  const showHz = useGalaxyMapStore((s) => s.showHabitableZone);
-  const toggleHz = useGalaxyMapStore((s) => s.toggleHabitableZone);
   const visibleTypes = useGalaxyMapStore((s) => s.visiblePlanetTypes);
-  const togglePlanetType = useGalaxyMapStore((s) => s.togglePlanetType);
-  const orbitStyle = useSettingsStore((s) => s.orbitStyle);
-  const setSettings = useSettingsStore((s) => s.setSettings);
-  const dockPanel = useGalaxyMapStore((s) => s.dockPanel);
-  const musicExpanded = useGalaxyMapStore((s) => s.musicExpanded);
-  const compact = useCompactViewport();
-  const [logMode, setLogMode] = useState(false);
-  const [pausedFrom, setPausedFrom] = useState<number | null>(null);
 
   const host = hostname ? getHost(hostname) : null;
   if (!hostname || !host) return null;
   const shownPlanets = host.planets.filter((p) => visibleTypes[classifyPlanet(p)]);
   const planet = shownPlanets.find((p) => p.pl_name === selectedPlanet) ?? null;
-  const paused = timeScale === 0;
 
   return (
     <>
@@ -203,34 +155,6 @@ export function SystemOverlay() {
         className="absolute top-16 right-4 z-10 max-h-[calc(100%-13.5rem)] lg:max-h-[calc(100%-9.5rem)] w-80 overflow-y-auto p-4"
       >
         <p className="mb-2 text-sm text-hud-muted">{t('system.planets')}</p>
-        <fieldset className="mb-2" data-testid="planet-type-filter">
-          <legend className="font-hud text-xs text-hud-muted">{t('system.planetTypes')}</legend>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-            {PLANET_TYPES.map((type) => (
-              <HudSwitch
-                key={type}
-                label={t(`planetType.${type}`)}
-                checked={visibleTypes[type]}
-                data-testid={`planet-type-${type}`}
-                onChange={() => togglePlanetType(type)}
-              />
-            ))}
-          </div>
-        </fieldset>
-        <label className="mb-2 flex items-center justify-between gap-2 font-hud text-xs text-hud-muted">
-          {t('system.orbitStyle')}
-          <HudSelect
-            value={orbitStyle}
-            data-testid="orbit-style"
-            onChange={(e) => setSettings({ orbitStyle: e.target.value as OrbitStyle })}
-          >
-            {ORBIT_STYLES.map((style) => (
-              <option key={style} value={style}>
-                {t(`orbitStyle.${style}`)}
-              </option>
-            ))}
-          </HudSelect>
-        </label>
         <div className="flex flex-wrap gap-1">
           {shownPlanets.map((p) => (
             <button
@@ -252,84 +176,6 @@ export function SystemOverlay() {
         {planet && <PlanetDetails planet={planet} />}
         <p className="mt-3 text-xs text-hud-muted">{t('system.scaleNote')}</p>
       </HudCard>
-
-      {/*
-       * Sits above the dock (#3: the dock shows only Options in the
-       * System View). The dock icon row is at bottom-4; bottom-20 clears it.
-       * An open dock panel renders in that same band (Dock.tsx) and its
-       * height varies (Options is tall), so the bar is hidden while a panel
-       * is open instead of guessing an offset that can still overlap. The
-       * expanded player takes the bar's band on compact viewports.
-       */}
-      {!dockPanel && !(musicExpanded && compact) && (
-        <HudCard
-          as="section"
-          aria-label={t('system.timeScale')}
-          className="absolute bottom-20 left-1/2 z-10 p-3 w-[28rem] max-w-[calc(100%-2rem)] -translate-x-1/2 text-sm"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span>{t('system.timeScale')}</span>
-            <span className="font-hud-mono text-hud-bright" data-testid="time-scale-value">
-              {t('system.daysPerSecond', {
-                value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
-              })}
-            </span>
-          </div>
-          <div className="mt-2 flex items-center gap-3">
-            <HudButton
-              variant="secondary"
-              data-testid="time-pause"
-              onClick={() => {
-                if (paused) {
-                  setTimeScale(pausedFrom ?? 2);
-                  setPausedFrom(null);
-                } else {
-                  setPausedFrom(timeScale);
-                  setTimeScale(0);
-                }
-              }}
-            >
-              {paused ? '▶' : '⏸'}
-              <span className="sr-only">{t(paused ? 'system.resume' : 'system.pause')}</span>
-            </HudButton>
-            <HudSlider
-              min={0}
-              max={SLIDER_STEPS}
-              step={1}
-              value={toSlider(paused ? (pausedFrom ?? 2) : timeScale, logMode)}
-              disabled={paused}
-              data-testid="time-slider"
-              aria-label={t('system.timeScale')}
-              onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
-              className="flex-1"
-            />
-            <HudSwitch
-              // The wrapping label bakes in text-sm; a same-specificity text-xs in
-              // className would conflict with it by stylesheet order, not intent, so
-              // the smaller size is set on the label text itself instead.
-              label={<span className="text-xs">{t('system.logScale')}</span>}
-              checked={logMode}
-              data-testid="time-log-mode"
-              onChange={(e) => setLogMode(e.target.checked)}
-              className="whitespace-nowrap"
-            />
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <HudSwitch
-              label={
-                <>
-                  {t('system.habitableZone')}{' '}
-                  <span className="text-xs text-hud-warn">{t('system.hzApprox')}</span>
-                </>
-              }
-              checked={showHz}
-              disabled={host.st_lum === null}
-              data-testid="toggle-hz"
-              onChange={toggleHz}
-            />
-          </div>
-        </HudCard>
-      )}
     </>
   );
 }

@@ -14,8 +14,8 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
   energy-faithful sizing/color and bloom.
 - Free-fly + click-to-orbit camera with animated fly-to; `prefers-reduced-motion`
   aware.
-- Sci-fi HUD UI: bottom control dock (filters, view toggles, options) with
-  slide-in panels; music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star detail panel with stat tiles and gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude) and, for exoplanet hosts, a collapsible "Advanced data" section (metallicity, age, mass, rotation); the System View planet panel adds density, irradiation, mass provenance, an approximate composition class and orbit direction ("n/a" until the exoplanet data is refreshed); selecting a star
+- Sci-fi HUD UI: bottom control dock opening a single tabbed panel (Filters / View /
+  Options); music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star detail panel with stat tiles and gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude) and, for exoplanet hosts, a collapsible "Advanced data" section (metallicity, age, mass, rotation); the System View planet panel adds density, irradiation, mass provenance, an approximate composition class and orbit direction ("n/a" until the exoplanet data is refreshed); selecting a star
   shows a ring and a summary card anchored to it.
 - Welcome dialog with a short description and quick controls guide, shown on
   every visit until "Don't show again" is ticked; the "?" button in the
@@ -25,8 +25,9 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 - Search (proper names, HD/HIP/Gl, Gaia/TYC ids, exoplanet hosts) and runtime
   filters via a GPU visibility mask.
 - System View: fly into an exoplanet system, real-scale orbits (Kepler solver),
-  shared time-scale slider, habitable-zone overlay (approximate √L model),
-  planet type filter and selectable orbit style (trail / thick / simple).
+  shared time-scale slider (time bar above the dock), habitable-zone overlay
+  (approximate √L model), planet type filter and selectable orbit style
+  (trail / thick / simple), all in the dock's View tab.
   Planet sizes and looks are **presentational, not data**: the catalog has no
   planet colors or surfaces, so each planet gets a procedural look from its
   size class (rocky / sub-Neptune / giant / unknown, from radius or mass) plus

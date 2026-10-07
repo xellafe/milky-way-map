@@ -65,7 +65,8 @@
     "label": "Controls",
     "filters": "Filters",
     "view": "View",
-    "options": "Options"
+    "options": "Options",
+    "visibleOf": "{{visible}} of {{total}} visible"
   },
   "filters": {
     "title": "Filters",
@@ -169,7 +170,9 @@
     "twinkleSpeed": "Twinkle frequency",
     "twinkleAmplitude": "Twinkle intensity",
     "sizeGamma": "Star size contrast",
-    "reset": "Reset options"
+    "reset": "Reset options",
+    "sectionCamera": "Camera",
+    "sectionStars": "Stars"
   },
   "planetType": {
     "rocky": "Rocky",

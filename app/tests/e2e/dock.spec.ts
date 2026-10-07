@@ -41,15 +41,66 @@ test('dock: one panel open at a time, Esc closes and restores focus', async ({ p
   await expect(optionsToggle).toBeFocused();
 });
 
-test('dock: visible-count badge does not cover the Filters icon', async ({ page }) => {
+test('dock: single tabbed panel, arrow keys switch tab without closing', async ({ page }) => {
   await openApp(page);
-  const badge = page.getByTestId('visible-count');
-  await expect(badge).toBeVisible();
-  const b = (await badge.boundingBox())!;
-  const i = (await page.getByTestId('filters-toggle').locator('svg').boundingBox())!;
-  const overlap =
-    b.x < i.x + i.width && b.x + b.width > i.x && b.y < i.y + i.height && b.y + b.height > i.y;
-  expect(overlap).toBe(false);
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('dock-panel')).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Filters' })).toHaveAttribute('aria-selected', 'true');
+
+  await page.getByRole('tab', { name: 'Filters' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'View' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('view-toggles')).toBeVisible();
+  await expect(page.getByTestId('dock-panel')).toBeVisible();
+});
+
+test('dock: Esc closes the panel, prevents default and restores focus', async ({ page }) => {
+  await openApp(page);
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('dock-panel')).toBeVisible();
+  await page.evaluate(() => {
+    (window as unknown as { __escPrevented: boolean | null }).__escPrevented = null;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape')
+        (window as unknown as { __escPrevented: boolean | null }).__escPrevented =
+          e.defaultPrevented;
+    });
+  });
+  await page.getByRole('tab', { name: 'Filters' }).focus();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('dock-panel')).toHaveCount(0);
+  await expect(page.getByTestId('filters-toggle')).toBeFocused();
+  expect(
+    await page.evaluate(() => (window as unknown as { __escPrevented: boolean }).__escPrevented),
+  ).toBe(true);
+});
+
+test('dock: visible-count sits inside the dock panel', async ({ page }) => {
+  await openApp(page);
+  await page.getByTestId('filters-toggle').click();
+  const panel = (await page.getByTestId('dock-panel').boundingBox())!;
+  const c = (await page.getByTestId('visible-count').boundingBox())!;
+  expect(c.x).toBeGreaterThanOrEqual(panel.x);
+  expect(c.y).toBeGreaterThanOrEqual(panel.y);
+  expect(c.x + c.width).toBeLessThanOrEqual(panel.x + panel.width);
+  expect(c.y + c.height).toBeLessThanOrEqual(panel.y + panel.height);
+});
+
+test('dock: visible-count stays in the panel header on every tab (galaxy)', async ({ page }) => {
+  await openApp(page);
+  await page.getByTestId('filters-toggle').click();
+  for (const tab of ['View', 'Options']) {
+    await page.getByRole('tab', { name: tab }).click();
+    await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true');
+    const panel = (await page.getByTestId('dock-panel').boundingBox())!;
+    const counter = page.getByTestId('visible-count');
+    await expect(counter).toBeVisible();
+    const c = (await counter.boundingBox())!;
+    expect(c.x).toBeGreaterThanOrEqual(panel.x);
+    expect(c.y).toBeGreaterThanOrEqual(panel.y);
+    expect(c.x + c.width).toBeLessThanOrEqual(panel.x + panel.width);
+    expect(c.y + c.height).toBeLessThanOrEqual(panel.y + panel.height);
+  }
 });
 
 test('dock: no music icon, music controls live outside the dock', async ({ page }) => {

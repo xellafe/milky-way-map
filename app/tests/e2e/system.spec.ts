@@ -137,6 +137,7 @@ test('habitable zone: toggle shows the √L ring consistent with the in_hz flags
 
   await page.waitForTimeout(300);
   const before = await litPixels();
+  await page.getByTestId('view-toggle').click();
   await page.getByTestId('toggle-hz').check();
   await expect.poll(litPixels, { timeout: 5_000 }).toBeGreaterThan(before * 1.5);
 
@@ -163,6 +164,7 @@ test('habitable zone: ring plane follows the median orbital inclination, no cons
   page.on('pageerror', (e) => errors.push(e.message));
   await openApp(page);
   await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  await page.getByTestId('view-toggle').click();
   await page.getByTestId('toggle-hz').check();
   await page.waitForTimeout(500);
 
@@ -248,6 +250,7 @@ test('habitable zone: gradient is warmer at the inner edge than at the outer edg
     );
 
   const off = await sample();
+  await page.getByTestId('view-toggle').click();
   await page.getByTestId('toggle-hz').check();
 
   // Mean red-minus-blue gain of the ring over the HZ-off frame; null until
@@ -312,6 +315,7 @@ test('planet type filter hides planets and their chips (TRAPPIST-1: all rocky)',
   await enterSystem(page, 'trappist', 'TRAPPIST-1');
 
   await expect(page.getByTestId('planet-chip')).toHaveCount(7);
+  await page.getByTestId('view-toggle').click();
   await page.getByTestId('planet-type-rocky').uncheck();
   await expect(page.getByTestId('planet-chip')).toHaveCount(0);
   await expect.poll(async () => (await bridge(page)).planets.length).toBe(0);
@@ -329,6 +333,7 @@ test('orbit style: each style renders and the choice persists', async ({ page })
   await openApp(page);
   await enterSystem(page, 'trappist', 'TRAPPIST-1');
 
+  await page.getByTestId('view-toggle').click();
   const select = page.getByTestId('orbit-style');
   await expect(select).toHaveValue('trail');
   for (const style of ['thick', 'simple', 'trail']) {
@@ -340,22 +345,24 @@ test('orbit style: each style renders and the choice persists', async ({ page })
   await page.reload();
   await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
   await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  await page.getByTestId('view-toggle').click();
   await expect(page.getByTestId('orbit-style')).toHaveValue('thick');
   expect(errors.filter((e) => /shader|WebGL|THREE/i.test(e))).toEqual([]);
 });
 
-test('time bar is hidden while a dock panel is open so it cannot overlap it', async ({ page }) => {
+test('time bar stays visible below the open dock panel', async ({ page }) => {
   await openApp(page);
   await enterSystem(page, 'trappist', 'TRAPPIST-1');
 
-  const bar = page.getByTestId('time-pause');
-  await expect(bar).toBeVisible();
   await page.getByTestId('options-toggle').click();
-  await expect(page.getByTestId('options-panel')).toBeVisible();
-  await expect(bar).toHaveCount(0);
-
-  await page.getByTestId('options-toggle').click();
-  await expect(bar).toBeVisible();
+  await expect(page.getByTestId('dock-panel')).toBeVisible();
+  await expect(page.getByTestId('time-scale')).toBeVisible();
+  const p = (await page.getByTestId('dock-panel').boundingBox())!;
+  const t = (await page.getByTestId('time-scale').boundingBox())!;
+  const overlap =
+    p.x < t.x + t.width && p.x + p.width > t.x && p.y < t.y + t.height && p.y + p.height > t.y;
+  expect(overlap).toBe(false);
+  expect(t.y).toBeGreaterThanOrEqual(p.y + p.height);
 });
 
 // --- Advanced planet data (#18) -----------------------------------------------

@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { isDefaultFilters, type Filters } from '../lib/filterMask';
+import { type Filters } from '../lib/filterMask';
+import { getStarCore } from '../data/starCoreStore';
+import { formatNumber } from '../lib/format';
 import { spectralChipColor, type SpectralLetter } from '../lib/spectralChip';
 import { useGalaxyMapStore } from '../state/store';
-import { HudButton } from './hud/HudButton';
 import { HudSwitch } from './hud/HudInputs';
-import { HudCard } from './hud/HudCard';
 import { RangeSlider } from './hud/RangeSlider';
 import { ToggleChip } from './hud/ToggleChip';
 
@@ -12,14 +12,15 @@ const SPECTRAL_LABELS: SpectralLetter[] = ['O', 'B', 'A', 'F', 'G', 'K', 'M'];
 
 /**
  * Runtime filters panel (SPEC §6.5) — GPU mask only, no data reload.
- * Content only: the dock (ControlDock/Dock) owns the toggle icon,
- * positioning and open/close state (issue #3).
+ * Content only: the dock panel (ControlDock) owns the frame, the reset button
+ * and the visible count (issue #3).
  */
 export function FiltersPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const visibleCount = useGalaxyMapStore((s) => s.visibleCount);
+  const total = getStarCore()?.count ?? null;
   const filters = useGalaxyMapStore((s) => s.filters);
   const setFilters = useGalaxyMapStore((s) => s.setFilters);
-  const resetFilters = useGalaxyMapStore((s) => s.resetFilters);
   const bounds = useGalaxyMapStore((s) => s.dataBounds);
 
   const toggleClass = (code: number) => {
@@ -35,13 +36,7 @@ export function FiltersPanel() {
     setFilters({ [key]: e.target.checked });
 
   return (
-    <HudCard
-      as="section"
-      id="dock-panel-filters"
-      aria-label={t('filters.title')}
-      data-testid="filters-panel"
-      className="max-h-[60vh] w-80 overflow-y-auto p-3"
-    >
+    <section id="dock-panel-filters" aria-label={t('filters.title')} data-testid="filters-panel">
       <fieldset>
         <legend className="font-hud text-xs text-hud-muted">{t('filters.spectralClass')}</legend>
         <div className="mt-1 flex flex-wrap gap-2">
@@ -112,15 +107,17 @@ export function FiltersPanel() {
         />
       </div>
 
-      <HudButton
-        variant="secondary"
-        onClick={resetFilters}
-        disabled={isDefaultFilters(filters)}
-        data-testid="filters-reset"
-        className="mt-3 w-full"
-      >
-        {t('filters.reset')}
-      </HudButton>
-    </HudCard>
+      {visibleCount !== null && total !== null && (
+        <p
+          className="mt-3 border-t border-hud-accent/20 pt-2 font-hud-mono text-xs text-hud-muted"
+          data-testid="visible-total"
+        >
+          {t('dock.visibleOf', {
+            visible: formatNumber(visibleCount, i18n.language),
+            total: formatNumber(total, i18n.language),
+          })}
+        </p>
+      )}
+    </section>
   );
 }

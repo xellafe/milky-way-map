@@ -65,7 +65,8 @@
     "label": "Controlli",
     "filters": "Filtri",
     "view": "Vista",
-    "options": "Opzioni"
+    "options": "Opzioni",
+    "visibleOf": "{{visible}} di {{total}} visibili"
   },
   "filters": {
     "title": "Filtri",
@@ -169,7 +170,9 @@
     "twinkleSpeed": "Frequenza del luccichio",
     "twinkleAmplitude": "Intensità del luccichio",
     "sizeGamma": "Contrasto dimensioni stelle",
-    "reset": "Ripristina opzioni"
+    "reset": "Ripristina opzioni",
+    "sectionCamera": "Camera",
+    "sectionStars": "Stelle"
   },
   "planetType": {
     "rocky": "Roccioso",
