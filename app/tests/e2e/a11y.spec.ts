@@ -155,9 +155,28 @@ test('planet panel with the advanced section open has no blocking axe violations
   await openApp(page);
   await enterTrappist(page);
   await page.getByTestId('planet-chip').first().click();
-  const section = page.getByTestId('planet-panel').getByTestId('planet-advanced');
-  await expect(section).toBeVisible();
-  await section.locator('summary').click();
-  await expect(section).toHaveAttribute('open', '');
+  // #23: planet details are the anchored card; Advanced via the mode toggle.
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  await page.getByTestId('card-mode-advanced').click();
+  await expect(page.getByTestId('planet-panel').getByTestId('card-advanced')).toBeVisible();
+  await scan(page, '[data-testid="planet-panel"]');
+});
+
+// Proxima Cen has no pl_orbincl in the fixture, so the Advanced card shows the
+// schematic-orbit note next to the inclination row.
+test('Proxima Cen b advanced card (schematic orbit note) has no blocking axe violations', async ({
+  page,
+}) => {
+  await openApp(page);
+  await page.getByTestId('search-input').fill('proxima cen');
+  await page.getByRole('option').filter({ hasText: 'Proxima Cen' }).first().click();
+  const button = page.getByTestId('view-system-button');
+  await expect(button).toBeEnabled({ timeout: 10_000 });
+  await button.click();
+  await expect(page.getByTestId('system-title')).toHaveText('Proxima Cen');
+  await page.getByTestId('planet-chip').filter({ hasText: 'Proxima Cen b' }).click();
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  await page.getByTestId('card-mode-advanced').click();
+  await expect(page.getByTestId('planet-panel').getByTestId('card-advanced')).toBeVisible();
   await scan(page, '[data-testid="planet-panel"]');
 });

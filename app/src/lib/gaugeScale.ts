@@ -108,3 +108,40 @@ export function visibilityVerdict(
       ? 'binocular'
       : 'telescope';
 }
+
+/** Earth radii, log, 0.3..30 (aesthetic choice, not data). */
+export const planetRadiusScale = logScale(0.3, 30);
+
+/** Earth masses, log, 0.1..1e4 (aesthetic choice, not data). */
+export const planetMassScale = logScale(0.1, 1e4);
+
+/** Days, log, 0.1..1e5 (aesthetic choice, not data). */
+export const orbitalPeriodScale = logScale(0.1, 1e5);
+
+/** Kelvin, log, 50..3000 (aesthetic choice, not data). */
+export const eqTempScale = logScale(50, 3000);
+
+// Reference bodies (data): equatorial radii, the NASA Exoplanet Archive convention.
+export const PLANET_RADIUS_TICKS: readonly Tick[] = [
+  { at: pos(planetRadiusScale, 1), label: '⊕', mark: true },
+  { at: pos(planetRadiusScale, 3.883), label: '♆', mark: true },
+  { at: pos(planetRadiusScale, 11.209), label: '♃', mark: true },
+];
+
+// Earth masses (data): reference bodies as above.
+export const PLANET_MASS_TICKS: readonly Tick[] = [
+  { at: pos(planetMassScale, 1), label: '⊕', mark: true },
+  { at: pos(planetMassScale, 17.15), label: '♆', mark: true },
+  { at: pos(planetMassScale, 317.83), label: '♃', mark: true },
+];
+
+/** Days; 365.25 d is the Julian year (convention). The label is i18n (`gauge.oneDay`, `gauge.oneYear`), set by the tile. */
+export const PERIOD_TICKS: readonly (Tick & { labelKey: string })[] = [
+  { at: pos(orbitalPeriodScale, 1), labelKey: 'gauge.oneDay', mark: true },
+  { at: pos(orbitalPeriodScale, 365.25), labelKey: 'gauge.oneYear', mark: true },
+];
+
+/** Earth's equilibrium temperature, 255 K (Bond albedo 0.3; data). */
+export const EQ_TEMP_TICKS: readonly Tick[] = [
+  { at: pos(eqTempScale, 255), label: '⊕', mark: true },
+];

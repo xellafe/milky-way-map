@@ -298,7 +298,9 @@ test('Proxima Cen: schematic orbits without inclination + planet details panel',
   const panel = page.getByTestId('planet-panel');
   await expect(panel).toBeVisible();
   await expect(page.getByTestId('planet-panel-title')).toHaveText('Proxima Cen b');
-  await expect(panel).toContainText('11.18'); // orbital period, days
+  await expect(panel).toContainText('11.18'); // orbital period tile (Base), days
+  // #23: semi-major axis and method moved to the Advanced columns of the card.
+  await page.getByTestId('card-mode-advanced').click();
   await expect(panel).toContainText('0.04848'); // semi-major axis, AU
   await expect(panel).toContainText('Radial Velocity');
 });
@@ -395,14 +397,13 @@ type Planet = Record<string, number | string | null>;
 const planetOf = (host: string, name: string) =>
   readFixtureExoplanets().hosts[host]!.planets.find((p) => p['pl_name'] === name) as Planet;
 
+// #23: the planet details live in the anchored card; Advanced rows need the mode toggle.
 async function openPlanetAdvanced(page: Page, chip: string) {
   await page.getByTestId('planet-chip').filter({ hasText: chip }).click();
-  const section = page.getByTestId('planet-panel').getByTestId('planet-advanced');
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  await page.getByTestId('card-mode-advanced').click();
+  const section = page.getByTestId('planet-panel').getByTestId('card-advanced');
   await expect(section).toBeVisible();
-  await expect(section).not.toHaveAttribute('open', /.*/);
-  await section.locator('summary').focus();
-  await page.keyboard.press('Enter');
-  await expect(section).toHaveAttribute('open', '');
   return section;
 }
 
@@ -543,4 +544,77 @@ test('camera follows the selected planet', async ({ page }) => {
   await page.waitForTimeout(500);
   const still2 = (await bridge(page)).cameraTarget;
   expect(dist(still1, still2)).toBe(0);
+});
+
+// --- Planet card with gauges (#23) -----------------------------------------------
+test('planet card: Base shows the four stat tiles with the fixture values', async ({ page }) => {
+  const p = planetOf('TRAPPIST-1', 'TRAPPIST-1 b');
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  await page.getByTestId('planet-chip').filter({ hasText: 'TRAPPIST-1 b' }).click();
+
+  const card = page.getByTestId('planet-panel');
+  await expect(card).toBeVisible();
+  await expect(card).toHaveAttribute('data-mode', 'base');
+  await expect(page.getByTestId('planet-panel-title')).toHaveText('TRAPPIST-1 b');
+  await expect(card.getByTestId('stat-radius')).toContainText(sig3(p['pl_rade'] as number));
+  await expect(card.getByTestId('stat-mass')).toContainText(sig3(p['pl_bmasse'] as number));
+  await expect(card.getByTestId('stat-period')).toContainText(sig3(p['pl_orbper'] as number));
+  await expect(card.getByTestId('stat-eqt')).toContainText(sig3(p['pl_eqt'] as number));
+  // in_hz is false for planet b in the fixture.
+  expect(p['in_hz']).toBe(false);
+  const inHzNo = EN.system['inHzNo'];
+  expect(inHzNo, 'en.json system.inHzNo').toBeTruthy();
+  await expect(card.getByTestId('stat-eqt-verdict')).toHaveText(inHzNo as string);
+  await expect(card).toContainText('Rocky');
+  await expect(page.getByTestId('card-advanced')).toHaveCount(0);
+});
+
+test('planet card: Advanced mode shows the composition note', async ({ page }) => {
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  const section = await openPlanetAdvanced(page, 'TRAPPIST-1 b');
+  await expect(section.getByTestId('adv-composition-note')).toBeVisible();
+});
+
+test('planet card follows the planet on screen', async ({ page }) => {
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  await page.getByTestId('planet-chip').filter({ hasText: 'TRAPPIST-1 b' }).click();
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  // The overlay is the anchor: its transform is rewritten every frame.
+  const anchor = page.getByTestId('selection-overlay');
+  await expect(anchor).toHaveCount(1);
+  await expect(anchor).toHaveCSS('visibility', 'visible');
+  const t1 = await anchor.evaluate((el) => (el as HTMLElement).style.transform);
+  expect(t1).toMatch(/^translate\(/);
+  await page.waitForTimeout(500);
+  const t2 = await anchor.evaluate((el) => (el as HTMLElement).style.transform);
+  expect(t2).not.toBe(t1);
+});
+
+test('planet without pl_orbsmax: card beside the panel, no ring, no console errors', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    const pl = d.hosts['TRAPPIST-1']!.planets.find((q) => q['pl_name'] === 'TRAPPIST-1 b')!;
+    pl['pl_orbsmax'] = null;
+  });
+  await page.goto('/?pdb=1');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  await page.getByTestId('planet-chip').filter({ hasText: 'TRAPPIST-1 b' }).click();
+
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  await expect(page.getByTestId('planet-no-position')).toBeVisible();
+  await expect(page.locator('[data-hud="selection-ring"]')).toHaveCount(0);
+  const card = (await page.getByTestId('planet-panel').boundingBox())!;
+  const side = await page.locator('[data-hud="side-panel-right"]').boundingBox();
+  expect(side, 'side-panel-right must be present').not.toBeNull();
+  expect(card.x + card.width).toBeLessThanOrEqual(side!.x + 1);
+  expect(errors).toEqual([]);
 });

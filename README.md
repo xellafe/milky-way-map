@@ -15,7 +15,7 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 - Free-fly + click-to-orbit camera with animated fly-to; `prefers-reduced-motion`
   aware.
 - Sci-fi HUD UI: bottom control dock opening a single tabbed panel (Filters / View /
-  Options); music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star card anchored to the selected star (the only place for star data; closed with ✕ or Esc) with a Base/Advanced toggle (animated, immediate with reduced motion, choice remembered across visits): Base shows stat tiles, gauges with labelled scales with labelled scales (distance, spectral class, luminosity, apparent magnitude; the latter has a brighter-to-the-right axis, naked-eye and approximate binoculars zones, and a three-state visibility verdict) and a "N known planets · View system →" button; Advanced widens the card to two columns with absolute magnitude, B–V, estimated age, a Catalog section and a NASA archive section (metallicity, age, mass, rotation for exoplanet hosts); an exoplanet host not anchored to a catalog star, picked from search, opens the System View directly with a "not anchored" badge; the System View planet panel adds density, irradiation, mass provenance, an approximate composition class and orbit direction ("n/a" until the exoplanet data is refreshed); selecting a star
+  Options); music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star card anchored to the selected star (the only place for star data; closed with ✕ or Esc) with a Base/Advanced toggle (animated, immediate with reduced motion, choice remembered across visits): Base shows stat tiles, gauges with labelled scales with labelled scales (distance, spectral class, luminosity, apparent magnitude; the latter has a brighter-to-the-right axis, naked-eye and approximate binoculars zones, and a three-state visibility verdict) and a "N known planets · View system →" button; Advanced widens the card to two columns with absolute magnitude, B–V, estimated age, a Catalog section and a NASA archive section (metallicity, age, mass, rotation for exoplanet hosts); an exoplanet host not anchored to a catalog star, picked from search, opens the System View directly with a "not anchored" badge; selecting a star
   shows a ring and a summary card anchored to it.
 - Welcome dialog with a short description and quick controls guide, shown on
   every visit until "Don't show again" is ticked; the "?" button in the
@@ -32,6 +32,15 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
   it, then follows it along its orbit keeping your distance and angle. ✕, Esc
   or a click on empty space stops following (the camera stays put); hiding the
   selected planet's type in the filter closes the selection.
+  The selected planet's data show in a card anchored to it (ring + leader
+  line, follows the planet) with the same Base/Advanced toggle as the star
+  card. Base: gauges for radius and mass (log scales, Earth/Neptune/Jupiter
+  ticks), orbital period (1 day / 1 year ticks) and equilibrium temperature
+  (Earth 255 K tick, archive "in habitable zone" verdict) plus planet type.
+  Advanced: semi-major axis, eccentricity, inclination, discovery, density,
+  irradiation, mass provenance, approximate composition class and orbit
+  direction ("n/a" until the exoplanet data is refreshed). A planet without a
+  semi-major axis is not drawn and gets an unanchored card with a note.
   Planet sizes and looks are **presentational, not data**: the catalog has no
   planet colors or surfaces, so each planet gets a procedural look from its
   size class (rocky / sub-Neptune / giant / unknown, from radius or mass) plus

@@ -27,7 +27,11 @@ import planetFrag from '../shaders/planet.frag?raw';
 import planetVert from '../shaders/planet.vert?raw';
 import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
+import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
 import { HostStar } from './HostStar';
+import { placeAnchor } from './placeAnchor';
+import { getSelectionAnchor } from './selectionAnchor';
+import { readUsableArea } from './usableArea';
 
 const SUN_RADIUS_AU = 0.00465;
 // Orbits are real-scale; BODY sizes and looks are not (pscomppars has no
@@ -320,6 +324,45 @@ function PlanetFollow({
 }
 
 /**
+ * Projects the selected planet onto the card's anchor, like SelectionTracker
+ * does for stars. A planet without a mesh (no semi-major axis) has no position:
+ * its card sits against the right edge of the usable area instead. Mounted
+ * after PlanetAnimator so it reads this frame's positions.
+ */
+function PlanetTracker({
+  planets,
+  meshes,
+}: {
+  planets: RenderablePlanet[];
+  meshes: React.RefObject<(THREE.Mesh | null)[]>;
+}) {
+  const { camera, size } = useThree();
+  const v = useRef(new THREE.Vector3());
+
+  useFrame(() => {
+    const el = getSelectionAnchor();
+    const name = useGalaxyMapStore.getState().selectedPlanet;
+    if (!el || !name) return;
+    const mesh = meshes.current[planets.findIndex((p) => p.record.pl_name === name)];
+    if (!mesh) {
+      const area = readUsableArea(size.width, size.height);
+      placeAnchor(el, area.right + CARD_GAP_PX, area.top - CARD_TOP_OFFSET_PX, true, size);
+      return;
+    }
+    camera.updateMatrixWorld();
+    const p = v.current.copy(mesh.position).project(camera);
+    // Behind the camera the transform is left alone (mirrored projection).
+    if (p.z >= 1) {
+      el.style.visibility = 'hidden';
+      return;
+    }
+    const onScreen = Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1;
+    placeAnchor(el, ((p.x + 1) / 2) * size.width, ((1 - p.y) / 2) * size.height, onScreen, size);
+  });
+  return null;
+}
+
+/**
  * drei's OrbitControls wraps three-stdlib, which has no `cursorStyle`, so the
  * grab/grabbing cursor (#11) is driven here from the left-button drag.
  */
@@ -481,6 +524,7 @@ export function SystemScene() {
       ))}
       <PlanetAnimator planets={planets} meshes={meshes} angles={angles} hz={hz} hzIncl={hzIncl} />
       <PlanetFollow planets={planets} meshes={meshes} />
+      <PlanetTracker planets={planets} meshes={meshes} />
       <GrabCursor overPlanet={overPlanet} />
       <OrbitControls
         makeDefault

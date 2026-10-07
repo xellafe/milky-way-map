@@ -49,7 +49,9 @@
     "binocular": "Fernglas",
     "verdictNakedEye": "Mit bloßem Auge sichtbar",
     "verdictBinocular": "Mit Fernglas sichtbar",
-    "verdictTelescope": "Teleskop nötig"
+    "verdictTelescope": "Teleskop nötig",
+    "oneDay": "1 Tag",
+    "oneYear": "1 Jahr"
   },
   "view": {
     "title": "Ansichtsoptionen",
@@ -118,12 +120,10 @@
     "method": "Entdeckungsmethode",
     "discYear": "Entdeckungsjahr",
     "eqTemp": "Gleichgewichtstemperatur",
-    "inHz": "In habitabler Zone",
     "schematicOrbit": "Schematische Bahn (Neigung n. v.)",
     "type": "Typ",
     "planetTypes": "Planetentypen",
     "orbitStyle": "Orbit-Stil",
-    "advancedData": "Erweiterte Daten",
     "density": "Dichte",
     "insolation": "Einstrahlung",
     "massProvLabel": "Herkunft der Masse",
@@ -144,7 +144,10 @@
       "prograde": "Prograd",
       "retrograde": "Retrograd"
     },
-    "compositionNote": "(Näherungsmodell)"
+    "compositionNote": "(Näherungsmodell)",
+    "noOrbitPosition": "Bahnposition nicht verfügbar",
+    "inHzYes": "In der habitablen Zone",
+    "inHzNo": "Außerhalb der habitablen Zone"
   },
   "music": {
     "label": "Musik",

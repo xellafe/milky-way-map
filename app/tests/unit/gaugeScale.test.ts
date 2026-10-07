@@ -7,6 +7,14 @@ import {
   MAGNITUDE_ZONES,
   NAKED_EYE_LIMIT_MAG,
   TEMPERATURE_TICKS,
+  EQ_TEMP_TICKS,
+  PERIOD_TICKS,
+  PLANET_MASS_TICKS,
+  PLANET_RADIUS_TICKS,
+  eqTempScale,
+  orbitalPeriodScale,
+  planetMassScale,
+  planetRadiusScale,
   distanceScale,
   luminosityScale,
   magnitudeScale,
@@ -121,6 +129,40 @@ describe('gaugeScale', () => {
       labelled.forEach((t, i) =>
         expect(t.at).toBeCloseTo(temperatureScale(Math.sqrt(bands[i]! * bands[i + 1]!)) as number),
       );
+    });
+  });
+});
+
+describe('planet gauge scales (#23)', () => {
+  it('radius: log 0.3→30 R⊕, Earth at the log midpoint offset', () => {
+    expect(planetRadiusScale(1)).toBeCloseTo(Math.log10(1 / 0.3) / 2);
+    expect(planetRadiusScale(0.3)).toBe(0);
+    expect(planetRadiusScale(30)).toBe(1);
+  });
+  it('mass: log 0.1→1e4 M⊕', () => {
+    expect(planetMassScale(0.1)).toBeCloseTo(0);
+    expect(planetMassScale(1e4)).toBeCloseTo(1);
+  });
+  it('period: 365.25 d sits inside the scale', () => {
+    const v = orbitalPeriodScale(365.25)!;
+    expect(v).toBeGreaterThan(0);
+    expect(v).toBeLessThan(1);
+  });
+  it('null / non-finite input → null', () => {
+    for (const f of [planetRadiusScale, planetMassScale, orbitalPeriodScale, eqTempScale])
+      expect(f(null)).toBeNull();
+  });
+  it.each([
+    ['radius', PLANET_RADIUS_TICKS],
+    ['mass', PLANET_MASS_TICKS],
+    ['period', PERIOD_TICKS],
+    ['eqt', EQ_TEMP_TICKS],
+  ])('%s ticks are increasing and within [0, 1]', (_n, ticks) => {
+    expect(ticks.length).toBeGreaterThan(0);
+    ticks.forEach((t, i) => {
+      expect(t.at).toBeGreaterThanOrEqual(0);
+      expect(t.at).toBeLessThanOrEqual(1);
+      if (i > 0) expect(t.at).toBeGreaterThan(ticks[i - 1]!.at);
     });
   });
 });

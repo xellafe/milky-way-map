@@ -13,7 +13,7 @@ import {
 } from '../../lib/selectionGeometry';
 
 /** B6 double ring + leader + card that follow an anchor (#3). The anchor's
- * position is written by SelectionTracker. Ring diameters (60/94.5 px,
+ * position is written by the scene trackers (placeAnchor). Ring diameters (60/94.5 px,
  * lib/selectionGeometry), rotation periods (14 s / 8 s), opening sequence (lock
  * 600 ms, callout draw 300 ms at 450 ms, card unfold 250 ms at 700 ms) are human
  * design choices (#3 design spec §2), not data. `anchored === false` shows the
@@ -112,7 +112,7 @@ export function AnchoredCard({
 
         {/* The card blocks the pointer: UI must not let hover, click or wheel
             reach the stars drawn behind it. The slot carries side, vertical
-            shift (SelectionTracker) and the unfold. */}
+            shift (placeAnchor) and the unfold. */}
         <div
           data-hud="selection-slot"
           style={
