@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { approachTarget, followStep } from '../../src/lib/follow';
+import { approachTarget, followStep, followViewShift } from '../../src/lib/follow';
+import { CARD_GAP_PX } from '../../src/lib/selectionGeometry';
 
 describe('followStep', () => {
   it('moves the target onto the planet and translates the camera by the same delta', () => {
@@ -32,5 +33,27 @@ describe('approachTarget', () => {
     expect(mid[0]).toBeCloseTo(2, 9);
     expect(mid[1]).toBeCloseTo(-1, 9);
     expect(mid[2]).toBeCloseTo(3, 9);
+  });
+});
+
+describe('followViewShift', () => {
+  const CARD = 470; // widest (Advanced) planet card, px
+
+  it('does not shift when the card fits beside the centred planet (1920 geometry)', () => {
+    expect(followViewShift({ left: 0, right: 1608 }, 1920, CARD, CARD_GAP_PX)).toBe(0);
+  });
+
+  it('shifts the planet left so the card edge touches the area (1280 geometry)', () => {
+    const shift = followViewShift({ left: 0, right: 968 }, 1280, CARD, CARD_GAP_PX);
+    expect(shift).toBeGreaterThan(0);
+    expect(shift).toBeCloseTo(1280 / 2 - (968 - CARD - CARD_GAP_PX), 10);
+  });
+
+  it('never returns a negative shift', () => {
+    for (const right of [300, 968, 1500, 1608, 5000])
+      for (const width of [800, 1280, 1920])
+        expect(
+          followViewShift({ left: 0, right }, width, CARD, CARD_GAP_PX),
+        ).toBeGreaterThanOrEqual(0);
   });
 });

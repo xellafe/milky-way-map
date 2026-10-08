@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
 import { canvasCursor } from '../lib/canvasCursor';
-import { approachTarget, followStep } from '../lib/follow';
+import { approachTarget, followStep, followViewShift } from '../lib/follow';
 import { prefersReducedMotion } from '../lib/motion';
 import { hzBoundsAU, hzInclinationDeg, type HzBounds } from '../lib/habitableZone';
 import {
@@ -277,11 +277,19 @@ function PlanetAnimator({
 
 /** Seconds the controls target takes to reach a newly selected planet (aesthetic choice, not data). */
 const FOLLOW_APPROACH_S = 1;
+// Width of the widest planet card, px: mirrors `.object-card[data-mode='advanced']`
+// in index.css (human choice, #23). The view shift keeps this card on screen.
+const ADVANCED_CARD_WIDTH_PX = 470;
+// Rate of the ease that slides the view to/from the parked position, 1/s. Aesthetic choice.
+const VIEW_SLIDE_RATE = 8;
 
 /**
  * Keeps the orbit target on the selected planet (#10): eased approach, then a
- * per-frame lock with the camera translated by the same delta. Must be mounted
- * after PlanetAnimator so it reads this frame's planet positions.
+ * per-frame lock with the camera translated by the same delta. It also shifts
+ * the projection (setViewOffset) when the Advanced card would not fit beside a
+ * centred planet; this changes picking and PlanetTracker's projection too. The
+ * shift is kept on deselect and dies with the Canvas. Must be mounted after
+ * PlanetAnimator so it reads this frame's planet positions.
  */
 function PlanetFollow({
   planets,
@@ -291,12 +299,41 @@ function PlanetFollow({
   meshes: React.RefObject<(THREE.Mesh | null)[]>;
 }) {
   const controls = useThree((s) => s.controls) as { target: THREE.Vector3 } | null;
-  const camera = useThree((s) => s.camera);
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
   const run = useRef<{ name: string; start: THREE.Vector3; elapsed: number } | null>(null);
+  // Applied and wanted horizontal projection shift, px (#23 AC7).
+  const viewShift = useRef(0);
+  const wantShift = useRef(0);
 
   useFrame((_, delta) => {
     const name = useGalaxyMapStore.getState().selectedPlanet;
     const mesh = name ? meshes.current[planets.findIndex((p) => p.record.pl_name === name)] : null;
+    // Recomputed only while a planet is followed: on deselect the view stays put.
+    if (mesh) {
+      wantShift.current = followViewShift(
+        readUsableArea(size.width, size.height),
+        size.width,
+        ADVANCED_CARD_WIDTH_PX,
+        CARD_GAP_PX,
+      );
+    }
+    const gap = wantShift.current - viewShift.current;
+    viewShift.current =
+      prefersReducedMotion() || Math.abs(gap) < 0.5
+        ? wantShift.current
+        : viewShift.current + gap * Math.min(1, delta * VIEW_SLIDE_RATE);
+    if (viewShift.current === 0) {
+      if (camera.view) camera.clearViewOffset();
+    } else {
+      camera.setViewOffset(size.width, size.height, viewShift.current, 0, size.width, size.height);
+    }
+    if (exposeBridge) {
+      const bridge = (globalThis as Record<string, unknown>).__system as
+        | { viewShiftPx?: number }
+        | undefined;
+      if (bridge) bridge.viewShiftPx = viewShift.current;
+    }
     if (!controls || !name || !mesh) {
       run.current = null;
       return;
@@ -482,7 +519,11 @@ export function SystemScene() {
   const hzIncl = hzInclinationDeg(allPlanets.map((p) => p.inclinationDeg));
 
   return (
+    // R3F leaves the <canvas> at the 300x150 default until its first resize
+    // measure; filling the wrapper meanwhile keeps the canvas from sitting in
+    // the top-left corner under the star panel (#23) and losing pointer input.
     <Canvas
+      className="[&_canvas]:size-full"
       camera={{
         position: [maxA * 1.7, maxA * 1.1, maxA * 1.7],
         fov: 50,

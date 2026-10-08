@@ -23,3 +23,19 @@ export function approachTarget(start: Vec3, next: Vec3, t: number): Vec3 {
     start[2] + (next[2] - start[2]) * k,
   ];
 }
+
+/**
+ * Horizontal projection shift, px, that moves the followed planet left of the
+ * screen centre when the widest card would not fit between the planet and the
+ * usable area's right edge; 0 when it already fits. The card sits `gap` px to
+ * the right of the planet (selectionGeometry).
+ */
+export function followViewShift(
+  area: { left: number; right: number },
+  width: number,
+  cardWidth: number,
+  gap: number,
+): number {
+  if (width / 2 + gap + cardWidth <= area.right) return 0;
+  return width / 2 - (area.right - cardWidth - gap);
+}

@@ -133,6 +133,10 @@ test('the star surface is textured', async ({ page }) => {
   // At the default camera the disc is ~13 px wide-radius and the grid spans a
   // few pixels, so texture is only meaningful zoomed in: wheel in to the
   // OrbitControls minDistance clamp (disc radius >> 60 px).
+  // R3F measures the canvas after first paint: wait for the real size before aiming the wheel.
+  await expect
+    .poll(async () => (await page.locator('canvas').boundingBox())?.width ?? 0)
+    .toBeGreaterThan(300);
   const box = (await page.locator('canvas').boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   for (let i = 0; i < 60; i++) await page.mouse.wheel(0, -200);

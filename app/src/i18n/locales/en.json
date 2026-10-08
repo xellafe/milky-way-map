@@ -42,7 +42,8 @@
     "advRotation": "Rotation period",
     "advVsini": "Projected rotation speed (v sin i)",
     "viewSystemCount_one": "{{count}} known planet · View system →",
-    "viewSystemCount_other": "{{count}} known planets · View system →"
+    "viewSystemCount_other": "{{count}} known planets · View system →",
+    "stellarRadius": "Stellar radius"
   },
   "gauge": {
     "nakedEye": "naked eye",
@@ -147,7 +148,9 @@
     "compositionNote": "(approximate model)",
     "noOrbitPosition": "Orbit position not available",
     "inHzYes": "In the habitable zone",
-    "inHzNo": "Outside the habitable zone"
+    "inHzNo": "Outside the habitable zone",
+    "starPanel": "Host star",
+    "planetList": "Planet list"
   },
   "music": {
     "label": "Music",

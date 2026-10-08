@@ -180,3 +180,29 @@ test('Proxima Cen b advanced card (schematic orbit note) has no blocking axe vio
   await expect(page.getByTestId('planet-panel').getByTestId('card-advanced')).toBeVisible();
   await scan(page, '[data-testid="planet-panel"]');
 });
+
+test('galaxy: Advanced card with the dock open has no blocking axe violations', async ({
+  page,
+}) => {
+  await openApp(page);
+  await page.getByTestId('search-input').fill('polaris');
+  await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
+  await expect(page.getByTestId('selection-card')).toBeVisible();
+  await page.getByTestId('card-mode-advanced').click();
+  await expect(page.getByTestId('card-advanced')).toBeVisible();
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('dock-panel')).toBeVisible();
+  await scan(page);
+});
+
+test('system view: both panels and the planet card have no blocking axe violations', async ({
+  page,
+}) => {
+  await openApp(page);
+  await enterTrappist(page);
+  await expect(page.getByTestId('system-star-panel')).toBeVisible();
+  await expect(page.getByTestId('planet-list')).toBeVisible();
+  await page.getByTestId('planet-list').getByTestId('planet-chip').first().click();
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  await scan(page);
+});

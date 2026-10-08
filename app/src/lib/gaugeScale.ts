@@ -145,3 +145,14 @@ export const PERIOD_TICKS: readonly (Tick & { labelKey: string })[] = [
 export const EQ_TEMP_TICKS: readonly Tick[] = [
   { at: pos(eqTempScale, 255), label: '⊕', mark: true },
 ];
+
+/** Solar radii, log, 0.1..100 (aesthetic choice, not data). */
+export const stellarRadiusScale = logScale(0.1, 100);
+
+// Decade marks, locale-neutral labels; 1 is the Sun (1 R☉, data).
+const STELLAR_RADIUS_LABELS = ['10⁻¹', '1', '10', '10²'];
+export const STELLAR_RADIUS_TICKS: readonly Tick[] = [0.1, 1, 10, 100].map((v, i) => ({
+  at: pos(stellarRadiusScale, v),
+  label: STELLAR_RADIUS_LABELS[i]!,
+  mark: true,
+}));

@@ -431,6 +431,15 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - `starcloud.spec` (riga 6) "renders the star cloud from the fixture data":
   fallito una volta nella run completa (conteggio stelle 0 dopo il timeout di
   15 s); da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
+- `overlay.spec` (riga ~289) "Advanced to Base: animates out, then unmounts the
+  column": `data-mode` ancora "advanced" dopo 2 s nella run completa sotto
+  carico; da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
+- `system.spec` (riga ~581) "planet card follows the planet on screen":
+  transform dell'ancora invariato dopo 500 ms nella run completa sotto carico;
+  da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
+- `layout.spec` "1920x1080 galaxy": ≈1–1,3 min da solo con GL software, usa
+  `test.slow()`; due timeout nelle run complete prima dell'accelerazione. Visto
+  sul branch `feat/ui-overhaul`, issue #23.
 
 ## Come riprendere
 

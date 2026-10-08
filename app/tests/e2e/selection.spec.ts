@@ -308,7 +308,6 @@ test('clicking empty sky keeps the selection (card stays)', async ({ page }) => 
 // Numbers use 3 significant digits (en); null renders as the "n/a" marker.
 const sig3 = (v: number) =>
   new Intl.NumberFormat('en-US', { maximumSignificantDigits: 3 }).format(v);
-const trappistHost = () => readFixtureExoplanets().hosts['TRAPPIST-1']!;
 // #23: the galaxy card only exists for anchored hosts. Proxima Cen stands in for
 // TRAPPIST-1 here: it receives the real TRAPPIST-1 host-star fixture values (the
 // fields the card renders), so the expectations still come from the golden file.
@@ -348,30 +347,11 @@ async function openAdvanced(page: Page) {
 const advValue = (section: Locator, field: string) =>
   section.getByTestId(`adv-${field}`).locator('dd');
 
-test('advanced star data is hidden in Base and shows fixture values in Advanced', async ({
-  page,
-}) => {
-  const host = trappistHost();
-  await serveFixtureData(page);
-  await serveStarCardHost(page);
-  await openAppReady(page);
-  await selectHost(page, 'proxima cen', HOST);
-  await expect(page.getByTestId('card-advanced')).toHaveCount(0);
-
-  const section = await openAdvanced(page);
-  for (const f of ADV_FIELDS) {
-    const v = host[f] as number | string | null;
-    const dd = advValue(section, f);
-    if (v === null) await expect(dd).toContainText('n/a');
-    else if (typeof v === 'string') await expect(dd).toContainText(v);
-    else await expect(dd).toContainText(sig3(v));
-  }
-});
-
 test('Proxima Cen own fixture: real values shown, missing fields read n/a', async ({ page }) => {
   await serveFixtureData(page);
   await openAppReady(page);
   await selectHost(page, 'proxima cen', HOST);
+  await expect(page.getByTestId('card-advanced')).toHaveCount(0); // hidden in Base
   const section = await openAdvanced(page);
   const host = readFixtureExoplanets().hosts[HOST]!;
   for (const f of ADV_FIELDS) {
@@ -381,80 +361,6 @@ test('Proxima Cen own fixture: real values shown, missing fields read n/a', asyn
     else if (typeof v === 'string') await expect(dd).toContainText(v);
     else await expect(dd).toContainText(sig3(v));
   }
-});
-
-test('advanced data: metallicity label carries the archive ratio ([Fe/H] from the fixture)', async ({
-  page,
-}) => {
-  const host = readFixtureExoplanets().hosts['TRAPPIST-1']!;
-  await serveFixtureData(page);
-  await serveStarCardHost(page);
-  await openAppReady(page);
-  await selectHost(page, 'proxima cen', HOST);
-  const section = await openAdvanced(page);
-  await expect(section.getByTestId('adv-st_met')).toContainText(host['st_metratio'] as string);
-});
-
-test('advanced data: [M/H] ratio label', async ({ page }) => {
-  await serveFixtureData(page);
-  await serveStarCardHost(page, (h) => {
-    h['st_metratio'] = '[M/H]';
-  });
-  await openAppReady(page);
-  await selectHost(page, 'proxima cen', HOST);
-  const row = (await openAdvanced(page)).getByTestId('adv-st_met');
-  await expect(row).toContainText('[M/H]');
-  await expect(row.locator('dd')).toContainText(sig3(trappistHost()['st_met'] as number));
-});
-
-test('advanced data: plain "Metallicity" label when st_metratio is absent', async ({ page }) => {
-  await serveFixtureData(page);
-  await serveStarCardHost(page, (h) => {
-    h['st_metratio'] = null;
-  });
-  await openAppReady(page);
-  await selectHost(page, 'proxima cen', HOST);
-  const row = (await openAdvanced(page)).getByTestId('adv-st_met');
-  await expect(row.locator('dt')).toHaveText('Metallicity');
-  await expect(row.locator('dd')).toContainText(sig3(trappistHost()['st_met'] as number));
-});
-
-test('advanced data: limit flags prefix the value with < or >', async ({ page }) => {
-  await serveFixtureData(page);
-  await serveStarCardHost(page, (h) => {
-    h['st_agelim'] = 1;
-    h['st_masslim'] = -1;
-  });
-  await openAppReady(page);
-  await selectHost(page, 'proxima cen', HOST);
-  const section = await openAdvanced(page);
-  const h = trappistHost();
-  const starts = (prefix: string, v: unknown) =>
-    new RegExp(`^${prefix}\\s?${sig3(v as number).replace(/[.]/g, '\\.')}`);
-  await expect(advValue(section, 'st_age')).toHaveText(starts('<', h['st_age']));
-  await expect(advValue(section, 'st_mass')).toHaveText(starts('>', h['st_mass']));
-  await expect(advValue(section, 'st_met')).toHaveText(starts('', h['st_met']));
-});
-
-test('advanced data: v sin i row is labelled as a projected rotation speed', async ({ page }) => {
-  await serveFixtureData(page);
-  await serveStarCardHost(page);
-  await openAppReady(page);
-  await selectHost(page, 'proxima cen', HOST);
-  const section = await openAdvanced(page);
-  await expect(section.getByTestId('adv-st_vsin').locator('dt')).toHaveText(
-    'Projected rotation speed (v sin i)',
-  );
-});
-
-test('advanced data: metallicity and log g carry their units', async ({ page }) => {
-  await serveFixtureData(page);
-  await serveStarCardHost(page);
-  await openAppReady(page);
-  await selectHost(page, 'proxima cen', HOST);
-  const section = await openAdvanced(page);
-  await expect(advValue(section, 'st_met')).toContainText('dex');
-  await expect(advValue(section, 'st_logg')).toContainText('cgs');
 });
 
 test('Proxima Cen: "age" row reads only n/a when st_age is null', async ({ page }) => {
@@ -483,28 +389,6 @@ test('Proxima Cen: "age" row shows st_age with unit and the uncertainty note', a
   await expect(row).toContainText(sig3(age));
   await expect(row).toContainText('Gyr');
   await expect(row).toContainText('uncertain estimate');
-});
-
-test('legacy exoplanets.json (new fields absent): section shows only n/a, no errors', async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
-  await serveFixtureData(page);
-  await serveMutatedExoplanets(page, (d) => {
-    const hostNew = /^st_(met|age|mass|logg|spectype|rotp|vsin)/;
-    const planetNew = /^pl_(dens|insol|bmassprov|projobliq|trueobliq)/;
-    for (const h of Object.values(d.hosts)) {
-      for (const k of Object.keys(h)) if (hostNew.test(k)) delete h[k];
-      for (const p of h.planets) for (const k of Object.keys(p)) if (planetNew.test(k)) delete p[k];
-    }
-  });
-  await openAppReady(page);
-  await selectHost(page, 'proxima cen', HOST);
-  const section = await openAdvanced(page);
-  for (const f of ADV_FIELDS) await expect(advValue(section, f)).toContainText('n/a');
-  expect(errors).toEqual([]);
 });
 
 test('1280x720: advanced card stays clear of the music player, column scrolls', async ({

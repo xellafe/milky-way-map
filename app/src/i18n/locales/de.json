@@ -42,7 +42,8 @@
     "advRotation": "Rotationsperiode",
     "advVsini": "Projizierte Rotationsgeschwindigkeit (v sin i)",
     "viewSystemCount_one": "{{count}} bekannter Planet · System ansehen →",
-    "viewSystemCount_other": "{{count}} bekannte Planeten · System ansehen →"
+    "viewSystemCount_other": "{{count}} bekannte Planeten · System ansehen →",
+    "stellarRadius": "Sternradius"
   },
   "gauge": {
     "nakedEye": "bloßes Auge",
@@ -147,7 +148,9 @@
     "compositionNote": "(Näherungsmodell)",
     "noOrbitPosition": "Bahnposition nicht verfügbar",
     "inHzYes": "In der habitablen Zone",
-    "inHzNo": "Außerhalb der habitablen Zone"
+    "inHzNo": "Außerhalb der habitablen Zone",
+    "starPanel": "Wirtsstern",
+    "planetList": "Planetenliste"
   },
   "music": {
     "label": "Musik",

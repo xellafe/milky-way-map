@@ -22,6 +22,7 @@ interface SystemBridge {
   timeScale: number;
   hz: { innerAU: number; outerAU: number; inclinationDeg: number | null } | null;
   cameraTarget: [number, number, number];
+  viewShiftPx: number;
   planets: {
     name: string;
     position: [number, number, number];
@@ -617,4 +618,188 @@ test('planet without pl_orbsmax: card beside the panel, no ring, no console erro
   expect(side, 'side-panel-right must be present').not.toBeNull();
   expect(card.x + card.width).toBeLessThanOrEqual(side!.x + 1);
   expect(errors).toEqual([]);
+});
+
+// --- Two-panel layout: star panel (left) and planet list (right) (#23) -------------
+const starPanel = (page: Page) => page.getByTestId('system-star-panel');
+
+test('TRAPPIST-1: unanchored badge and catalog stat tiles live in the left panel', async ({
+  page,
+}) => {
+  const host = readFixtureExoplanets().hosts['TRAPPIST-1']!;
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+
+  const panel = starPanel(page);
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId('not-anchored-badge')).toBeVisible();
+  await expect(
+    page.locator('[data-hud="system-header"]').getByTestId('not-anchored-badge'),
+  ).toHaveCount(0);
+  await expect(panel.getByTestId('stat-teff')).toContainText(sig3(host['st_teff'] as number));
+  await expect(panel.getByTestId('stat-luminosity')).toContainText(
+    sig3(10 ** (host['st_lum'] as number)),
+  );
+  await expect(panel.getByTestId('stat-stellar-radius')).toContainText(
+    sig3(host['st_rad'] as number),
+  );
+  // Unanchored: no star-cloud data, so no distance tile.
+  await expect(panel.getByTestId('stat-distance')).toHaveCount(0);
+});
+
+test('Proxima Cen: anchored host shows the star stat tiles in the left panel', async ({ page }) => {
+  await openApp(page);
+  await enterSystem(page, 'proxima cen', 'Proxima Cen');
+  const panel = starPanel(page);
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId('stat-distance')).toContainText(/\d/);
+  await expect(panel.getByTestId('stat-distance')).toContainText('ly');
+  await expect(panel.getByTestId('not-anchored-badge')).toHaveCount(0);
+});
+
+test('planet list: one chip per planet, pressed state follows the selection', async ({ page }) => {
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  const list = page.getByTestId('planet-list');
+  await expect(list).toBeVisible();
+  await expect(list.getByTestId('planet-chip')).toHaveCount(7);
+  const b = list.getByTestId('planet-chip').filter({ hasText: 'TRAPPIST-1 b' });
+  await b.click();
+  await expect(b).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('planet-panel-title')).toHaveText('TRAPPIST-1 b');
+});
+
+// --- Host-star archive rows, read from TRAPPIST-1's own left panel (#18, #23) -----
+const archiveValue = (page: Page, field: string) =>
+  starPanel(page).getByTestId(`adv-${field}`).locator('dd');
+const ARCHIVE_FIELDS = [
+  'st_met',
+  'st_age',
+  'st_mass',
+  'st_logg',
+  'st_spectype',
+  'st_rotp',
+  'st_vsin',
+];
+
+async function enterTrappistWith(page: Page, mutate?: (h: Record<string, unknown>) => void) {
+  await serveFixtureData(page);
+  if (mutate) await serveMutatedExoplanets(page, (d) => mutate(d.hosts['TRAPPIST-1']!));
+  await page.goto('/?pdb=1');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+}
+
+test('archive rows show the TRAPPIST-1 fixture values', async ({ page }) => {
+  const host = readFixtureExoplanets().hosts['TRAPPIST-1']!;
+  await enterTrappistWith(page);
+  for (const f of ARCHIVE_FIELDS) {
+    const v = host[f] as number | string | null;
+    const dd = archiveValue(page, f);
+    if (v === null) await expect(dd).toContainText('n/a');
+    else if (typeof v === 'string') await expect(dd).toContainText(v);
+    else await expect(dd).toContainText(sig3(v));
+  }
+});
+
+test('archive rows: metallicity label carries the archive ratio ([Fe/H] from the fixture)', async ({
+  page,
+}) => {
+  const host = readFixtureExoplanets().hosts['TRAPPIST-1']!;
+  await enterTrappistWith(page);
+  await expect(starPanel(page).getByTestId('adv-st_met')).toContainText(
+    host['st_metratio'] as string,
+  );
+});
+
+test('archive rows: [M/H] ratio label', async ({ page }) => {
+  const host = readFixtureExoplanets().hosts['TRAPPIST-1']!;
+  await enterTrappistWith(page, (h) => {
+    h['st_metratio'] = '[M/H]';
+  });
+  const row = starPanel(page).getByTestId('adv-st_met');
+  await expect(row).toContainText('[M/H]');
+  await expect(row.locator('dd')).toContainText(sig3(host['st_met'] as number));
+});
+
+test('archive rows: plain "Metallicity" label when st_metratio is absent', async ({ page }) => {
+  const host = readFixtureExoplanets().hosts['TRAPPIST-1']!;
+  await enterTrappistWith(page, (h) => {
+    h['st_metratio'] = null;
+  });
+  const row = starPanel(page).getByTestId('adv-st_met');
+  await expect(row.locator('dt')).toHaveText('Metallicity');
+  await expect(row.locator('dd')).toContainText(sig3(host['st_met'] as number));
+});
+
+test('archive rows: limit flags prefix the value with < or >', async ({ page }) => {
+  const h = readFixtureExoplanets().hosts['TRAPPIST-1']!;
+  await enterTrappistWith(page, (m) => {
+    m['st_agelim'] = 1;
+    m['st_masslim'] = -1;
+  });
+  const starts = (prefix: string, v: unknown) =>
+    new RegExp(`^${prefix}\\s?${sig3(v as number).replace(/[.]/g, '\\.')}`);
+  await expect(archiveValue(page, 'st_age')).toHaveText(starts('<', h['st_age']));
+  await expect(archiveValue(page, 'st_mass')).toHaveText(starts('>', h['st_mass']));
+  await expect(archiveValue(page, 'st_met')).toHaveText(starts('', h['st_met']));
+});
+
+test('archive rows: v sin i is labelled as a projected rotation speed', async ({ page }) => {
+  await enterTrappistWith(page);
+  await expect(starPanel(page).getByTestId('adv-st_vsin').locator('dt')).toHaveText(
+    'Projected rotation speed (v sin i)',
+  );
+});
+
+test('archive rows: metallicity and log g carry their units', async ({ page }) => {
+  await enterTrappistWith(page);
+  await expect(archiveValue(page, 'st_met')).toContainText('dex');
+  await expect(archiveValue(page, 'st_logg')).toContainText('cgs');
+});
+
+test('legacy exoplanets.json (new host fields absent): archive rows read n/a, no errors', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await serveFixtureData(page);
+  await serveMutatedExoplanets(page, (d) => {
+    const hostNew = /^st_(met|age|mass|logg|spectype|rotp|vsin)/;
+    for (const h of Object.values(d.hosts))
+      for (const k of Object.keys(h)) if (hostNew.test(k)) delete h[k];
+  });
+  await page.goto('/?pdb=1');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  for (const f of ARCHIVE_FIELDS) await expect(archiveValue(page, f)).toContainText('n/a');
+  expect(errors).toEqual([]);
+});
+
+// --- Projection shift that keeps the Advanced card on screen (#23) -----------------
+test('1280x720: Advanced card shifts the view, kept after Esc', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  expect((await bridge(page)).viewShiftPx).toBe(0);
+
+  await openPlanetAdvanced(page, 'TRAPPIST-1 b');
+  await page.waitForTimeout(1_500);
+  const shifted = (await bridge(page)).viewShiftPx;
+  expect(shifted).toBeGreaterThan(0);
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('planet-panel')).toHaveCount(0);
+  await page.waitForTimeout(500);
+  expect((await bridge(page)).viewShiftPx).toBe(shifted);
+});
+
+test('1920x1080: Advanced card needs no view shift', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+  await openPlanetAdvanced(page, 'TRAPPIST-1 b');
+  await page.waitForTimeout(1_500);
+  expect((await bridge(page)).viewShiftPx).toBe(0);
 });

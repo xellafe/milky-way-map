@@ -15,8 +15,7 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 - Free-fly + click-to-orbit camera with animated fly-to; `prefers-reduced-motion`
   aware.
 - Sci-fi HUD UI: bottom control dock opening a single tabbed panel (Filters / View /
-  Options); music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star card anchored to the selected star (the only place for star data; closed with ✕ or Esc) with a Base/Advanced toggle (animated, immediate with reduced motion, choice remembered across visits): Base shows stat tiles, gauges with labelled scales with labelled scales (distance, spectral class, luminosity, apparent magnitude; the latter has a brighter-to-the-right axis, naked-eye and approximate binoculars zones, and a three-state visibility verdict) and a "N known planets · View system →" button; Advanced widens the card to two columns with absolute magnitude, B–V, estimated age, a Catalog section and a NASA archive section (metallicity, age, mass, rotation for exoplanet hosts); an exoplanet host not anchored to a catalog star, picked from search, opens the System View directly with a "not anchored" badge; selecting a star
-  shows a ring and a summary card anchored to it.
+  Options); music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star card anchored to the selected star by a ring and leader line (the only place for star data; closed with ✕ or Esc) with a Base/Advanced toggle (animated, immediate with reduced motion, choice remembered across visits): Base shows stat tiles, gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude; the latter has a brighter-to-the-right axis, naked-eye and approximate binoculars zones, and a three-state visibility verdict) and a "N known planets · View system →" button; Advanced widens the card to two columns with absolute magnitude, B–V, estimated age, a Catalog section and a NASA archive section (metallicity, age, mass, rotation for exoplanet hosts); an exoplanet host not anchored to a catalog star, picked from search, opens the System View directly with a "not anchored" badge.
 - Welcome dialog with a short description and quick controls guide, shown on
   every visit until "Don't show again" is ticked; the "?" button in the
   top-right cluster reopens it in both the galaxy and System views.
@@ -28,10 +27,17 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
   shared time-scale slider (time bar above the dock), habitable-zone overlay
   (approximate √L model), planet type filter and selectable orbit style
   (trail / thick / simple), all in the dock's View tab.
-  Clicking a planet (in the scene or its chip) selects it: the camera flies to
-  it, then follows it along its orbit keeping your distance and angle. ✕, Esc
+  Two fixed side panels: on the left the host star data (stat tiles; catalog
+  rows for anchored hosts; a "not anchored" badge and archive tiles for
+  temperature, luminosity and radius for unanchored hosts; a NASA archive
+  section at the bottom); on the right the planet list (name and type per row)
+  with the real-scale note.
+  Clicking a planet (in the scene or its list row) selects it: the camera flies
+  to it, then follows it along its orbit keeping your distance and angle. ✕, Esc
   or a click on empty space stops following (the camera stays put); hiding the
-  selected planet's type in the filter closes the selection.
+  selected planet's type in the filter closes the selection. At small widths,
+  when the Advanced card would not fit, the view shifts the planet left so the
+  card stays on screen (kept after deselecting, reset on leaving the System View).
   The selected planet's data show in a card anchored to it (ring + leader
   line, follows the planet) with the same Base/Advanced toggle as the star
   card. Base: gauges for radius and mass (log scales, Earth/Neptune/Jupiter

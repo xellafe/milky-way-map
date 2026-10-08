@@ -42,7 +42,8 @@
     "advRotation": "Periodo di rotazione",
     "advVsini": "Velocità di rotazione proiettata (v sin i)",
     "viewSystemCount_one": "{{count}} pianeta noto · Vedi sistema →",
-    "viewSystemCount_other": "{{count}} pianeti noti · Vedi sistema →"
+    "viewSystemCount_other": "{{count}} pianeti noti · Vedi sistema →",
+    "stellarRadius": "Raggio stellare"
   },
   "gauge": {
     "nakedEye": "occhio nudo",
@@ -147,7 +148,9 @@
     "compositionNote": "(modello approssimato)",
     "noOrbitPosition": "Posizione orbitale non disponibile",
     "inHzYes": "Nella zona abitabile",
-    "inHzNo": "Fuori dalla zona abitabile"
+    "inHzNo": "Fuori dalla zona abitabile",
+    "starPanel": "Stella ospite",
+    "planetList": "Elenco dei pianeti"
   },
   "music": {
     "label": "Musica",

@@ -10,6 +10,8 @@ import {
   EQ_TEMP_TICKS,
   PERIOD_TICKS,
   PLANET_MASS_TICKS,
+  STELLAR_RADIUS_TICKS,
+  stellarRadiusScale,
   PLANET_RADIUS_TICKS,
   eqTempScale,
   orbitalPeriodScale,
@@ -164,5 +166,24 @@ describe('planet gauge scales (#23)', () => {
       expect(t.at).toBeLessThanOrEqual(1);
       if (i > 0) expect(t.at).toBeGreaterThan(ticks[i - 1]!.at);
     });
+  });
+});
+
+describe('stellar radius scale (#23)', () => {
+  // logScale(0.1, 100) in R_sun: 3 decades, so 1 R_sun sits a third of the way.
+  it('maps 0.1..100 R_sun logarithmically onto 0..1', () => {
+    expect(stellarRadiusScale(0.1)).toBeCloseTo(0, 10);
+    expect(stellarRadiusScale(1)).toBeCloseTo(1 / 3, 10);
+    expect(stellarRadiusScale(10)).toBeCloseTo(2 / 3, 10);
+    expect(stellarRadiusScale(100)).toBeCloseTo(1, 10);
+  });
+  it('returns null for missing values and clamps out-of-range ones', () => {
+    expect(stellarRadiusScale(null)).toBeNull();
+    expect(stellarRadiusScale(1000)).toBe(1);
+  });
+  it('has marks at 0.1, 1, 10 and 100 R_sun', () => {
+    expect(STELLAR_RADIUS_TICKS.map((t) => t.at)).toEqual(
+      [0.1, 1, 10, 100].map((v) => stellarRadiusScale(v)),
+    );
   });
 });
