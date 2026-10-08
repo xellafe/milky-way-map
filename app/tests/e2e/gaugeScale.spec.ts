@@ -168,3 +168,22 @@ for (const lang of ['en', 'it'] as const) {
     expect(bino.x + bino.width).toBeLessThan(naked.x);
   });
 }
+
+test('Polaris: plain gauge tracks have a visible background (regression #23)', async ({ page }) => {
+  await selectStar(page);
+  const tracks = await page
+    .getByTestId('selection-card')
+    .locator('[role=meter]')
+    .evaluateAll((els) =>
+      els
+        .map((el) => getComputedStyle(el))
+        .filter((s) => s.backgroundImage === 'none')
+        .map((s) => s.backgroundColor),
+    );
+  expect(tracks.length).toBeGreaterThan(0);
+  for (const color of tracks) {
+    // Computed colour is `rgba(r, g, b, a)`; fully transparent is `rgba(0, 0, 0, 0)`.
+    const alpha = color.startsWith('rgba') ? Number(color.split(',')[3]!.replace(')', '')) : 1;
+    expect(alpha, `track background ${color}`).toBeGreaterThan(0);
+  }
+});

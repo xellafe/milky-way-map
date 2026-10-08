@@ -38,7 +38,7 @@ export function Gauge({
       aria-labelledby={labelledBy}
       // Sizes below (track 2 px, marker 2x12 px, zone box, offsets, label size) are
       // aesthetic choices, not data (#23).
-      className={`relative ${zones.length ? 'mt-6' : 'mt-3'} h-0.5 w-full bg-hud-accent/25${ticks.some((t) => t.label) ? ' mb-3.5' : ''}`}
+      className={`relative ${zones.length ? 'mt-6' : 'mt-3'} h-0.5 w-full bg-hud-accent/25 ${ticks.some((t) => t.label) ? 'mb-3.5' : ''}`}
       style={variant === 'spectral' ? { backgroundImage: SPECTRAL_GRADIENT } : undefined}
     >
       {fill && variant === 'track' && position !== null && (
@@ -58,7 +58,7 @@ export function Gauge({
           <span
             aria-hidden="true"
             data-gauge-label="zone"
-            className={`absolute -top-5 whitespace-nowrap text-[9px] leading-none text-hud-muted${z.strong ? ' ml-1' : ' -translate-x-full'}`}
+            className={`absolute -top-5 whitespace-nowrap text-[9px] leading-none text-hud-muted ${z.strong ? 'ml-1' : '-translate-x-full'}`}
             style={{ left: `${(z.strong ? z.from : z.to) * 100}%` }}
           >
             {z.label}
@@ -79,8 +79,8 @@ export function Gauge({
               aria-hidden="true"
               data-gauge-label="tick"
               // Edge labels are anchored inward so they never overflow the tile.
-              className={`absolute top-3 whitespace-nowrap text-[9px] leading-none text-hud-muted${
-                t.at === 0 ? '' : t.at === 1 ? ' -translate-x-full' : ' -translate-x-1/2'
+              className={`absolute top-3 whitespace-nowrap text-[9px] leading-none text-hud-muted ${
+                t.at === 0 ? '' : t.at === 1 ? '-translate-x-full' : '-translate-x-1/2'
               }`}
               style={{ left: `${t.at * 100}%` }}
             >
