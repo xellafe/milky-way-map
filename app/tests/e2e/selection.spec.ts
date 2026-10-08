@@ -354,7 +354,10 @@ test('Proxima Cen own fixture: real values shown, missing fields read n/a', asyn
   await expect(page.getByTestId('card-advanced')).toHaveCount(0); // hidden in Base
   const section = await openAdvanced(page);
   const host = readFixtureExoplanets().hosts[HOST]!;
-  for (const f of ADV_FIELDS) {
+  // #23 R18: the age lives only in the star-age row of the card.
+  await expect(section.getByTestId('adv-st_age')).toHaveCount(0);
+  await expect(section.getByTestId('star-age')).toContainText('n/a');
+  for (const f of ADV_FIELDS.filter((k) => k !== 'st_age')) {
     const v = host[f] as number | string | null;
     const dd = advValue(section, f);
     if (v === null) await expect(dd).toContainText('n/a');

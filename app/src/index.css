@@ -253,8 +253,8 @@
    * narrow 250 ms. Aesthetic choices (not data); none with reduced motion. */
   @media (prefers-reduced-motion: no-preference) {
     /* The opening unfold (250 ms after 700 ms, human choice #3) belongs to a card
-     * anchored to a star. */
-    .selection-slot .object-card {
+     * anchored to a star; an unanchored one (no ring or leader to wait for) opens at once. */
+    .selection-slot[data-anchored] .object-card {
       animation: hud-unfold 250ms ease-out 700ms backwards;
     }
 
@@ -262,7 +262,7 @@
       animation: card-widen 250ms ease-out;
     }
 
-    .selection-slot .object-card[data-mode='advanced'] {
+    .selection-slot[data-anchored] .object-card[data-mode='advanced'] {
       animation:
         hud-unfold 250ms ease-out 700ms backwards,
         card-widen 250ms ease-out;
@@ -273,7 +273,7 @@
     }
 
     /* Keeps the finished unfold in the list: dropping it would replay it. */
-    .selection-slot .object-card[data-leaving] {
+    .selection-slot[data-anchored] .object-card[data-leaving] {
       animation:
         hud-unfold 250ms ease-out 700ms backwards,
         card-narrow 250ms ease-out 200ms forwards;

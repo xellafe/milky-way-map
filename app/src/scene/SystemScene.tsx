@@ -305,6 +305,7 @@ function PlanetFollow({
   // Applied and wanted horizontal projection shift, px (#23 AC7).
   const viewShift = useRef(0);
   const wantShift = useRef(0);
+  const lastWidth = useRef(size.width);
 
   useFrame((_, delta) => {
     const name = useGalaxyMapStore.getState().selectedPlanet;
@@ -317,14 +318,18 @@ function PlanetFollow({
         ADVANCED_CARD_WIDTH_PX,
         CARD_GAP_PX,
       );
+    } else if (lastWidth.current !== size.width) {
+      // The parked shift was computed for another viewport width; park the view at the centre.
+      wantShift.current = 0;
     }
+    lastWidth.current = size.width;
     const gap = wantShift.current - viewShift.current;
     viewShift.current =
       prefersReducedMotion() || Math.abs(gap) < 0.5
         ? wantShift.current
         : viewShift.current + gap * Math.min(1, delta * VIEW_SLIDE_RATE);
     if (viewShift.current === 0) {
-      if (camera.view) camera.clearViewOffset();
+      if (camera.view?.enabled) camera.clearViewOffset();
     } else {
       camera.setViewOffset(size.width, size.height, viewShift.current, 0, size.width, size.height);
     }

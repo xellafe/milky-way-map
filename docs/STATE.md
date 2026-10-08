@@ -420,10 +420,6 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - `system.spec` "orbit style: each style renders and the choice persists":
   ~30 s da solo contro un budget di 60 s; timeout sotto carico della suite
   completa due volte il 2026-10-06; da solo passa.
-- `overlay.spec` (riga 142) "clicking the SAME star again reopens a closed
-  overlay": fallito una volta nella run completa (`selection-overlay` ancora
-  presente 1000 ms dopo `overlay-close`); da solo passa. Visto sul branch
-  `feat/ui-overhaul`, issue #23.
 - `orbit.spec` (riga 175) "ambient auto-orbit revolves around the locked star
   until a manual drag": fallito una volta nella run completa (deriva della
   distanza 0,119 contro < 0,05); da solo passa. Visto sul branch
@@ -434,9 +430,9 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - `overlay.spec` (riga ~289) "Advanced to Base: animates out, then unmounts the
   column": `data-mode` ancora "advanced" dopo 2 s nella run completa sotto
   carico; da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
-- `system.spec` (riga ~581) "planet card follows the planet on screen":
-  transform dell'ancora invariato dopo 500 ms nella run completa sotto carico;
-  da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
+- `filters.spec` (riga ~159) "filters visibly change the rendered cloud (GPU
+  mask)": `loading-overlay` ancora presente dopo 15 s in una run completa sotto
+  carico; da solo passa (13,7 s). Visto sul branch `feat/ui-overhaul`, issue #23.
 - `layout.spec` "1920x1080 galaxy": ≈1–1,3 min da solo con GL software, usa
   `test.slow()`; due timeout nelle run complete prima dell'accelerazione. Visto
   sul branch `feat/ui-overhaul`, issue #23.

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { prefersReducedMotion } from '../../lib/motion';
 import { useGalaxyMapStore } from '../../state/store';
@@ -35,29 +35,35 @@ export function ObjectCard({
   const { t } = useTranslation();
   const mode = useGalaxyMapStore((s) => s.cardMode);
   const setCardMode = useGalaxyMapStore((s) => s.setCardMode);
-  // Advanced -> Base keeps the column mounted while it fades out and the card narrows;
-  // the mode flips when the narrowing ends (index.css, .object-card[data-leaving]).
+  // Advanced -> Base: the mode is stored at the click (a close during the exit must not
+  // leave Advanced persisted), while `leaving` keeps the column mounted until the
+  // narrowing ends (index.css, .object-card[data-leaving]).
   const [leaving, setLeaving] = useState(false);
   const select = (next: 'base' | 'advanced') => {
-    if (next === 'base' && mode === 'advanced' && !prefersReducedMotion()) {
-      setLeaving(true);
-      return;
-    }
-    setLeaving(false);
+    setLeaving(next === 'base' && mode === 'advanced' && !prefersReducedMotion());
     setCardMode(next);
   };
+  // React has no onAnimationCancel; a cancelled narrowing would otherwise keep the column forever.
+  useEffect(() => {
+    if (!leaving) return;
+    const onCancel = (e: AnimationEvent) => {
+      if (e.animationName === 'card-narrow') setLeaving(false);
+    };
+    document.addEventListener('animationcancel', onCancel);
+    return () => document.removeEventListener('animationcancel', onCancel);
+  }, [leaving]);
+  const showAdvanced = mode === 'advanced' || leaving;
   return (
     <HudCard
       as="section"
       aria-label={title}
       data-testid={testId}
       data-hud="selection-card"
-      data-mode={mode}
+      data-mode={showAdvanced ? 'advanced' : 'base'}
       data-leaving={leaving ? '' : undefined}
       onAnimationEnd={(e) => {
         if (e.target === e.currentTarget && e.animationName === 'card-narrow') {
           setLeaving(false);
-          setCardMode('base');
         }
       }}
       className="object-card pointer-events-auto relative flex"
@@ -70,11 +76,11 @@ export function ObjectCard({
           </h3>
           {subtitle && <div className="text-xs text-hud-muted">{subtitle}</div>}
         </div>
-        <CardModeToggle cardMode={leaving ? 'base' : mode} onSelect={select} />
+        <CardModeToggle cardMode={mode} onSelect={select} />
         {base}
         {footer}
       </div>
-      {mode === 'advanced' && (
+      {showAdvanced && (
         <div
           data-testid="card-advanced"
           // Scrollable: needs keyboard access (axe scrollable-region-focusable).

@@ -578,7 +578,9 @@ test('planet card: Advanced mode shows the composition note', async ({ page }) =
   await expect(section.getByTestId('adv-composition-note')).toBeVisible();
 });
 
-test('planet card follows the planet on screen', async ({ page }) => {
+test('once following, the planet moves in the world but the card anchor stays put on screen', async ({
+  page,
+}) => {
   await openApp(page);
   await enterSystem(page, 'trappist', 'TRAPPIST-1');
   await page.getByTestId('planet-chip').filter({ hasText: 'TRAPPIST-1 b' }).click();
@@ -587,11 +589,21 @@ test('planet card follows the planet on screen', async ({ page }) => {
   const anchor = page.getByTestId('selection-overlay');
   await expect(anchor).toHaveCount(1);
   await expect(anchor).toHaveCSS('visibility', 'visible');
-  const t1 = await anchor.evaluate((el) => (el as HTMLElement).style.transform);
-  expect(t1).toMatch(/^translate\(/);
+  await page.waitForTimeout(1_800); // approach (1 s) and view shift slide are over
+  const position = async () =>
+    (await bridge(page)).planets.find((p) => p.name === 'TRAPPIST-1 b')!.position;
+  const p1 = await position();
   await page.waitForTimeout(500);
-  const t2 = await anchor.evaluate((el) => (el as HTMLElement).style.transform);
-  expect(t2).not.toBe(t1);
+  const p2 = await position();
+  expect(p2, 'the planet moves in the world').not.toEqual(p1);
+
+  const vp = page.viewportSize()!;
+  const shift = (await bridge(page)).viewShiftPx;
+  const style = await anchor.evaluate((el) => (el as HTMLElement).style.transform);
+  const m = /^translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(style);
+  expect(m, style).not.toBeNull();
+  expect(Math.abs(Number(m![1]) - (vp.width / 2 - shift))).toBeLessThanOrEqual(1);
+  expect(Math.abs(Number(m![2]) - vp.height / 2)).toBeLessThanOrEqual(1);
 });
 
 test('planet without pl_orbsmax: card beside the panel, no ring, no console errors', async ({

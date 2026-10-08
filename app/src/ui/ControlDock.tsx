@@ -121,9 +121,7 @@ export function DockPanel() {
   return (
     <HudCard
       as="section"
-      id="dock-panel"
-      role="tabpanel"
-      aria-labelledby={`dock-tab-${active}`}
+      aria-label={t('dock.label')}
       data-testid="dock-panel"
       // 22rem = panel width: aesthetic choice (not data).
       className="pointer-events-auto w-[22rem] max-w-[calc(100vw-2rem)] p-3"
@@ -132,7 +130,13 @@ export function DockPanel() {
         <Tabs items={tabs} active={active} onSelect={select} label={t('dock.label')} />
         <div className="flex items-center gap-2">
           {view === 'galaxy' && visibleCount !== null && (
-            <span className="font-hud-mono text-xs text-hud-muted" data-testid="visible-count">
+            <span
+              className="font-hud-mono text-xs text-hud-muted"
+              data-testid="visible-count"
+              aria-label={t('dock.visibleCount', {
+                value: formatNumber(visibleCount, i18n.language),
+              })}
+            >
               {formatNumber(visibleCount, i18n.language)}
             </span>
           )}
@@ -140,7 +144,12 @@ export function DockPanel() {
         </div>
       </div>
       {/* max-h is an aesthetic choice (not data): leaves room for the time bar and dock. */}
-      <div className="max-h-[50vh] overflow-y-auto">
+      <div
+        id="dock-panel"
+        role="tabpanel"
+        aria-labelledby={`dock-tab-${active}`}
+        className="max-h-[50vh] overflow-y-auto"
+      >
         {active === 'filters' && <FiltersPanel />}
         {active === 'view' && (view === 'galaxy' ? <ViewTogglesPanel /> : <SystemViewPanel />)}
         {active === 'options' && <OptionsPanel />}

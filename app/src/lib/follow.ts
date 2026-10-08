@@ -1,4 +1,5 @@
 import { easeInOutCubic } from '../scene/cameraTween';
+import { RING_HALF_PX } from './selectionGeometry';
 
 export type Vec3 = readonly [number, number, number];
 
@@ -28,7 +29,9 @@ export function approachTarget(start: Vec3, next: Vec3, t: number): Vec3 {
  * Horizontal projection shift, px, that moves the followed planet left of the
  * screen centre when the widest card would not fit between the planet and the
  * usable area's right edge; 0 when it already fits. The card sits `gap` px to
- * the right of the planet (selectionGeometry).
+ * the right of the planet (selectionGeometry). Never moves the planet's ring
+ * left of the usable area (#23): when the card then does not fit, `placeCard`
+ * picks a side and overlapping the right panel is the accepted degradation.
  */
 export function followViewShift(
   area: { left: number; right: number },
@@ -37,5 +40,6 @@ export function followViewShift(
   gap: number,
 ): number {
   if (width / 2 + gap + cardWidth <= area.right) return 0;
-  return width / 2 - (area.right - cardWidth - gap);
+  const shift = width / 2 - (area.right - cardWidth - gap);
+  return Math.max(0, Math.min(shift, width / 2 - (area.left + RING_HALF_PX)));
 }

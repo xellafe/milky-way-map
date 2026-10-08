@@ -88,7 +88,7 @@ export function SystemStarPanel({ hostname, host }: { hostname: string; host: Ex
       )}
       {anchored ? (
         <div className="flex flex-col gap-3">
-          <StarStatTiles index={index} />
+          <StarStatTiles index={index} compact />
           <StarExtraRows index={index} />
           <CatalogSection index={index} />
         </div>
@@ -96,7 +96,7 @@ export function SystemStarPanel({ hostname, host }: { hostname: string; host: Ex
         <UnanchoredTiles host={host} />
       )}
       <div className="mt-3">
-        <ArchiveSection host={host} />
+        <ArchiveSection host={host} withAge={!anchored} />
       </div>
     </HudCard>
   );

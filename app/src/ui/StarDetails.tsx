@@ -81,8 +81,12 @@ export function CatalogSection({ index }: { index: number }) {
   );
 }
 
-/** Host-star data from the NASA Exoplanet Archive (#18); absent fields read n/a. */
-export function ArchiveSection({ host }: { host: ExoHost }) {
+/**
+ * Host-star data from the NASA Exoplanet Archive (#18); absent fields read n/a.
+ * `withAge={false}` where StarExtraRows is shown: it already carries the age with
+ * its uncertainty note (SPEC §6.6), and a datum appears once (#23).
+ */
+export function ArchiveSection({ host, withAge = true }: { host: ExoHost; withAge?: boolean }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const tag = metallicityRatioTag(host.st_metratio);
@@ -93,11 +97,13 @@ export function ArchiveSection({ host }: { host: ExoHost }) {
         value={formatLimited(host.st_met, host.st_metlim, lang, 3, t('units.dex'))}
         testId="adv-st_met"
       />
-      <DataRow
-        label={t('panel.advAge')}
-        value={formatLimited(host.st_age, host.st_agelim, lang, 3, t('units.gyr'))}
-        testId="adv-st_age"
-      />
+      {withAge && (
+        <DataRow
+          label={t('panel.advAge')}
+          value={formatLimited(host.st_age, host.st_agelim, lang, 3, t('units.gyr'))}
+          testId="adv-st_age"
+        />
+      )}
       <DataRow
         label={t('panel.advMass')}
         value={formatLimited(host.st_mass, host.st_masslim, lang, 3, t('units.msun'))}

@@ -64,7 +64,8 @@
     "filters": "Filters",
     "view": "View",
     "options": "Options",
-    "visibleOf": "{{visible}} of {{total}} visible"
+    "visibleOf": "{{visible}} of {{total}} visible",
+    "visibleCount": "{{value}} stars visible"
   },
   "filters": {
     "title": "Filters",

@@ -119,7 +119,9 @@ for (const size of SIZES) {
     expect(card.x).toBeGreaterThanOrEqual(0);
     expect(card.x + card.width).toBeLessThanOrEqual(size.width);
     expect(card.y).toBeGreaterThanOrEqual(search.y + search.height - 0.5);
-    expect(card.y + card.height).toBeLessThanOrEqual(Math.min(stack.y, music.y) + 0.5);
+    // #23 R19: the open dock panel floats over the card; the card ends above the dock bar.
+    const dock = await box(page.getByTestId('dock'), 'dock');
+    expect(card.y + card.height).toBeLessThanOrEqual(Math.min(dock.y, music.y) + 0.5);
   });
 
   test(`${label} system view: header, both panels, time bar, dock panel and dock stay apart`, async ({
@@ -159,6 +161,6 @@ for (const size of SIZES) {
     expect(card.x).toBeGreaterThanOrEqual(left.x + left.width - 0.5);
     expect(card.x + card.width).toBeLessThanOrEqual(right.x + 0.5);
     expect(card.y).toBeGreaterThanOrEqual(header.y + header.height - 0.5);
-    expect(card.y + card.height).toBeLessThanOrEqual(Math.min(dockPanel.y, time.y, music.y) + 0.5);
+    expect(card.y + card.height).toBeLessThanOrEqual(Math.min(dock.y, time.y, music.y) + 0.5);
   });
 }

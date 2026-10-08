@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { approachTarget, followStep, followViewShift } from '../../src/lib/follow';
-import { CARD_GAP_PX } from '../../src/lib/selectionGeometry';
+import { CARD_GAP_PX, RING_HALF_PX } from '../../src/lib/selectionGeometry';
 
 describe('followStep', () => {
   it('moves the target onto the planet and translates the camera by the same delta', () => {
@@ -47,6 +47,24 @@ describe('followViewShift', () => {
     const shift = followViewShift({ left: 0, right: 968 }, 1280, CARD, CARD_GAP_PX);
     expect(shift).toBeGreaterThan(0);
     expect(shift).toBeCloseTo(1280 / 2 - (968 - CARD - CARD_GAP_PX), 10);
+  });
+
+  it('keeps the planet right of the left panel at 1024 geometry', () => {
+    // Panels of 18 rem leave the usable area 312..712 at a 1024 px width.
+    const area = { left: 312, right: 712 };
+    const shift = followViewShift(area, 1024, CARD, CARD_GAP_PX);
+    expect(shift).toBeGreaterThanOrEqual(0);
+    // The followed planet sits at width / 2 - shift on screen.
+    expect(1024 / 2 - shift).toBeGreaterThanOrEqual(area.left + RING_HALF_PX);
+  });
+
+  it('keeps the planet right of area.left for narrow desktop widths', () => {
+    for (const width of [1024, 1100, 1210]) {
+      const area = { left: 312, right: width - 312 };
+      const shift = followViewShift(area, width, CARD, CARD_GAP_PX);
+      expect(shift).toBeGreaterThanOrEqual(0);
+      expect(width / 2 - shift).toBeGreaterThanOrEqual(area.left + RING_HALF_PX);
+    }
   });
 
   it('never returns a negative shift', () => {

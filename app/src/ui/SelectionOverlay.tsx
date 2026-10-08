@@ -47,7 +47,7 @@ function StarCard({ index }: { index: number }) {
             <>
               <StarExtraRows index={index} />
               <CatalogSection index={index} />
-              {host && <ArchiveSection host={host} />}
+              {host && <ArchiveSection host={host} withAge={false} />}
             </>
           }
         />

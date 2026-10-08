@@ -1,7 +1,7 @@
 /**
  * Issue #3 tweak: scale labels under each stat gauge (selection card and star
  * panel share StarStatTiles) and the "Temperature" label. Scale labels are the
- * 9px aria-hidden spans of the Gauge.
+ * Gauge spans marked `data-gauge-label="tick"`; zone labels use "zone".
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

@@ -115,6 +115,7 @@ export function AnchoredCard({
             shift (placeAnchor) and the unfold. */}
         <div
           data-hud="selection-slot"
+          data-anchored={anchored ? '' : undefined}
           style={
             {
               top: CARD_TOP_OFFSET_PX,

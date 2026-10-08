@@ -36,7 +36,7 @@ function fromSlider(slider: number, log: boolean): number {
 }
 
 /**
- * System View time-scale bar (SPEC §6.7): pause, slider, optional log mode.
+ * System View time-scale bar (SPEC §6.7): pause, slider, value and log mode on one row.
  * Part of BottomStack, so it never overlaps the dock panel. The expanded
  * player takes the bar's band on compact viewports.
  */
@@ -57,17 +57,10 @@ export function TimeBar() {
       as="section"
       aria-label={t('system.timeScale')}
       data-testid="time-scale"
+      data-hud="time-bar"
       className="pointer-events-auto w-[28rem] max-w-[calc(100vw-2rem)] p-3 text-sm"
     >
-      <div className="flex items-center justify-between gap-2">
-        <span>{t('system.timeScale')}</span>
-        <span className="font-hud-mono text-hud-bright" data-testid="time-scale-value">
-          {t('system.daysPerSecond', {
-            value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
-          })}
-        </span>
-      </div>
-      <div className="mt-2 flex items-center gap-3">
+      <div className="flex items-center gap-3">
         <HudButton
           variant="secondary"
           data-testid="time-pause"
@@ -93,8 +86,16 @@ export function TimeBar() {
           data-testid="time-slider"
           aria-label={t('system.timeScale')}
           onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
-          className="flex-1"
+          className="min-w-0 flex-1"
         />
+        <span
+          className="font-hud-mono whitespace-nowrap text-hud-bright"
+          data-testid="time-scale-value"
+        >
+          {t('system.daysPerSecond', {
+            value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
+          })}
+        </span>
         <HudSwitch
           // The wrapping label bakes in text-sm; a same-specificity text-xs in
           // className would conflict with it by stylesheet order, not intent, so

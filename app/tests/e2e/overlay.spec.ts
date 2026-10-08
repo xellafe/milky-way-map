@@ -189,7 +189,7 @@ test('prefers-reduced-motion: overlay-close removes the overlay immediately', as
   await expect(overlay(page)).toHaveCount(0, { timeout: 300 });
 });
 
-test('card stays in the usable area: below the search, above the bottom stack (Proxima Cen)', async ({
+test('card stays in the usable area: below the search, above the dock bar (Proxima Cen)', async ({
   page,
 }) => {
   await openApp(page);
@@ -199,10 +199,10 @@ test('card stays in the usable area: below the search, above the bottom stack (P
 
   const card = (await page.getByTestId('selection-card').boundingBox())!;
   const search = (await page.locator('[data-hud=search]').boundingBox())!;
-  const stack = (await page.locator('[data-hud=bottom-stack]').boundingBox())!;
+  const dock = (await page.locator('[data-testid=dock]').boundingBox())!;
   const vp = page.viewportSize()!;
   expect(card.y).toBeGreaterThanOrEqual(search.y + search.height);
-  expect(card.y + card.height).toBeLessThanOrEqual(stack.y);
+  expect(card.y + card.height).toBeLessThanOrEqual(dock.y);
   expect(card.x).toBeGreaterThanOrEqual(0);
   expect(card.x + card.width).toBeLessThanOrEqual(vp.width);
 });
@@ -220,9 +220,10 @@ test('card stays in the usable area with the Filters panel open and Advanced mod
 
   const card = (await page.getByTestId('selection-card').boundingBox())!;
   const search = (await page.locator('[data-hud=search]').boundingBox())!;
-  const stack = (await page.locator('[data-hud=bottom-stack]').boundingBox())!;
+  // #23 R19: the open panel floats over the card; the card ends above the dock bar.
+  const dock = (await page.getByTestId('dock').boundingBox())!;
   expect(card.y).toBeGreaterThanOrEqual(search.y + search.height);
-  expect(card.y + card.height).toBeLessThanOrEqual(stack.y);
+  expect(card.y + card.height).toBeLessThanOrEqual(dock.y + 0.5);
 });
 
 test('prefers-reduced-motion: switching to Advanced runs no animation on the card', async ({
