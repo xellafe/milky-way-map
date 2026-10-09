@@ -8,6 +8,15 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #27 — lint delle classi Tailwind attaccate a `${…}` (2026-10-09, branch `chore/lint-tailwind-interpolation`, commit `0940829`)
+
+- Regola `no-restricted-syntax` in `app/eslint.config.js`: due selettori esquery segnalano
+  una classe incollata a `${…}` nei template literal di `className`, anche annidati.
+- Test: `app/tests/unit/tailwindLint.test.ts` (10 casi). AC verificati: casi errati
+  segnalati, nessun falso positivo (`npm run lint` verde), test unitario. Gate completo verde: vitest 256, playwright 210.
+- Limite noto: le classi composte fuori dall'attributo `className` (variabili, helper) non sono coperte; oggi non ne esistono.
+- Decisione: `eslint.config.js` modificato via Bash con approvazione umana, perché l'hook `ecc pre:config-protection` blocca Edit su quel file.
+
 ## Issue #23 — restyling UI desktop, include #10 (2026-10-08, branch `feat/ui-overhaul`, commit `c818aa1`, `4c449c0`, `3671482`, `e0361c5`, `7b3a81a`, `4fa0f02`, `bd105ab`, `b931e2d`, `d9847c3`)
 
 Spec: `docs/superpowers/specs/2026-10-07-ui-overhaul-design.md`; piano: `docs/superpowers/plans/2026-10-07-ui-overhaul.md`.
