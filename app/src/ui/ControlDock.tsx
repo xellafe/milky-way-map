@@ -7,6 +7,7 @@ import { FiltersPanel } from './FiltersPanel';
 import { Dock, type DockItem } from './hud/Dock';
 import { HudButton } from './hud/HudButton';
 import { HudCard } from './hud/HudCard';
+import { HudSwitch } from './hud/HudInputs';
 import { Tabs, type TabItem } from './hud/Tabs';
 import { OptionsPanel } from './OptionsPanel';
 import { SystemViewPanel } from './SystemViewPanel';
@@ -78,13 +79,39 @@ export function ControlDock() {
   return <Dock items={items} label={t('dock.label')} />;
 }
 
-/** Reset button of the active tab; the View tab has nothing to reset. */
+/**
+ * System View options (#23): only realism acts on the host star. The galaxy-only
+ * settings are hidden, and so is the reset (it would also wipe them).
+ */
+function SystemOptions() {
+  const { t } = useTranslation();
+  const realism = useSettingsStore((s) => s.realism);
+  const setSettings = useSettingsStore((s) => s.setSettings);
+  return (
+    <section
+      id="dock-panel-options"
+      aria-label={t('options.title')}
+      data-testid="options-panel"
+      className="text-sm"
+    >
+      <HudSwitch
+        label={t('options.realism')}
+        checked={realism}
+        data-testid="option-realism"
+        onChange={(e) => setSettings({ realism: e.target.checked })}
+      />
+    </section>
+  );
+}
+
+/** Reset button of the active tab; the View tab and the System View options have nothing to reset. */
 function ResetButton({ id }: { id: DockPanelId }) {
   const { t } = useTranslation();
   const filters = useGalaxyMapStore((s) => s.filters);
   const resetFilters = useGalaxyMapStore((s) => s.resetFilters);
   const settings = useSettingsStore();
-  if (id === 'view') return null;
+  const view = useGalaxyMapStore((s) => s.view);
+  if (id === 'view' || (id === 'options' && view === 'system')) return null;
   const isFilters = id === 'filters';
   return (
     <HudButton
@@ -152,7 +179,7 @@ export function DockPanel() {
       >
         {active === 'filters' && <FiltersPanel />}
         {active === 'view' && (view === 'galaxy' ? <ViewTogglesPanel /> : <SystemViewPanel />)}
-        {active === 'options' && <OptionsPanel />}
+        {active === 'options' && (view === 'galaxy' ? <OptionsPanel /> : <SystemOptions />)}
       </div>
     </HudCard>
   );
