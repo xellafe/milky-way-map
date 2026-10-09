@@ -69,7 +69,8 @@ export function ObjectCard({
       className="object-card pointer-events-auto relative flex"
     >
       <CloseButton onClick={onClose} label={t('overlay.close')} testId={closeTestId} />
-      <div className="flex w-56 min-w-0 flex-col gap-2 overflow-y-auto p-2">
+      {/* min-w: the fixed-width Advanced column overflows while the card widens; without it the base column would shrink and reflow (#23). */}
+      <div className="flex w-56 min-w-[calc(14rem-2*var(--card-stroke,0px))] flex-col gap-2 overflow-y-auto p-2">
         <div>
           <h3 className="pr-6 font-hud text-sm text-hud-bright" data-testid={titleTestId}>
             {title}
@@ -87,7 +88,7 @@ export function ObjectCard({
           tabIndex={0}
           role="region"
           aria-label={t('card.advanced')}
-          className="card-advanced min-w-0 flex-1 overflow-y-auto border-l border-hud-accent/20 p-2 pt-7 text-sm"
+          className="card-advanced flex-none overflow-y-auto border-l border-hud-accent/20 p-2 pt-7 text-sm"
         >
           {advanced}
         </div>

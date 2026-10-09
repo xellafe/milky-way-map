@@ -242,6 +242,19 @@
     max-height: var(--card-max-h, none);
     border-width: var(--card-stroke);
     border-color: color-mix(in srgb, var(--color-hud-accent) var(--card-stroke-alpha), transparent);
+    /* The widen/narrow animation uncovers the Advanced column instead of reflowing it (#23). */
+    overflow-x: clip;
+  }
+
+  /* Always laid out at its final width: Advanced card width (470 px) minus Base (224 px),
+   * minus the card border. Derived from the human-chosen card widths (#23). */
+  .card-advanced {
+    width: calc(246px - 2 * var(--card-stroke, 0px));
+  }
+
+  /* The card clips horizontally: keep the focus ring inside the column. */
+  .card-advanced:focus-visible {
+    outline-offset: -2px;
   }
 
   .object-card[data-mode='advanced'] {
