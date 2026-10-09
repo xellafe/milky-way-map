@@ -118,6 +118,7 @@ tester (red) → coder → code-reviewer ⟲ coder (max 3 giri) → tester (veri
 4. StrictMode in dev esegue gli effetti due volte (vedi `f8defa5`).
 5. Path dei dati sempre via `DATA_BASE_URL`, mai `'/data/'` hard-coded.
 6. Nel tool Bash niente here-string PowerShell (`@'…'@`).
+7. Tailwind: una classe in un template literal va separata da uno spazio da `${…}` (`bg-x ${cond}`, mai `bg-x${cond}`): lo scanner legge il token con `${` e non genera la regola, che funziona solo se la classe compare anche altrove (vedi `4132d02`).
 
 ## Agenti
 
