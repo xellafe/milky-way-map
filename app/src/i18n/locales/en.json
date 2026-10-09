@@ -12,14 +12,10 @@
     "searchUnanchored": "system only"
   },
   "overlay": {
-    "close": "Close star summary",
-    "label": "Selected star summary"
+    "close": "Close star card"
   },
   "panel": {
-    "regionLabel": "Star details",
-    "close": "Close panel",
     "na": "n/a",
-    "constellation": "Constellation",
     "catalogIds": "Catalog IDs",
     "spectralClass": "Spectral class",
     "msClass": "Luminosity class",
@@ -30,31 +26,33 @@
     "luminosity": "Luminosity",
     "teff": "Temperature",
     "estimate": "estimate",
-    "moreData": "More data and catalog IDs",
-    "nakedEye": "naked eye",
     "age": "Estimated age",
     "ageNote": "(uncertain estimate)",
     "variable": "Variable star",
     "multiple": "Multiple system",
-    "exoplanets": "Exoplanets",
-    "planetsCount_one": "{{count}} known planet",
-    "planetsCount_other": "{{count}} known planets",
     "viewSystem": "View system",
     "notAnchored": "Not anchored to a catalog star — reachable via search only",
-    "hostStar": "Host star data (NASA Exoplanet Archive)",
-    "stTeff": "Star temperature",
-    "stLum": "Star luminosity",
-    "stRad": "Star radius",
     "yes": "Yes",
     "no": "No",
-    "advancedData": "Advanced data",
     "advMetallicity": "Metallicity",
     "advAge": "Age",
     "advMass": "Star mass",
     "advLogg": "Surface gravity (log g)",
     "advSpectype": "Spectral type",
     "advRotation": "Rotation period",
-    "advVsini": "Projected rotation speed (v sin i)"
+    "advVsini": "Projected rotation speed (v sin i)",
+    "viewSystemCount_one": "{{count}} known planet · View system →",
+    "viewSystemCount_other": "{{count}} known planets · View system →",
+    "stellarRadius": "Stellar radius"
+  },
+  "gauge": {
+    "nakedEye": "naked eye",
+    "binocular": "binoculars",
+    "verdictNakedEye": "Visible to the naked eye",
+    "verdictBinocular": "Visible with binoculars",
+    "verdictTelescope": "Needs a telescope",
+    "oneDay": "1 day",
+    "oneYear": "1 year"
   },
   "view": {
     "title": "View options",
@@ -65,7 +63,9 @@
     "label": "Controls",
     "filters": "Filters",
     "view": "View",
-    "options": "Options"
+    "options": "Options",
+    "visibleOf": "{{visible}} of {{total}} visible",
+    "visibleCount": "{{value}} stars visible"
   },
   "filters": {
     "title": "Filters",
@@ -122,12 +122,10 @@
     "method": "Discovery method",
     "discYear": "Discovery year",
     "eqTemp": "Equilibrium temperature",
-    "inHz": "In habitable zone",
     "schematicOrbit": "Schematic orbit (inclination n/a)",
     "type": "Type",
     "planetTypes": "Planet types",
     "orbitStyle": "Orbit style",
-    "advancedData": "Advanced data",
     "density": "Density",
     "insolation": "Irradiation",
     "massProvLabel": "Mass provenance",
@@ -148,7 +146,12 @@
       "prograde": "Prograde",
       "retrograde": "Retrograde"
     },
-    "compositionNote": "(approximate model)"
+    "compositionNote": "(approximate model)",
+    "noOrbitPosition": "Orbit position not available",
+    "inHzYes": "In the habitable zone",
+    "inHzNo": "Outside the habitable zone",
+    "starPanel": "Host star",
+    "planetList": "Planet list"
   },
   "music": {
     "label": "Music",
@@ -169,7 +172,9 @@
     "twinkleSpeed": "Twinkle frequency",
     "twinkleAmplitude": "Twinkle intensity",
     "sizeGamma": "Star size contrast",
-    "reset": "Reset options"
+    "reset": "Reset options",
+    "sectionCamera": "Camera",
+    "sectionStars": "Stars"
   },
   "planetType": {
     "rocky": "Rocky",
@@ -210,7 +215,7 @@
       },
       "system": {
         "action": "See the planetary system",
-        "command": "\"View system\" button in the star panel"
+        "command": "\"View system\" button on the star card"
       },
       "dock": {
         "action": "Filters, view options and settings",
@@ -220,5 +225,12 @@
     "dontShowAgain": "Don't show again",
     "start": "Start exploring",
     "helpButton": "Show the welcome guide"
+  },
+  "card": {
+    "base": "Base",
+    "advanced": "Advanced",
+    "modeLabel": "Detail level",
+    "sectionCatalog": "Catalog",
+    "sectionArchive": "NASA Exoplanet Archive"
   }
 }

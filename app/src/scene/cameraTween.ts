@@ -1,9 +1,14 @@
 import * as THREE from 'three';
+import { DEFAULT_SETTINGS } from '../state/settings';
 
 /** Distance (ly) at which a fly-to stops in front of the target star. */
 export const ARRIVE_DISTANCE_LY = 4;
 export const FLY_MIN_DURATION_S = 0.8;
 export const FLY_MAX_DURATION_S = 2.5;
+// Bounds (s) of the speed-scaled fly-to: human choice (#23), not data. Wider than the
+// distance-only bounds above so the movement-speed slider (5-200 ly/s) stays noticeable.
+export const FLY_SPEED_MIN_DURATION_S = 0.3;
+export const FLY_SPEED_MAX_DURATION_S = 8;
 /** Closest the orbit dolly may get to the target (ly). */
 export const ORBIT_MIN_DISTANCE_LY = 0.1;
 export const ORBIT_MAX_DISTANCE_LY = 1_000_000;
@@ -27,11 +32,19 @@ export function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
-/** Flight time grows with the log of the travel distance, clamped to [min, max]. */
-export function flyToDurationS(distanceLy: number): number {
+/**
+ * Flight time grows with the log of the travel distance (clamped to [min, max]),
+ * then scales inversely with the movement speed relative to the default (#23).
+ */
+export function flyToDurationS(
+  distanceLy: number,
+  speedLyPerS: number = DEFAULT_SETTINGS.moveSpeedLyPerS,
+): number {
   if (!(distanceLy > 0)) return 0;
   const d = 0.5 + 0.25 * Math.log2(1 + distanceLy);
-  return Math.min(Math.max(d, FLY_MIN_DURATION_S), FLY_MAX_DURATION_S);
+  const base = Math.min(Math.max(d, FLY_MIN_DURATION_S), FLY_MAX_DURATION_S);
+  const scaled = (base * DEFAULT_SETTINGS.moveSpeedLyPerS) / speedLyPerS;
+  return Math.min(Math.max(scaled, FLY_SPEED_MIN_DURATION_S), FLY_SPEED_MAX_DURATION_S);
 }
 
 /**
@@ -59,6 +72,7 @@ export function createFlyToTween(
   cameraQuat: THREE.Quaternion,
   target: THREE.Vector3,
   reducedMotion: boolean,
+  speedLyPerS: number = DEFAULT_SETTINGS.moveSpeedLyPerS,
 ): CameraTween {
   const approach = cameraPos.clone().sub(target);
   if (approach.lengthSq() < 1e-6) approach.set(0, 0, 1);
@@ -69,7 +83,7 @@ export function createFlyToTween(
     fromQuat: cameraQuat.clone(),
     toPos,
     toQuat: lookQuaternion(toPos, target, cameraQuat),
-    durationS: reducedMotion ? 0 : flyToDurationS(cameraPos.distanceTo(toPos)),
+    durationS: reducedMotion ? 0 : flyToDurationS(cameraPos.distanceTo(toPos), speedLyPerS),
     elapsedS: 0,
   };
 }

@@ -19,9 +19,6 @@ async function enterTrappist(page: Page) {
   await input.click();
   await input.fill('trappist');
   await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
-  const button = page.getByTestId('view-system-button');
-  await expect(button).toBeEnabled({ timeout: 10_000 });
-  await button.click();
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
 }
 
@@ -90,7 +87,7 @@ test('galaxy overlay has no blocking axe violations', async ({ page }) => {
   await page.getByTestId('search-input').click();
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
-  await expect(page.getByTestId('star-panel')).toBeVisible();
+  await expect(page.getByTestId('selection-card')).toBeVisible();
   await scan(page);
 });
 
@@ -107,7 +104,7 @@ for (const [id, toggle] of dockPanels) {
     await openApp(page);
     await page.getByTestId(toggle).click();
     await expect(page.getByTestId(toggle)).toHaveAttribute('aria-expanded', 'true');
-    await scan(page, `#dock-panel-${id}`);
+    await scan(page, '#dock-panel');
   });
 }
 
@@ -142,17 +139,14 @@ test('reduced motion: System View starts paused', async ({ page }) => {
   await expect(page.getByTestId('time-pause')).toContainText('▶');
 });
 
-test('star panel with the advanced section open has no blocking axe violations', async ({
-  page,
-}) => {
+test('star card in advanced mode has no blocking axe violations', async ({ page }) => {
   await openApp(page);
-  await page.getByTestId('search-input').fill('trappist');
-  await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
-  const section = page.getByTestId('star-panel').getByTestId('star-advanced');
-  await expect(section).toBeVisible();
-  await section.locator('summary').click();
-  await expect(section).toHaveAttribute('open', '');
-  await scan(page, '[data-testid="star-panel"]');
+  await page.getByTestId('search-input').fill('proxima cen');
+  await page.getByRole('option').filter({ hasText: 'Proxima Cen' }).first().click();
+  await expect(page.getByTestId('selection-card')).toBeVisible();
+  await page.getByTestId('card-mode-advanced').click();
+  await expect(page.getByTestId('card-advanced')).toBeVisible();
+  await scan(page, '[data-testid="selection-card"]');
 });
 
 test('planet panel with the advanced section open has no blocking axe violations', async ({
@@ -161,9 +155,54 @@ test('planet panel with the advanced section open has no blocking axe violations
   await openApp(page);
   await enterTrappist(page);
   await page.getByTestId('planet-chip').first().click();
-  const section = page.getByTestId('planet-panel').getByTestId('planet-advanced');
-  await expect(section).toBeVisible();
-  await section.locator('summary').click();
-  await expect(section).toHaveAttribute('open', '');
+  // #23: planet details are the anchored card; Advanced via the mode toggle.
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  await page.getByTestId('card-mode-advanced').click();
+  await expect(page.getByTestId('planet-panel').getByTestId('card-advanced')).toBeVisible();
   await scan(page, '[data-testid="planet-panel"]');
+});
+
+// Proxima Cen has no pl_orbincl in the fixture, so the Advanced card shows the
+// schematic-orbit note next to the inclination row.
+test('Proxima Cen b advanced card (schematic orbit note) has no blocking axe violations', async ({
+  page,
+}) => {
+  await openApp(page);
+  await page.getByTestId('search-input').fill('proxima cen');
+  await page.getByRole('option').filter({ hasText: 'Proxima Cen' }).first().click();
+  const button = page.getByTestId('view-system-button');
+  await expect(button).toBeEnabled({ timeout: 10_000 });
+  await button.click();
+  await expect(page.getByTestId('system-title')).toHaveText('Proxima Cen');
+  await page.getByTestId('planet-chip').filter({ hasText: 'Proxima Cen b' }).click();
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  await page.getByTestId('card-mode-advanced').click();
+  await expect(page.getByTestId('planet-panel').getByTestId('card-advanced')).toBeVisible();
+  await scan(page, '[data-testid="planet-panel"]');
+});
+
+test('galaxy: Advanced card with the dock open has no blocking axe violations', async ({
+  page,
+}) => {
+  await openApp(page);
+  await page.getByTestId('search-input').fill('polaris');
+  await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
+  await expect(page.getByTestId('selection-card')).toBeVisible();
+  await page.getByTestId('card-mode-advanced').click();
+  await expect(page.getByTestId('card-advanced')).toBeVisible();
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('dock-panel')).toBeVisible();
+  await scan(page);
+});
+
+test('system view: both panels and the planet card have no blocking axe violations', async ({
+  page,
+}) => {
+  await openApp(page);
+  await enterTrappist(page);
+  await expect(page.getByTestId('system-star-panel')).toBeVisible();
+  await expect(page.getByTestId('planet-list')).toBeVisible();
+  await page.getByTestId('planet-list').getByTestId('planet-chip').first().click();
+  await expect(page.getByTestId('planet-panel')).toBeVisible();
+  await scan(page);
 });

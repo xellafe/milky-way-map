@@ -8,8 +8,9 @@
   --color-hud-text: #f4f8ff;
   --color-hud-warn: #ff9f5f;
   --color-hud-bg: rgb(10 16 30 / 0.82);
-  /* Corner radius of every HUD box and stat tile: human design choice (3 px), not data. */
-  --radius-hud: 3px;
+  /* Corner radius of every HUD box, tile, button and input: human design choice
+   * (#23, square corners), not data. */
+  --radius-hud: 0;
   --font-hud: 'Segoe UI', system-ui, sans-serif;
   --font-hud-mono: Consolas, 'Cascadia Mono', ui-monospace, monospace;
 }
@@ -36,33 +37,186 @@
     font-size: 0.75rem;
   }
 
-  /* HUD panel: dark translucent card, thin accent border, inner glow,
-   * and native scrollbars tinted to match instead of the default white. */
-  .hud-panel {
-    background-color: var(--color-hud-bg);
-    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 35%, transparent);
-    box-shadow: inset 0 0 20px color-mix(in srgb, var(--color-hud-accent) 12%, transparent);
+  /* HUD card (#23): dark translucent blurred card, thin accent border, corner
+   * brackets (top-left / bottom-right), and native scrollbars tinted to match.
+   * Opacity, blur and bracket size are human choices (#23), not data. The brackets
+   * are background layers (default attachment: they stay on the box, not on the
+   * scrolling content); each L is two 10 px x 1.5 px bars. `relative` anchors
+   * absolutely positioned children (CloseButton); position utilities
+   * (absolute/fixed) still win because they live in a later layer. A <dialog>
+   * must add `fixed` (this rule overrides its UA position). */
+  .hud-card {
+    position: relative;
+    background:
+      linear-gradient(var(--color-hud-accent), var(--color-hud-accent)) top left / 10px 1.5px
+        no-repeat,
+      linear-gradient(var(--color-hud-accent), var(--color-hud-accent)) top left / 1.5px 10px
+        no-repeat,
+      linear-gradient(var(--color-hud-accent), var(--color-hud-accent)) bottom right / 10px 1.5px
+        no-repeat,
+      linear-gradient(var(--color-hud-accent), var(--color-hud-accent)) bottom right / 1.5px 10px
+        no-repeat,
+      rgb(8 14 28 / 0.72);
+    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 18%, transparent);
+    backdrop-filter: blur(6px);
     font-family: var(--font-hud);
     color: var(--color-hud-text);
     scrollbar-color: color-mix(in srgb, var(--color-hud-accent) 40%, transparent) transparent;
     scrollbar-width: thin;
   }
 
-  /* Selection overlay card (#3): right of the star; SelectionTracker flips
-   * data-side to "left" when it would run under the detail panel. --card-gap
-   * is set inline from CARD_GAP_PX (lib/selectionGeometry). The border matches
-   * the callout stroke (width and alpha set inline from the same constants);
-   * human design choice, not data. */
-  .selection-card {
-    border-width: var(--card-stroke);
-    border-color: color-mix(in srgb, var(--color-hud-accent) var(--card-stroke-alpha), transparent);
+  /* Switch: 28x14 px track, 8 px knob; sizes are aesthetic choices (#23). */
+  .hud-switch {
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 28px;
+    height: 14px;
+  }
+  .hud-switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .hud-switch-track {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 40%, transparent);
+    background: rgb(0 0 0 / 0.4);
+  }
+  .hud-switch-track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 8px;
+    height: 8px;
+    background: var(--color-hud-muted);
+  }
+  /* 120 ms: aesthetic choice (not data, #23); skipped for reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hud-switch-track::after {
+      transition: transform 120ms;
+    }
+  }
+  .hud-switch input:checked + .hud-switch-track {
+    border-color: var(--color-hud-accent);
+    background: color-mix(in srgb, var(--color-hud-accent) 25%, transparent);
+  }
+  .hud-switch input:checked + .hud-switch-track::after {
+    transform: translateX(14px);
+    background: var(--color-hud-accent);
+  }
+  .hud-switch input:focus-visible + .hud-switch-track {
+    outline: 2px solid var(--color-hud-accent);
+    outline-offset: 2px;
+  }
+  .hud-switch input:disabled {
+    cursor: not-allowed;
+  }
+  .hud-switch input:disabled + .hud-switch-track {
+    opacity: 0.4;
+  }
+
+  /* Range: 2 px track, 2x12 px bar thumb with glow (aesthetic choices, #23). */
+  .hud-range {
+    appearance: none;
+    height: 12px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .hud-range::-webkit-slider-runnable-track {
+    height: 2px;
+    background: color-mix(in srgb, var(--color-hud-accent) 35%, transparent);
+  }
+  .hud-range::-moz-range-track {
+    height: 2px;
+    background: color-mix(in srgb, var(--color-hud-accent) 35%, transparent);
+  }
+  .hud-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 2px;
+    height: 12px;
+    margin-top: -5px;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-hud-accent);
+    box-shadow: 0 0 6px var(--color-hud-accent);
+  }
+  .hud-range::-moz-range-thumb {
+    width: 2px;
+    height: 12px;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-hud-accent);
+    box-shadow: 0 0 6px var(--color-hud-accent);
+  }
+  .hud-range:focus-visible {
+    outline: 1px solid var(--color-hud-accent);
+    outline-offset: 2px;
+  }
+  .hud-range:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  /* Two stacked ranges: only the thumbs may take the pointer. */
+  .hud-range-dual .hud-range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    pointer-events: none;
+  }
+  .hud-range-dual .hud-range::-webkit-slider-thumb {
+    pointer-events: auto;
+  }
+  .hud-range-dual .hud-range::-moz-range-thumb {
+    pointer-events: auto;
+  }
+
+  /* Aesthetic choice (not data, #23). Colors are copied from the palette: a data
+   * URI and <option> cannot use the translucent var. */
+  .hud-select {
+    appearance: none;
+    padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-hud-accent) 30%, transparent);
+    border-radius: var(--radius-hud);
+    background: rgb(0 0 0 / 0.4)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%239ec8ff'/%3E%3C/svg%3E")
+      no-repeat right 0.5rem center;
+    font-family: var(--font-hud);
+    font-size: 0.875rem;
+    color: var(--color-hud-text);
+  }
+  .hud-select option {
+    background: #0a101e;
+  }
+
+  /* Small mono caption for section titles and stat labels; 9 px and 0.12 em are a
+   * human choice (#23), not data. */
+  .hud-label {
+    font-family: var(--font-hud-mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-hud-muted);
+  }
+
+  /* Selection card slot (#3): right of the star; SelectionTracker flips
+   * data-side to "left" when the card does not fit. --card-gap is set inline from
+   * CARD_GAP_PX (lib/selectionGeometry). */
+  .selection-slot {
     left: var(--card-gap);
     /* The card opens from the callout side: the hidden edge is set per side. */
     --unfold-r: 100%;
     --unfold-l: 0px;
   }
 
-  [data-side='left'] .selection-card {
+  [data-side='left'] .selection-slot {
     left: auto;
     right: var(--card-gap);
     --unfold-r: 0px;
@@ -80,7 +234,98 @@
     scale: -1 1;
   }
 
-  /* B6 ring + overlay close animations (#3; durations are human choices). */
+  /* The border matches the callout stroke (width and alpha set inline on the slot
+   * from the same constants); human design choice, not data. Widths are human
+   * choices (#23). */
+  .object-card {
+    width: 224px;
+    max-height: var(--card-max-h, none);
+    border-width: var(--card-stroke);
+    border-color: color-mix(in srgb, var(--color-hud-accent) var(--card-stroke-alpha), transparent);
+    /* The widen/narrow animation uncovers the Advanced column instead of reflowing it (#23). */
+    overflow-x: clip;
+  }
+
+  /* Always laid out at its final width: Advanced card width (470 px) minus Base (224 px),
+   * minus the card border. Derived from the human-chosen card widths (#23). */
+  .card-advanced {
+    width: calc(246px - 2 * var(--card-stroke, 0px));
+  }
+
+  /* The card clips horizontally: keep the focus ring inside the column. */
+  .card-advanced:focus-visible {
+    outline-offset: -2px;
+  }
+
+  .object-card[data-mode='advanced'] {
+    width: 470px;
+  }
+
+  /* Base -> Advanced: widen 250 ms, then fade the column in 200 ms. Advanced -> Base
+   * (data-leaving, until ObjectCard sees card-narrow end): fade out 200 ms, then
+   * narrow 250 ms. Aesthetic choices (not data); none with reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    /* The opening unfold (250 ms after 700 ms, human choice #3) belongs to a card
+     * anchored to a star; an unanchored one (no ring or leader to wait for) opens at once. */
+    .selection-slot[data-anchored] .object-card {
+      animation: hud-unfold 250ms ease-out 700ms backwards;
+    }
+
+    .object-card[data-mode='advanced'] {
+      animation: card-widen 250ms ease-out;
+    }
+
+    .selection-slot[data-anchored] .object-card[data-mode='advanced'] {
+      animation:
+        hud-unfold 250ms ease-out 700ms backwards,
+        card-widen 250ms ease-out;
+    }
+
+    .object-card[data-leaving] {
+      animation: card-narrow 250ms ease-out 200ms forwards;
+    }
+
+    /* Keeps the finished unfold in the list: dropping it would replay it. */
+    .selection-slot[data-anchored] .object-card[data-leaving] {
+      animation:
+        hud-unfold 250ms ease-out 700ms backwards,
+        card-narrow 250ms ease-out 200ms forwards;
+    }
+
+    .card-advanced {
+      animation: card-fade 200ms ease-out 250ms both;
+    }
+
+    .object-card[data-leaving] .card-advanced {
+      animation: card-fade-out 200ms ease-out forwards;
+    }
+  }
+
+  @keyframes card-widen {
+    from {
+      width: 224px;
+    }
+  }
+
+  @keyframes card-narrow {
+    to {
+      width: 224px;
+    }
+  }
+
+  @keyframes card-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes card-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* B6 ring animations (#3; durations are human choices). */
   @keyframes hud-spin {
     to {
       transform: rotate(360deg);
@@ -123,27 +368,6 @@
     to {
       clip-path: inset(0);
       opacity: 1;
-    }
-  }
-
-  @keyframes hud-flicker {
-    0% {
-      opacity: 1;
-    }
-    20% {
-      opacity: 0.2;
-    }
-    40% {
-      opacity: 0.9;
-    }
-    60% {
-      opacity: 0.1;
-    }
-    80% {
-      opacity: 0.6;
-    }
-    100% {
-      opacity: 0;
     }
   }
 }

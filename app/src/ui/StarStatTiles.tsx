@@ -5,15 +5,22 @@ import {
   DISTANCE_TICKS,
   LUMINOSITY_TICKS,
   MAGNITUDE_TICKS,
-  NAKED_EYE_AT,
+  MAGNITUDE_ZONES,
   TEMPERATURE_TICKS,
   distanceScale,
   luminosityScale,
   magnitudeScale,
   temperatureScale,
+  visibilityVerdict,
 } from '../lib/gaugeScale';
 import { estimateTeffFromBV } from '../lib/teff';
 import { StatTile } from './hud/StatTile';
+
+const VERDICT_KEYS = {
+  nakedEye: 'gauge.verdictNakedEye',
+  binocular: 'gauge.verdictBinocular',
+  telescope: 'gauge.verdictTelescope',
+} as const;
 
 /** Four headline stats of a catalog star (distance, temperature, luminosity,
  * apparent magnitude), each with a gauge. */
@@ -26,6 +33,7 @@ export function StarStatTiles({ index, compact = false }: { index: number; compa
   const luminosity = details?.luminosity[index] ?? null;
   const appMag = details?.appMag[index] ?? null;
   const teff = details ? estimateTeffFromBV(details.colorIndex[index]!) : null;
+  const verdict = visibilityVerdict(appMag);
   const fmt = (v: number | null, o: Intl.NumberFormatOptions) => formatNumber(v, lang, o);
 
   return (
@@ -69,7 +77,16 @@ export function StarStatTiles({ index, compact = false }: { index: number; compa
         label={t('panel.apparentMagnitude')}
         value={fmt(appMag, { maximumFractionDigits: 2 })}
         position={magnitudeScale(appMag)}
-        ticks={[...MAGNITUDE_TICKS, { at: NAKED_EYE_AT, label: t('panel.nakedEye'), mark: true }]}
+        ticks={MAGNITUDE_TICKS}
+        zones={MAGNITUDE_ZONES.map((z) => ({
+          from: z.from,
+          to: z.to,
+          label: t(`gauge.${z.kind}`),
+          strong: z.kind === 'nakedEye',
+        }))}
+        // A fill from the left would cover the zone band; the zones carry the meaning.
+        fill={false}
+        verdict={verdict ? t(VERDICT_KEYS[verdict]) : undefined}
       />
     </div>
   );

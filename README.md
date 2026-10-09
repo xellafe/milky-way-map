@@ -12,11 +12,11 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 
 - 3D point cloud of ~2.49M stars (AT-HYG + HYG) in a single draw call, with
   energy-faithful sizing/color and bloom.
-- Free-fly + click-to-orbit camera with animated fly-to; `prefers-reduced-motion`
-  aware.
-- Sci-fi HUD UI: bottom control dock (filters, view toggles, options) with
-  slide-in panels; music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star detail panel with stat tiles and gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude) and, for exoplanet hosts, a collapsible "Advanced data" section (metallicity, age, mass, rotation); the System View planet panel adds density, irradiation, mass provenance, an approximate composition class and orbit direction ("n/a" until the exoplanet data is refreshed); selecting a star
-  shows a ring and a summary card anchored to it.
+- Free-fly + click-to-orbit camera with animated fly-to; the movement-speed
+  option also scales the fly-to duration (faster = shorter, clamped 0.3–8 s);
+  `prefers-reduced-motion` aware (instant fly-to).
+- Sci-fi HUD UI: bottom control dock opening a single tabbed panel (Filters / View /
+  Options); music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star card anchored to the selected star by a ring and leader line (the only place for star data; closed with ✕ or Esc) with a Base/Advanced toggle (animated, immediate with reduced motion, choice remembered across visits): Base shows stat tiles, gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude; the latter has a brighter-to-the-right axis, naked-eye and approximate binoculars zones, and a three-state visibility verdict) and a "N known planets · View system →" button; Advanced widens the card to two columns with absolute magnitude, B–V, estimated age, a Catalog section and a NASA archive section (metallicity, mass, rotation for exoplanet hosts; the age is shown once); an exoplanet host not anchored to a catalog star, picked from search, opens the System View directly with a "not anchored" badge.
 - Welcome dialog with a short description and quick controls guide, shown on
   every visit until "Don't show again" is ticked; the "?" button in the
   top-right cluster reopens it in both the galaxy and System views.
@@ -25,8 +25,30 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 - Search (proper names, HD/HIP/Gl, Gaia/TYC ids, exoplanet hosts) and runtime
   filters via a GPU visibility mask.
 - System View: fly into an exoplanet system, real-scale orbits (Kepler solver),
-  shared time-scale slider, habitable-zone overlay (approximate √L model),
-  planet type filter and selectable orbit style (trail / thick / simple).
+  shared time-scale slider (time bar above the dock), habitable-zone overlay
+  (approximate √L model), planet type filter and selectable orbit style
+  (trail / thick / simple), all in the dock's View tab. In the System View the
+  Options tab shows only the Realism switch.
+  Two fixed side panels: on the left the host star data (stat tiles; catalog
+  rows for anchored hosts; a "not anchored" badge and archive tiles for
+  temperature, luminosity and radius for unanchored hosts; a NASA archive
+  section at the bottom); on the right the planet list (name and type per row)
+  with the real-scale note.
+  Clicking a planet (in the scene or its list row) selects it: the camera flies
+  to it, then follows it along its orbit keeping your distance and angle. ✕, Esc
+  or a click on empty space stops following (the camera stays put); hiding the
+  selected planet's type in the filter closes the selection. At small widths,
+  when the Advanced card would not fit, the view shifts the planet left so the
+  card stays on screen (kept after deselecting, reset on leaving the System View).
+  The selected planet's data show in a card anchored to it (ring + leader
+  line, follows the planet) with the same Base/Advanced toggle as the star
+  card. Base: gauges for radius and mass (log scales, Earth/Neptune/Jupiter
+  ticks), orbital period (1 day / 1 year ticks) and equilibrium temperature
+  (Earth 255 K tick, archive "in habitable zone" verdict) plus planet type.
+  Advanced: semi-major axis, eccentricity, inclination, discovery, density,
+  irradiation, mass provenance, approximate composition class and orbit
+  direction ("n/a" until the exoplanet data is refreshed). A planet without a
+  semi-major axis is not drawn and gets an unanchored card with a note.
   Planet sizes and looks are **presentational, not data**: the catalog has no
   planet colors or surfaces, so each planet gets a procedural look from its
   size class (rocky / sub-Neptune / giant / unknown, from radius or mass) plus

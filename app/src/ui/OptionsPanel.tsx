@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../lib/format';
-import { isDefaultSettings, type Settings, useSettingsStore } from '../state/settings';
-import { HudButton } from './hud/HudButton';
-import { HudCheckbox, HudSlider } from './hud/HudInputs';
-import { HudPanel } from './hud/HudPanel';
+import { type Settings, useSettingsStore } from '../state/settings';
+import { HudSwitch, HudSlider } from './hud/HudInputs';
+import { DataSection } from './hud/DataSection';
 
 type NumericKey = {
   [K in keyof Settings]: Settings[K] extends number ? K : never;
@@ -56,81 +55,76 @@ function SliderSetting({
 
 /**
  * User customizations (issue #1): camera, star look. Persisted locally.
- * Content only: the dock owns the toggle icon, positioning and open/close
- * state (issue #3).
+ * Content only: the dock panel (ControlDock) owns the frame and the reset
+ * button (issue #3).
  */
 export function OptionsPanel() {
   const { t } = useTranslation();
   const settings = useSettingsStore();
 
   return (
-    <HudPanel
+    <section
       id="dock-panel-options"
       aria-label={t('options.title')}
       data-testid="options-panel"
-      className="max-h-[60vh] w-72 overflow-y-auto text-sm"
+      className="text-sm"
     >
-      <SliderSetting
-        id="moveSpeedLyPerS"
-        label={t('options.moveSpeed')}
-        min={5}
-        max={200}
-        step={5}
-        digits={0}
-        suffix={` ${t('units.ly')}/s`}
-      />
-      <div className="mt-3">
-        <HudCheckbox
-          label={t('options.autoOrbit')}
-          checked={settings.autoOrbit}
-          data-testid="option-autoOrbit"
-          onChange={(e) => settings.setSettings({ autoOrbit: e.target.checked })}
+      <DataSection title={t('options.sectionCamera')} list={false}>
+        <SliderSetting
+          id="moveSpeedLyPerS"
+          label={t('options.moveSpeed')}
+          min={5}
+          max={200}
+          step={5}
+          digits={0}
+          suffix={` ${t('units.ly')}/s`}
         />
-      </div>
-      <div className="mt-1">
-        <HudCheckbox
-          label={t('options.realism')}
-          checked={settings.realism}
-          data-testid="option-realism"
-          onChange={(e) => settings.setSettings({ realism: e.target.checked })}
+        <div className="mt-3">
+          <HudSwitch
+            label={t('options.autoOrbit')}
+            checked={settings.autoOrbit}
+            data-testid="option-autoOrbit"
+            onChange={(e) => settings.setSettings({ autoOrbit: e.target.checked })}
+          />
+        </div>
+      </DataSection>
+      <DataSection title={t('options.sectionStars')} list={false}>
+        <div>
+          <HudSwitch
+            label={t('options.realism')}
+            checked={settings.realism}
+            data-testid="option-realism"
+            onChange={(e) => settings.setSettings({ realism: e.target.checked })}
+          />
+        </div>
+        <SliderSetting
+          id="twinkleSpeed"
+          label={t('options.twinkleSpeed')}
+          min={0.1}
+          max={2}
+          step={0.05}
+          digits={2}
+          suffix="×"
+          disabled={settings.realism}
         />
-      </div>
-      <SliderSetting
-        id="twinkleSpeed"
-        label={t('options.twinkleSpeed')}
-        min={0.1}
-        max={2}
-        step={0.05}
-        digits={2}
-        suffix="×"
-        disabled={settings.realism}
-      />
-      <SliderSetting
-        id="twinkleAmplitude"
-        label={t('options.twinkleAmplitude')}
-        min={0}
-        max={1}
-        step={0.05}
-        digits={2}
-        disabled={settings.realism}
-      />
-      <SliderSetting
-        id="sizeGamma"
-        label={t('options.sizeGamma')}
-        min={0.8}
-        max={1.6}
-        step={0.05}
-        digits={2}
-      />
-      <HudButton
-        variant="secondary"
-        onClick={settings.resetSettings}
-        disabled={isDefaultSettings(settings)}
-        data-testid="options-reset"
-        className="mt-3 w-full"
-      >
-        {t('options.reset')}
-      </HudButton>
-    </HudPanel>
+        <SliderSetting
+          id="twinkleAmplitude"
+          label={t('options.twinkleAmplitude')}
+          min={0}
+          max={1}
+          step={0.05}
+          digits={2}
+          disabled={settings.realism}
+        />
+        <SliderSetting
+          id="sizeGamma"
+          label={t('options.sizeGamma')}
+          min={0.8}
+          max={1.6}
+          step={0.05}
+          digits={2}
+        />
+      </DataSection>
+    </section>
   );
 }

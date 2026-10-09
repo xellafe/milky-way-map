@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchCatalogIds } from '../data/catalogIds';
 import { entryLabel, getNamesEntry } from '../data/namesIndex';
 import { useGalaxyMapStore } from '../state/store';
+import { HudCard } from './hud/HudCard';
 
 /**
  * Hover name label (SPEC §6.2): proper name when present, otherwise the
@@ -41,12 +42,12 @@ export function HoverLabel() {
   if (hovered === null || !label) return null;
 
   return (
-    <div
-      className="hud-panel pointer-events-none fixed z-20 rounded-hud px-2 py-0.5 font-hud text-sm text-hud-text"
+    <HudCard
+      className="pointer-events-none fixed z-20 px-2 py-0.5 font-hud text-sm text-hud-text"
       style={{ left: pos.x + 14, top: pos.y + 10 }}
       data-testid="hover-label"
     >
       {label}
-    </div>
+    </HudCard>
   );
 }

@@ -2,17 +2,9 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { getStarCore } from '../data/starCoreStore';
-import { overlaySide } from '../lib/overlayPlacement';
-import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
 import { useGalaxyMapStore } from '../state/store';
 import { getSelectionAnchor } from './selectionAnchor';
-
-// Card width before it is measured (first frame): mirrors `w-56` in
-// SelectionOverlay (224 px). Human choice (#3).
-const FALLBACK_CARD_WIDTH_PX = 224;
-
-// Clearance between the card and the search box / dock, px. Human choice (#3).
-const CARD_MARGIN_PX = 8;
+import { placeAnchor } from './placeAnchor';
 
 /**
  * In-Canvas projector of the selected star onto the overlay's anchor element
@@ -45,30 +37,7 @@ export function SelectionTracker() {
     const x = ((p.x + 1) / 2) * size.width;
     const y = ((1 - p.y) / 2) * size.height;
 
-    // The card must not sit under the detail panel: measure it, don't hard-code.
-    const panelWidth =
-      document.querySelector<HTMLElement>('[data-hud=star-panel]')?.offsetWidth ?? 0;
-    const card = el.querySelector<HTMLElement>('[data-hud=selection-card]');
-    const cardWidth = card?.offsetWidth || FALLBACK_CARD_WIDTH_PX;
-    // Keep the card between the search box and the dock / music player: shift it vertically
-    // (individual `translate` property, so it never fights `transform`).
-    if (card) {
-      const top = document.querySelector('[data-hud=search]')?.getBoundingClientRect().bottom ?? 0;
-      const bottom = Math.min(
-        ...['dock', 'music-player'].map(
-          (hud) =>
-            document.querySelector(`[data-hud=${hud}]`)?.getBoundingClientRect().top ?? size.height,
-        ),
-      );
-      const cardTop = y + CARD_TOP_OFFSET_PX;
-      const maxShift = bottom - CARD_MARGIN_PX - (cardTop + card.offsetHeight);
-      const minShift = top + CARD_MARGIN_PX - cardTop;
-      // Top wins if the card is taller than the free band.
-      card.style.translate = `0 ${Math.max(Math.min(0, maxShift), minShift).toFixed(1)}px`;
-    }
-    el.style.visibility = onScreen ? 'visible' : 'hidden';
-    el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-    el.dataset.side = overlaySide(x, cardWidth, CARD_GAP_PX, size.width - panelWidth);
+    placeAnchor(el, x, y, onScreen, size);
   });
 
   return null;

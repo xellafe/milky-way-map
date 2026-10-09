@@ -22,7 +22,7 @@ export function HudButton({
     <button
       ref={ref}
       type="button"
-      className={`rounded border px-3 py-1.5 font-hud text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${variantClass[variant]} ${className}`}
+      className={`rounded-hud border px-3 py-1.5 font-hud text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${variantClass[variant]} ${className}`}
       {...rest}
     />
   );

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { isWelcomeDismissed, setWelcomeDismissed } from '../lib/welcome';
 import { useGalaxyMapStore } from '../state/store';
 import { HudButton } from './hud/HudButton';
+import { HudSwitch } from './hud/HudInputs';
 
 const GUIDE_ROWS = ['look', 'move', 'zoom', 'select', 'search', 'system', 'dock'] as const;
 
@@ -38,7 +39,7 @@ export function WelcomeDialog() {
       ref={ref}
       data-testid="welcome-dialog"
       aria-labelledby="welcome-title"
-      className="hud-panel rounded-hud m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto p-6"
+      className="hud-card fixed m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto p-6"
       onClose={() => {
         setWelcomeDismissed(dontShow);
         setOpen(false);
@@ -70,15 +71,12 @@ export function WelcomeDialog() {
         ))}
       </dl>
       <form method="dialog" className="mt-5 flex items-center justify-between gap-4">
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            data-testid="welcome-dont-show"
-            checked={dontShow}
-            onChange={(e) => setDontShow(e.target.checked)}
-          />
-          {t('welcome.dontShowAgain')}
-        </label>
+        <HudSwitch
+          label={t('welcome.dontShowAgain')}
+          data-testid="welcome-dont-show"
+          checked={dontShow}
+          onChange={(e) => setDontShow(e.target.checked)}
+        />
         <HudButton ref={startRef} type="submit" data-testid="welcome-start">
           {t('welcome.start')}
         </HudButton>

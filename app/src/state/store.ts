@@ -12,11 +12,15 @@ export type DataStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type DockPanelId = 'filters' | 'view' | 'options';
 
 /**
- * Current selection: a star of the cloud (by SoA index) or an exoplanet host
- * with no catalog counterpart (matched:false, reachable only via search —
- * SPEC §5.3/§10, e.g. TRAPPIST-1).
+ * Current selection: a star of the cloud (by SoA index). Hosts with no
+ * catalog counterpart (e.g. TRAPPIST-1, SPEC §5.3) open the System View
+ * straight from search instead (#23).
  */
-export type Selection = { kind: 'star'; index: number } | { kind: 'host'; hostname: string } | null;
+export type Selection = { kind: 'star'; index: number } | null;
+export type CardMode = 'base' | 'advanced';
+
+/** Persisted flag set while the star card is in Advanced mode (#23). */
+export const CARD_ADVANCED_KEY = 'galaxy-map-card-advanced';
 
 /** Persisted flag set while the music player is collapsed (#13). */
 export const MUSIC_COLLAPSED_KEY = 'galaxy-map-music-collapsed';
@@ -38,6 +42,7 @@ export interface GalaxyMapState {
   systemHostname: string | null;
   /** Planet selected in the System View (pl_name), for the details panel. */
   selectedPlanet: string | null;
+  selectedPlanetType: PlanetType | null;
   showNames: boolean;
   showConstellations: boolean;
   showHabitableZone: boolean;
@@ -61,11 +66,9 @@ export interface GalaxyMapState {
   labelsVersion: number;
   /** Currently open dock panel, or null if none open (one at a time). */
   dockPanel: DockPanelId | null;
-  /**
-   * Floating star overlay next to the selection (#3). Reopened by every star
-   * selection, even of the same star; closing keeps the selection itself.
-   */
-  selectionOverlayOpen: boolean;
+  /** Star card detail level (#23); initialised from the persisted flag. */
+  cardMode: CardMode;
+  setCardMode: (mode: CardMode) => void;
   /** Welcome dialog (#12) open; initialised from the persisted dismissal flag. */
   welcomeOpen: boolean;
   /** Opens or closes the welcome dialog (#12). */
@@ -73,12 +76,10 @@ export interface GalaxyMapState {
   /** Music player expanded (#13); initialised from the persisted collapsed flag. */
   musicExpanded: boolean;
   setMusicExpanded: (expanded: boolean) => void;
-  /** Bumped by every star selection: remounts the overlay, so a re-click during
-   * its closing flicker reopens it. */
+  /** Bumped by every star selection: remounts the overlay, restarting its opening sequence. */
   selectionEpoch: number;
 
   selectStar: (index: number | null) => void;
-  selectHost: (hostname: string) => void;
   setHoveredStar: (index: number | null) => void;
   requestFlyTo: (position: [number, number, number]) => void;
   clearFlyTo: () => void;
@@ -93,7 +94,7 @@ export interface GalaxyMapState {
   setView: (view: ViewMode) => void;
   enterSystemView: (hostname: string) => void;
   exitSystemView: () => void;
-  selectPlanet: (planetName: string | null) => void;
+  selectPlanet: (planet: { name: string; type: PlanetType } | null) => void;
   toggleNames: () => void;
   toggleConstellations: () => void;
   toggleHabitableZone: () => void;
@@ -101,7 +102,6 @@ export interface GalaxyMapState {
   togglePlanetType: (type: PlanetType) => void;
   toggleDockPanel: (id: DockPanelId) => void;
   closeDockPanel: () => void;
-  closeSelectionOverlay: () => void;
 }
 
 export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
@@ -112,6 +112,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   view: 'galaxy',
   systemHostname: null,
   selectedPlanet: null,
+  selectedPlanetType: null,
   showNames: false,
   showConstellations: false,
   showHabitableZone: false,
@@ -124,7 +125,11 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   visibleCount: null,
   labelsVersion: 0,
   dockPanel: null,
-  selectionOverlayOpen: false,
+  cardMode: readFlag(CARD_ADVANCED_KEY) ? 'advanced' : 'base',
+  setCardMode: (mode) => {
+    writeFlag(CARD_ADVANCED_KEY, mode === 'advanced');
+    set({ cardMode: mode });
+  },
   welcomeOpen: !isWelcomeDismissed(),
   setWelcomeOpen: (open) => set({ welcomeOpen: open }),
   musicExpanded: !readFlag(MUSIC_COLLAPSED_KEY),
@@ -140,8 +145,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   selectionEpoch: 0,
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
-  // deselecting releases the lock. Hosts (matched:false, e.g. TRAPPIST-1)
-  // have no position in the cloud, so there is nothing to orbit.
+  // deselecting releases the lock.
   selectStar: (index) =>
     set((s) =>
       index === null
@@ -149,11 +153,9 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
         : {
             selection: { kind: 'star', index },
             cameraMode: 'orbit',
-            selectionOverlayOpen: true,
             selectionEpoch: s.selectionEpoch + 1,
           },
     ),
-  selectHost: (hostname) => set({ selection: { kind: 'host', hostname }, cameraMode: 'free-fly' }),
   setHoveredStar: (index) => set({ hoveredStarIndex: index }),
   requestFlyTo: (position) => set({ pendingFlyTo: position }),
   clearFlyTo: () => set({ pendingFlyTo: null }),
@@ -174,14 +176,22 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       view: 'system',
       systemHostname: hostname,
       selectedPlanet: null,
+      selectedPlanetType: null,
       dockPanel: null,
       ...(prefersReducedMotion() ? { timeScaleDaysPerSecond: 0 } : {}),
     }),
   // The galaxy selection survives: leaving the system brings back the same
-  // star panel (and the galaxy camera pose is restored from its holder).
+  // star card (and the galaxy camera pose is restored from its holder).
   exitSystemView: () =>
-    set({ view: 'galaxy', systemHostname: null, selectedPlanet: null, dockPanel: null }),
-  selectPlanet: (planetName) => set({ selectedPlanet: planetName }),
+    set({
+      view: 'galaxy',
+      systemHostname: null,
+      selectedPlanet: null,
+      selectedPlanetType: null,
+      dockPanel: null,
+    }),
+  selectPlanet: (planet) =>
+    set({ selectedPlanet: planet?.name ?? null, selectedPlanetType: planet?.type ?? null }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),
   toggleConstellations: () => set((s) => ({ showConstellations: !s.showConstellations })),
   toggleHabitableZone: () => set((s) => ({ showHabitableZone: !s.showHabitableZone })),
@@ -189,6 +199,10 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   togglePlanetType: (type) =>
     set((s) => ({
       visiblePlanetTypes: { ...s.visiblePlanetTypes, [type]: !s.visiblePlanetTypes[type] },
+      // Hiding the selected planet's class must not leave an invisible selection.
+      ...(s.visiblePlanetTypes[type] && s.selectedPlanetType === type
+        ? { selectedPlanet: null, selectedPlanetType: null }
+        : {}),
     })),
   toggleDockPanel: (id) =>
     set((s) => {
@@ -201,5 +215,4 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       };
     }),
   closeDockPanel: () => set({ dockPanel: null }),
-  closeSelectionOverlay: () => set({ selectionOverlayOpen: false }),
 }));

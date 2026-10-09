@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_SETTINGS } from '../../src/state/settings';
+
 import {
   ARRIVE_DISTANCE_LY,
   createFlyToTween,
   dollyTowardTarget,
   easeInOutCubic,
   FLY_MAX_DURATION_S,
+  FLY_SPEED_MAX_DURATION_S,
+  FLY_SPEED_MIN_DURATION_S,
   FLY_MIN_DURATION_S,
   flyToDurationS,
   ORBIT_MIN_DISTANCE_LY,
@@ -41,6 +45,34 @@ describe('flyToDurationS', () => {
 
   it('grows with distance', () => {
     expect(flyToDurationS(400)).toBeGreaterThan(flyToDurationS(10));
+  });
+});
+
+describe('flyToDurationS speed scaling', () => {
+  const v0 = DEFAULT_SETTINGS.moveSpeedLyPerS;
+  const d = 40; // mid-range distance: unclamped at 0.5x and 2x speed
+
+  it('equals the distance-only duration at the default speed', () => {
+    expect(flyToDurationS(d, v0)).toBeCloseTo(0.5 + 0.25 * Math.log2(1 + d), 10);
+    expect(flyToDurationS(d)).toBeCloseTo(flyToDurationS(d, v0), 10);
+  });
+
+  it('doubles at half the speed and halves at twice the speed', () => {
+    const base = flyToDurationS(d, v0);
+    expect(flyToDurationS(d, v0 / 2)).toBeCloseTo(base * 2, 10);
+    expect(flyToDurationS(d, v0 * 2)).toBeCloseTo(base / 2, 10);
+  });
+
+  it('clamps to the speed-scaled bounds', () => {
+    expect(FLY_SPEED_MIN_DURATION_S).toBe(0.3);
+    expect(FLY_SPEED_MAX_DURATION_S).toBe(8);
+    expect(flyToDurationS(0.001, 200)).toBe(FLY_SPEED_MIN_DURATION_S);
+    expect(flyToDurationS(1e6, 5)).toBe(FLY_SPEED_MAX_DURATION_S);
+    expect(flyToDurationS(0.001, 5)).toBeGreaterThan(flyToDurationS(0.001, v0));
+  });
+
+  it('is still 0 for zero distance', () => {
+    expect(flyToDurationS(0, 5)).toBe(0);
   });
 });
 

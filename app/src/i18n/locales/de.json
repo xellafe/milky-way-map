@@ -12,14 +12,10 @@
     "searchUnanchored": "nur System"
   },
   "overlay": {
-    "close": "Sternübersicht schließen",
-    "label": "Übersicht des ausgewählten Sterns"
+    "close": "Sternkarte schließen"
   },
   "panel": {
-    "regionLabel": "Sterndetails",
-    "close": "Panel schließen",
     "na": "k. A.",
-    "constellation": "Sternbild",
     "catalogIds": "Katalog-IDs",
     "spectralClass": "Spektraltyp",
     "msClass": "Leuchtkraftklasse",
@@ -30,31 +26,33 @@
     "luminosity": "Leuchtkraft",
     "teff": "Temperatur",
     "estimate": "Schätzung",
-    "moreData": "Weitere Daten und Katalog-IDs",
-    "nakedEye": "bloßes Auge",
     "age": "Geschätztes Alter",
     "ageNote": "(unsichere Schätzung)",
     "variable": "Veränderlicher Stern",
     "multiple": "Mehrfachsystem",
-    "exoplanets": "Exoplaneten",
-    "planetsCount_one": "{{count}} bekannter Planet",
-    "planetsCount_other": "{{count}} bekannte Planeten",
     "viewSystem": "System ansehen",
     "notAnchored": "Keinem Katalogstern zugeordnet — nur über die Suche erreichbar",
-    "hostStar": "Daten des Zentralsterns (NASA Exoplanet Archive)",
-    "stTeff": "Sterntemperatur",
-    "stLum": "Leuchtkraft des Sterns",
-    "stRad": "Sternradius",
     "yes": "Ja",
     "no": "Nein",
-    "advancedData": "Erweiterte Daten",
     "advMetallicity": "Metallizität",
     "advAge": "Alter",
     "advMass": "Sternmasse",
     "advLogg": "Oberflächenschwerkraft (log g)",
     "advSpectype": "Spektraltyp",
     "advRotation": "Rotationsperiode",
-    "advVsini": "Projizierte Rotationsgeschwindigkeit (v sin i)"
+    "advVsini": "Projizierte Rotationsgeschwindigkeit (v sin i)",
+    "viewSystemCount_one": "{{count}} bekannter Planet · System ansehen →",
+    "viewSystemCount_other": "{{count}} bekannte Planeten · System ansehen →",
+    "stellarRadius": "Sternradius"
+  },
+  "gauge": {
+    "nakedEye": "bloßes Auge",
+    "binocular": "Fernglas",
+    "verdictNakedEye": "Mit bloßem Auge sichtbar",
+    "verdictBinocular": "Mit Fernglas sichtbar",
+    "verdictTelescope": "Teleskop nötig",
+    "oneDay": "1 Tag",
+    "oneYear": "1 Jahr"
   },
   "view": {
     "title": "Ansichtsoptionen",
@@ -65,7 +63,9 @@
     "label": "Bedienelemente",
     "filters": "Filter",
     "view": "Ansicht",
-    "options": "Optionen"
+    "options": "Optionen",
+    "visibleOf": "{{visible}} von {{total}} sichtbar",
+    "visibleCount": "{{value}} Sterne sichtbar"
   },
   "filters": {
     "title": "Filter",
@@ -122,12 +122,10 @@
     "method": "Entdeckungsmethode",
     "discYear": "Entdeckungsjahr",
     "eqTemp": "Gleichgewichtstemperatur",
-    "inHz": "In habitabler Zone",
     "schematicOrbit": "Schematische Bahn (Neigung n. v.)",
     "type": "Typ",
     "planetTypes": "Planetentypen",
     "orbitStyle": "Orbit-Stil",
-    "advancedData": "Erweiterte Daten",
     "density": "Dichte",
     "insolation": "Einstrahlung",
     "massProvLabel": "Herkunft der Masse",
@@ -148,7 +146,12 @@
       "prograde": "Prograd",
       "retrograde": "Retrograd"
     },
-    "compositionNote": "(Näherungsmodell)"
+    "compositionNote": "(Näherungsmodell)",
+    "noOrbitPosition": "Bahnposition nicht verfügbar",
+    "inHzYes": "In der habitablen Zone",
+    "inHzNo": "Außerhalb der habitablen Zone",
+    "starPanel": "Wirtsstern",
+    "planetList": "Planetenliste"
   },
   "music": {
     "label": "Musik",
@@ -169,7 +172,9 @@
     "twinkleSpeed": "Funkelfrequenz",
     "twinkleAmplitude": "Funkelintensität",
     "sizeGamma": "Größenkontrast der Sterne",
-    "reset": "Optionen zurücksetzen"
+    "reset": "Optionen zurücksetzen",
+    "sectionCamera": "Kamera",
+    "sectionStars": "Sterne"
   },
   "planetType": {
     "rocky": "Gesteinsplanet",
@@ -210,7 +215,7 @@
       },
       "system": {
         "action": "Das Planetensystem ansehen",
-        "command": "Schaltfläche „System ansehen“ im Sternpanel"
+        "command": "Schaltfläche „System ansehen“ auf der Sternkarte"
       },
       "dock": {
         "action": "Filter, Ansichtsoptionen und Einstellungen",
@@ -220,5 +225,12 @@
     "dontShowAgain": "Nicht mehr anzeigen",
     "start": "Erkundung starten",
     "helpButton": "Willkommensanleitung anzeigen"
+  },
+  "card": {
+    "base": "Basis",
+    "advanced": "Erweitert",
+    "modeLabel": "Detailstufe",
+    "sectionCatalog": "Katalog",
+    "sectionArchive": "NASA Exoplanet Archive"
   }
 }

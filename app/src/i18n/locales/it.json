@@ -12,14 +12,10 @@
     "searchUnanchored": "solo sistema"
   },
   "overlay": {
-    "close": "Chiudi riepilogo stella",
-    "label": "Riepilogo della stella selezionata"
+    "close": "Chiudi scheda della stella"
   },
   "panel": {
-    "regionLabel": "Dettagli stella",
-    "close": "Chiudi pannello",
     "na": "n/d",
-    "constellation": "Costellazione",
     "catalogIds": "ID di catalogo",
     "spectralClass": "Tipo spettrale",
     "msClass": "Classe di luminosità",
@@ -30,31 +26,33 @@
     "luminosity": "Luminosità",
     "teff": "Temperatura",
     "estimate": "stima",
-    "moreData": "Altri dati e ID catalogo",
-    "nakedEye": "occhio nudo",
     "age": "Età stimata",
     "ageNote": "(stima incerta)",
     "variable": "Stella variabile",
     "multiple": "Sistema multiplo",
-    "exoplanets": "Esopianeti",
-    "planetsCount_one": "{{count}} pianeta noto",
-    "planetsCount_other": "{{count}} pianeti noti",
     "viewSystem": "Vedi sistema",
     "notAnchored": "Non agganciato a una stella di catalogo — raggiungibile solo via ricerca",
-    "hostStar": "Dati della stella ospite (NASA Exoplanet Archive)",
-    "stTeff": "Temperatura della stella",
-    "stLum": "Luminosità della stella",
-    "stRad": "Raggio della stella",
     "yes": "Sì",
     "no": "No",
-    "advancedData": "Dati avanzati",
     "advMetallicity": "Metallicità",
     "advAge": "Età",
     "advMass": "Massa della stella",
     "advLogg": "Gravità superficiale (log g)",
     "advSpectype": "Tipo spettrale",
     "advRotation": "Periodo di rotazione",
-    "advVsini": "Velocità di rotazione proiettata (v sin i)"
+    "advVsini": "Velocità di rotazione proiettata (v sin i)",
+    "viewSystemCount_one": "{{count}} pianeta noto · Vedi sistema →",
+    "viewSystemCount_other": "{{count}} pianeti noti · Vedi sistema →",
+    "stellarRadius": "Raggio stellare"
+  },
+  "gauge": {
+    "nakedEye": "occhio nudo",
+    "binocular": "binocolo",
+    "verdictNakedEye": "Visibile a occhio nudo",
+    "verdictBinocular": "Visibile con il binocolo",
+    "verdictTelescope": "Serve un telescopio",
+    "oneDay": "1 giorno",
+    "oneYear": "1 anno"
   },
   "view": {
     "title": "Opzioni vista",
@@ -65,7 +63,9 @@
     "label": "Controlli",
     "filters": "Filtri",
     "view": "Vista",
-    "options": "Opzioni"
+    "options": "Opzioni",
+    "visibleOf": "{{visible}} di {{total}} visibili",
+    "visibleCount": "{{value}} stelle visibili"
   },
   "filters": {
     "title": "Filtri",
@@ -122,12 +122,10 @@
     "method": "Metodo di scoperta",
     "discYear": "Anno di scoperta",
     "eqTemp": "Temperatura di equilibrio",
-    "inHz": "In zona abitabile",
     "schematicOrbit": "Orbita schematica (inclinazione n/d)",
     "type": "Tipo",
     "planetTypes": "Tipi di pianeta",
     "orbitStyle": "Stile orbite",
-    "advancedData": "Dati avanzati",
     "density": "Densità",
     "insolation": "Irraggiamento",
     "massProvLabel": "Provenienza della massa",
@@ -148,7 +146,12 @@
       "prograde": "Prograda",
       "retrograde": "Retrograda"
     },
-    "compositionNote": "(modello approssimato)"
+    "compositionNote": "(modello approssimato)",
+    "noOrbitPosition": "Posizione orbitale non disponibile",
+    "inHzYes": "Nella zona abitabile",
+    "inHzNo": "Fuori dalla zona abitabile",
+    "starPanel": "Stella ospite",
+    "planetList": "Elenco dei pianeti"
   },
   "music": {
     "label": "Musica",
@@ -169,7 +172,9 @@
     "twinkleSpeed": "Frequenza del luccichio",
     "twinkleAmplitude": "Intensità del luccichio",
     "sizeGamma": "Contrasto dimensioni stelle",
-    "reset": "Ripristina opzioni"
+    "reset": "Ripristina opzioni",
+    "sectionCamera": "Camera",
+    "sectionStars": "Stelle"
   },
   "planetType": {
     "rocky": "Roccioso",
@@ -210,7 +215,7 @@
       },
       "system": {
         "action": "Vedi il sistema planetario",
-        "command": "Pulsante \"Vedi sistema\" nel pannello della stella"
+        "command": "Pulsante \"Vedi sistema\" sulla scheda della stella"
       },
       "dock": {
         "action": "Filtri, opzioni di vista e impostazioni",
@@ -220,5 +225,12 @@
     "dontShowAgain": "Non mostrare più",
     "start": "Inizia a esplorare",
     "helpButton": "Mostra la guida di benvenuto"
+  },
+  "card": {
+    "base": "Base",
+    "advanced": "Avanzata",
+    "modeLabel": "Livello di dettaglio",
+    "sectionCatalog": "Catalogo",
+    "sectionArchive": "NASA Exoplanet Archive"
   }
 }

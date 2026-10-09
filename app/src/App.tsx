@@ -9,7 +9,7 @@ import { isWebGL2Available } from './lib/webgl';
 import { GalaxyScene } from './scene/GalaxyScene';
 import { SystemScene } from './scene/SystemScene';
 import { useGalaxyMapStore } from './state/store';
-import { ControlDock } from './ui/ControlDock';
+import { BottomStack } from './ui/BottomStack';
 import { HelpButton } from './ui/HelpButton';
 import { HoverLabel } from './ui/HoverLabel';
 import { LanguageSelector } from './ui/LanguageSelector';
@@ -18,7 +18,6 @@ import { MusicPlayer } from './ui/MusicPlayer';
 import { SearchBox } from './ui/SearchBox';
 import { SelectionOverlay } from './ui/SelectionOverlay';
 import { StarLabelsLayer } from './ui/StarLabelsLayer';
-import { StarPanel } from './ui/StarPanel';
 import { SystemOverlay } from './ui/SystemOverlay';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 
@@ -91,8 +90,6 @@ export default function App() {
           <GalaxyScene />
           <StarLabelsLayer />
           <SearchBox />
-          <StarPanel />
-          {/* After the panel: its ✕ is not the first Tab stop after the search box. */}
           <SelectionOverlay />
           <HoverLabel />
         </>
@@ -102,7 +99,7 @@ export default function App() {
           <SystemOverlay />
         </>
       )}
-      <ControlDock />
+      <BottomStack />
       {/* Outside the view switch: the <audio> and playback survive view changes. */}
       <MusicPlayer />
       <div className="absolute top-4 right-4 z-40 flex items-center gap-2">

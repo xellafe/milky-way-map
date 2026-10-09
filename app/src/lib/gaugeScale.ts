@@ -31,8 +31,9 @@ export const temperatureScale = logScale(2400, 30000);
 /** Solar luminosities, log, 0.001..1000 (aesthetic choice, not data). */
 export const luminosityScale = logScale(0.001, 1000);
 
-/** Apparent magnitude, linear, -1..20 (aesthetic choice, not data). */
-export const magnitudeScale = linearScale(-1, 20);
+/** Apparent magnitude, linear, inverted: 20 at the left end, -1 at the right,
+ * so brighter stars sit further right like the other gauges (human choice, #23). */
+export const magnitudeScale = linearScale(20, -1);
 
 /** Gauge scale mark: `at` is a 0..1 position, `mark` draws a vertical tick. */
 export interface Tick {
@@ -70,12 +71,88 @@ export const LUMINOSITY_TICKS: readonly Tick[] = [
   { at: pos(luminosityScale, 1000), label: '10³', mark: true },
 ];
 
-/** The 10 tick is mark-only: its label would collide with the naked-eye label. */
-export const MAGNITUDE_TICKS: readonly Tick[] = [0, 10, 20].map((m) => ({
+/** Naked-eye limit, magnitude ~6 (convention, dark sky). */
+export const NAKED_EYE_LIMIT_MAG = 6;
+/** Binocular limit, magnitude ~9 (approximate convention: depends on instrument and sky). */
+export const BINOCULAR_LIMIT_MAG = 9;
+
+/** The 10 tick is mark-only: 10 and 9 are ~10 px apart and their labels would collide. */
+export const MAGNITUDE_TICKS: readonly Tick[] = [20, 10, 9, 6, -1].map((m) => ({
   at: pos(magnitudeScale, m),
-  ...(m === 10 ? {} : { label: String(m) }),
+  ...(m === 10 ? {} : { label: String(m).replace('-', '−') }),
   mark: true,
 }));
 
-/** Naked-eye limit, magnitude ~6 (conventional dark-sky threshold). */
-export const NAKED_EYE_AT = pos(magnitudeScale, 6);
+export type VisibilityZone = 'nakedEye' | 'binocular';
+
+export const MAGNITUDE_ZONES: readonly { from: number; to: number; kind: VisibilityZone }[] = [
+  {
+    from: pos(magnitudeScale, NAKED_EYE_LIMIT_MAG),
+    to: pos(magnitudeScale, -1),
+    kind: 'nakedEye',
+  },
+  {
+    from: pos(magnitudeScale, BINOCULAR_LIMIT_MAG),
+    to: pos(magnitudeScale, NAKED_EYE_LIMIT_MAG),
+    kind: 'binocular',
+  },
+];
+
+export function visibilityVerdict(
+  mag: number | null | undefined,
+): VisibilityZone | 'telescope' | null {
+  if (mag == null || !Number.isFinite(mag)) return null;
+  return mag <= NAKED_EYE_LIMIT_MAG
+    ? 'nakedEye'
+    : mag <= BINOCULAR_LIMIT_MAG
+      ? 'binocular'
+      : 'telescope';
+}
+
+/** Earth radii, log, 0.3..30 (aesthetic choice, not data). */
+export const planetRadiusScale = logScale(0.3, 30);
+
+/** Earth masses, log, 0.1..1e4 (aesthetic choice, not data). */
+export const planetMassScale = logScale(0.1, 1e4);
+
+/** Days, log, 0.1..1e5 (aesthetic choice, not data). */
+export const orbitalPeriodScale = logScale(0.1, 1e5);
+
+/** Kelvin, log, 50..3000 (aesthetic choice, not data). */
+export const eqTempScale = logScale(50, 3000);
+
+// Reference bodies (data): equatorial radii, the NASA Exoplanet Archive convention.
+export const PLANET_RADIUS_TICKS: readonly Tick[] = [
+  { at: pos(planetRadiusScale, 1), label: '⊕', mark: true },
+  { at: pos(planetRadiusScale, 3.883), label: '♆', mark: true },
+  { at: pos(planetRadiusScale, 11.209), label: '♃', mark: true },
+];
+
+// Earth masses (data): reference bodies as above.
+export const PLANET_MASS_TICKS: readonly Tick[] = [
+  { at: pos(planetMassScale, 1), label: '⊕', mark: true },
+  { at: pos(planetMassScale, 17.15), label: '♆', mark: true },
+  { at: pos(planetMassScale, 317.83), label: '♃', mark: true },
+];
+
+/** Days; 365.25 d is the Julian year (convention). The label is i18n (`gauge.oneDay`, `gauge.oneYear`), set by the tile. */
+export const PERIOD_TICKS: readonly (Tick & { labelKey: string })[] = [
+  { at: pos(orbitalPeriodScale, 1), labelKey: 'gauge.oneDay', mark: true },
+  { at: pos(orbitalPeriodScale, 365.25), labelKey: 'gauge.oneYear', mark: true },
+];
+
+/** Earth's equilibrium temperature, 255 K (Bond albedo 0.3; data). */
+export const EQ_TEMP_TICKS: readonly Tick[] = [
+  { at: pos(eqTempScale, 255), label: '⊕', mark: true },
+];
+
+/** Solar radii, log, 0.1..100 (aesthetic choice, not data). */
+export const stellarRadiusScale = logScale(0.1, 100);
+
+// Decade marks, locale-neutral labels; 1 is the Sun (1 R☉, data).
+const STELLAR_RADIUS_LABELS = ['10⁻¹', '1', '10', '10²'];
+export const STELLAR_RADIUS_TICKS: readonly Tick[] = [0.1, 1, 10, 100].map((v, i) => ({
+  at: pos(stellarRadiusScale, v),
+  label: STELLAR_RADIUS_LABELS[i]!,
+  mark: true,
+}));

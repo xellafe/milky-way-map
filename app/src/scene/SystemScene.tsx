@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
 import { canvasCursor } from '../lib/canvasCursor';
+import { approachTarget, followStep, followViewShift } from '../lib/follow';
+import { prefersReducedMotion } from '../lib/motion';
 import { hzBoundsAU, hzInclinationDeg, type HzBounds } from '../lib/habitableZone';
 import {
   nameSeed,
@@ -25,7 +27,11 @@ import planetFrag from '../shaders/planet.frag?raw';
 import planetVert from '../shaders/planet.vert?raw';
 import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
+import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
 import { HostStar } from './HostStar';
+import { placeAnchor } from './placeAnchor';
+import { getSelectionAnchor } from './selectionAnchor';
+import { readUsableArea } from './usableArea';
 
 const SUN_RADIUS_AU = 0.00465;
 // Orbits are real-scale; BODY sizes and looks are not (pscomppars has no
@@ -225,6 +231,7 @@ function PlanetAnimator({
   hzIncl: number | null;
 }) {
   const tDays = useRef(0);
+  const controls = useThree((s) => s.controls) as { target: THREE.Vector3 } | null;
 
   useFrame((_, delta) => {
     tDays.current += delta * useGalaxyMapStore.getState().timeScaleDaysPerSecond;
@@ -247,10 +254,12 @@ function PlanetAnimator({
     if (exposeBridge) {
       (globalThis as Record<string, unknown>).__system = {
         tDays: tDays.current,
+        cameraTarget: controls?.target.toArray() ?? null,
         timeScale: useGalaxyMapStore.getState().timeScaleDaysPerSecond,
         hz: hz && { ...hz, inclinationDeg: hzIncl },
         planets: planets.map((p) => ({
           name: p.record.pl_name,
+          position: meshes.current[planets.indexOf(p)]?.position.toArray() ?? null,
           schematic: p.schematic,
           semiMajorAxisAU: p.semiMajorAxisAU,
           periodDays: p.record.pl_orbper,
@@ -263,6 +272,135 @@ function PlanetAnimator({
     }
   });
 
+  return null;
+}
+
+/** Seconds the controls target takes to reach a newly selected planet (aesthetic choice, not data). */
+const FOLLOW_APPROACH_S = 1;
+// Width of the widest planet card, px: mirrors `.object-card[data-mode='advanced']`
+// in index.css (human choice, #23). The view shift keeps this card on screen.
+const ADVANCED_CARD_WIDTH_PX = 470;
+// Rate of the ease that slides the view to/from the parked position, 1/s. Aesthetic choice.
+const VIEW_SLIDE_RATE = 8;
+
+/**
+ * Keeps the orbit target on the selected planet (#10): eased approach, then a
+ * per-frame lock with the camera translated by the same delta. It also shifts
+ * the projection (setViewOffset) when the Advanced card would not fit beside a
+ * centred planet; this changes picking and PlanetTracker's projection too. The
+ * shift is kept on deselect and dies with the Canvas. Must be mounted after
+ * PlanetAnimator so it reads this frame's planet positions.
+ */
+function PlanetFollow({
+  planets,
+  meshes,
+}: {
+  planets: RenderablePlanet[];
+  meshes: React.RefObject<(THREE.Mesh | null)[]>;
+}) {
+  const controls = useThree((s) => s.controls) as { target: THREE.Vector3 } | null;
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
+  const run = useRef<{ name: string; start: THREE.Vector3; elapsed: number } | null>(null);
+  // Applied and wanted horizontal projection shift, px (#23 AC7).
+  const viewShift = useRef(0);
+  const wantShift = useRef(0);
+  const lastWidth = useRef(size.width);
+
+  useFrame((_, delta) => {
+    const name = useGalaxyMapStore.getState().selectedPlanet;
+    const mesh = name ? meshes.current[planets.findIndex((p) => p.record.pl_name === name)] : null;
+    // Recomputed only while a planet is followed: on deselect the view stays put.
+    if (mesh) {
+      wantShift.current = followViewShift(
+        readUsableArea(size.width, size.height),
+        size.width,
+        ADVANCED_CARD_WIDTH_PX,
+        CARD_GAP_PX,
+      );
+    } else if (lastWidth.current !== size.width) {
+      // The parked shift was computed for another viewport width; park the view at the centre.
+      wantShift.current = 0;
+    }
+    lastWidth.current = size.width;
+    const gap = wantShift.current - viewShift.current;
+    viewShift.current =
+      prefersReducedMotion() || Math.abs(gap) < 0.5
+        ? wantShift.current
+        : viewShift.current + gap * Math.min(1, delta * VIEW_SLIDE_RATE);
+    if (viewShift.current === 0) {
+      if (camera.view?.enabled) camera.clearViewOffset();
+    } else {
+      camera.setViewOffset(size.width, size.height, viewShift.current, 0, size.width, size.height);
+    }
+    if (exposeBridge) {
+      const bridge = (globalThis as Record<string, unknown>).__system as
+        | { viewShiftPx?: number }
+        | undefined;
+      if (bridge) bridge.viewShiftPx = viewShift.current;
+    }
+    if (!controls || !name || !mesh) {
+      run.current = null;
+      return;
+    }
+    if (run.current?.name !== name) {
+      run.current = { name, start: controls.target.clone(), elapsed: 0 };
+    }
+    const r = run.current;
+    r.elapsed += delta;
+    const dur = prefersReducedMotion() ? 0 : FOLLOW_APPROACH_S;
+    const t = dur === 0 ? 1 : Math.min(r.elapsed / dur, 1);
+    const pos = mesh.position.toArray();
+    const next = t < 1 ? approachTarget(r.start.toArray(), pos, t) : pos;
+    const moved = followStep(camera.position.toArray(), controls.target.toArray(), next);
+    camera.position.set(...moved.camera);
+    controls.target.set(...moved.target);
+    if (exposeBridge) {
+      const bridge = (globalThis as Record<string, unknown>).__system as {
+        cameraTarget?: number[];
+      };
+      if (bridge) bridge.cameraTarget = [...moved.target];
+    }
+  });
+  return null;
+}
+
+/**
+ * Projects the selected planet onto the card's anchor, like SelectionTracker
+ * does for stars. A planet without a mesh (no semi-major axis) has no position:
+ * its card sits against the right edge of the usable area instead. Mounted
+ * after PlanetAnimator so it reads this frame's positions.
+ */
+function PlanetTracker({
+  planets,
+  meshes,
+}: {
+  planets: RenderablePlanet[];
+  meshes: React.RefObject<(THREE.Mesh | null)[]>;
+}) {
+  const { camera, size } = useThree();
+  const v = useRef(new THREE.Vector3());
+
+  useFrame(() => {
+    const el = getSelectionAnchor();
+    const name = useGalaxyMapStore.getState().selectedPlanet;
+    if (!el || !name) return;
+    const mesh = meshes.current[planets.findIndex((p) => p.record.pl_name === name)];
+    if (!mesh) {
+      const area = readUsableArea(size.width, size.height);
+      placeAnchor(el, area.right + CARD_GAP_PX, area.top - CARD_TOP_OFFSET_PX, true, size);
+      return;
+    }
+    camera.updateMatrixWorld();
+    const p = v.current.copy(mesh.position).project(camera);
+    // Behind the camera the transform is left alone (mirrored projection).
+    if (p.z >= 1) {
+      el.style.visibility = 'hidden';
+      return;
+    }
+    const onScreen = Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1;
+    placeAnchor(el, ((p.x + 1) / 2) * size.width, ((1 - p.y) / 2) * size.height, onScreen, size);
+  });
   return null;
 }
 
@@ -386,7 +524,11 @@ export function SystemScene() {
   const hzIncl = hzInclinationDeg(allPlanets.map((p) => p.inclinationDeg));
 
   return (
+    // R3F leaves the <canvas> at the 300x150 default until its first resize
+    // measure; filling the wrapper meanwhile keeps the canvas from sitting in
+    // the top-left corner under the star panel (#23) and losing pointer input.
     <Canvas
+      className="[&_canvas]:size-full"
       camera={{
         position: [maxA * 1.7, maxA * 1.1, maxA * 1.7],
         fov: 50,
@@ -416,7 +558,7 @@ export function SystemScene() {
             }}
             onClick={(e) => {
               e.stopPropagation();
-              selectPlanet(p.record.pl_name);
+              selectPlanet({ name: p.record.pl_name, type: p.type });
             }}
             onPointerOver={() => (overPlanet.current = true)}
             onPointerOut={() => (overPlanet.current = false)}
@@ -427,6 +569,8 @@ export function SystemScene() {
         </group>
       ))}
       <PlanetAnimator planets={planets} meshes={meshes} angles={angles} hz={hz} hzIncl={hzIncl} />
+      <PlanetFollow planets={planets} meshes={meshes} />
+      <PlanetTracker planets={planets} meshes={meshes} />
       <GrabCursor overPlanet={overPlanet} />
       <OrbitControls
         makeDefault

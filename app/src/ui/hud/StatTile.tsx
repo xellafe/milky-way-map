@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from './Badge';
 import type { Tick } from '../../lib/gaugeScale';
@@ -13,6 +13,9 @@ export function StatTile({
   position,
   variant,
   ticks,
+  zones,
+  fill,
+  verdict,
   compact = false,
   testId,
 }: {
@@ -23,6 +26,10 @@ export function StatTile({
   position: number | null;
   variant?: 'track' | 'spectral';
   ticks?: readonly Tick[];
+  zones?: ComponentProps<typeof Gauge>['zones'];
+  fill?: boolean;
+  /** Plain-language reading shown under the value. */
+  verdict?: string;
   compact?: boolean;
   testId?: string;
 }) {
@@ -30,10 +37,7 @@ export function StatTile({
   const labelId = useId();
   const text = value === null ? t('panel.na') : unit ? `${value} ${unit}` : value;
   return (
-    <div
-      data-testid={testId}
-      className={`rounded-hud border border-hud-accent/25 bg-hud-accent/5 ${compact ? 'p-1.5' : 'p-2'}`}
-    >
+    <div data-testid={testId} className={`bg-hud-accent/5 ${compact ? 'p-1.5' : 'p-2'}`}>
       <div className="flex flex-wrap items-center justify-between gap-x-1">
         <span id={labelId} className="text-xs text-hud-muted">
           {label}
@@ -45,10 +49,17 @@ export function StatTile({
       >
         {text}
       </div>
+      {verdict && (
+        <div data-testid={`${testId}-verdict`} className="text-xs text-hud-muted">
+          {verdict}
+        </div>
+      )}
       <Gauge
         position={value === null ? null : position}
         variant={variant}
         ticks={ticks}
+        zones={zones}
+        fill={fill}
         valueText={text}
         labelledBy={labelId}
       />

@@ -1,13 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useGalaxyMapStore } from '../state/store';
-import { HudCheckbox } from './hud/HudInputs';
-import { HudPanel } from './hud/HudPanel';
+import { HudSwitch } from './hud/HudInputs';
 
 /**
  * View toggles (SPEC §6.2): always-on star names and constellation lines.
  * Both default OFF (no clutter in the default configuration — M6 AC).
- * Content only: the dock owns the toggle icon, positioning and open/close
- * state (issue #3).
+ * Content only: the dock panel (ControlDock) owns the frame (issue #3).
  */
 export function ViewTogglesPanel() {
   const { t } = useTranslation();
@@ -17,24 +15,24 @@ export function ViewTogglesPanel() {
   const toggleConstellations = useGalaxyMapStore((s) => s.toggleConstellations);
 
   return (
-    <HudPanel
+    <section
       id="dock-panel-view"
       aria-label={t('view.title')}
       data-testid="view-toggles"
       className="flex flex-col gap-1"
     >
-      <HudCheckbox
+      <HudSwitch
         label={t('view.showNames')}
         checked={showNames}
         data-testid="toggle-names"
         onChange={toggleNames}
       />
-      <HudCheckbox
+      <HudSwitch
         label={t('view.showConstellations')}
         checked={showConstellations}
         data-testid="toggle-constellations"
         onChange={toggleConstellations}
       />
-    </HudPanel>
+    </section>
   );
 }

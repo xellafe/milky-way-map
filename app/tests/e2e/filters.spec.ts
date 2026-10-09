@@ -74,6 +74,11 @@ test('spectral class filter shows exactly the selected classes', async ({ page }
     await page.getByTestId(`filter-class-${letter}`).click();
   }
   await page.getByTestId('filter-class-unknown').click();
+  await expect(page.getByTestId('filter-class-M')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('filter-class-G')).toHaveAttribute('aria-pressed', 'false');
+  await page.getByTestId('filter-class-M').click();
+  await expect(page.getByTestId('filter-class-M')).toHaveAttribute('aria-pressed', 'false');
+  await page.getByTestId('filter-class-M').click();
 
   await pollCount(page).toBe(countWhere((i) => fx.spectralClass[i] === 6));
 
@@ -96,6 +101,33 @@ test('distance range filter matches the exact in-range count', async ({ page }) 
 
   await page.getByTestId('filter-distance-max').fill('50');
   await pollCount(page).toBe(countWhere((i) => fx.distanceLy[i]! >= 0 && fx.distanceLy[i]! <= 50));
+});
+
+test('range slider drives the distance bound and the visible count', async ({ page }) => {
+  await openApp(page);
+
+  await page.getByTestId('filter-distance-max-slider').fill('50');
+  await expect(page.getByTestId('filter-distance-max')).toHaveValue('50');
+  await pollCount(page).toBe(countWhere((i) => fx.distanceLy[i]! >= 0 && fx.distanceLy[i]! <= 50));
+  expect(await page.getByTestId('visible-count').textContent()).not.toContain(String(fx.count));
+});
+
+for (const id of ['appmag', 'distance']) {
+  test(`${id} max slider at its far right keeps every star visible`, async ({ page }) => {
+    await openApp(page);
+    const total = await page.getByTestId('visible-count').textContent();
+    const slider = page.getByTestId(`filter-${id}-max-slider`);
+    await slider.focus();
+    await page.keyboard.press('End');
+    await expect(slider).toHaveValue((await slider.getAttribute('max'))!);
+    await page.waitForTimeout(500);
+    expect(await page.getByTestId('visible-count').textContent()).toBe(total);
+  });
+}
+
+test('unknown-class chip has the translated accessible name', async ({ page }) => {
+  await openApp(page);
+  await expect(page.getByTestId('filter-class-unknown')).toHaveAccessibleName('unknown');
 });
 
 test('magnitude range filters match the exact in-range counts', async ({ page }) => {
@@ -165,7 +197,7 @@ test('search by HD id finds the star and flies to it', async ({ page }) => {
   await expect(page.getByTestId('panel-title')).toHaveText('Polaris');
 
   // Fly-to centered the star: hovering the canvas center names Polaris.
-  await page.getByTestId('panel-close').click();
+  await page.getByTestId('overlay-close').click();
   await waitForFlyToArrival(page);
   const box = (await page.locator('canvas').boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -178,7 +210,7 @@ test('filtered-out stars are not pickable', async ({ page }) => {
   // Center Polaris, hide class F (Polaris) → hover at center finds nothing.
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
-  await page.getByTestId('panel-close').click();
+  await page.getByTestId('overlay-close').click();
   await waitForFlyToArrival(page);
 
   await page.getByTestId('filter-class-F').click();

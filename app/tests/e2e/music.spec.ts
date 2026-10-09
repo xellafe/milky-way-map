@@ -189,15 +189,12 @@ async function selectStar(page: Page, query: string, name: string) {
   const input = page.getByTestId('search-input');
   await input.fill(query);
   await page.getByRole('option').filter({ hasText: name }).first().click();
-  await expect(page.getByTestId('star-panel')).toBeVisible();
+  await expect(page.getByTestId('selection-card')).toBeVisible();
 }
 
 async function enterTrappist(page: Page) {
   await page.getByTestId('search-input').fill('trappist');
   await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
-  const button = page.getByTestId('view-system-button');
-  await expect(button).toBeEnabled({ timeout: 10_000 });
-  await button.click();
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
 }
 
@@ -219,12 +216,11 @@ test('desktop: player clear of the dock and an open dock panel', async ({ page }
   await expectClear(page, page.getByTestId('filters-panel'));
 });
 
-test('desktop: player clear of the star panel and the selection card', async ({ page }) => {
+test('desktop: player clear of the selection card', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page);
   await selectStar(page, 'polaris', 'Polaris');
   await waitForFlyToArrival(page);
-  await expectClear(page, page.getByTestId('star-panel'));
   const card = page.locator('[data-hud=selection-card]');
   await expect(card).toBeVisible();
   await expectClear(page, card);
@@ -275,10 +271,10 @@ test('compact System View hides the time bar while the player is expanded', asyn
   await expectClear(page, timeBar(page));
 });
 
-test('compact: star panel ends above the expanded player', async ({ page }) => {
+test('compact: selection card ends above the expanded player', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await openApp(page);
   await selectStar(page, 'polaris', 'Polaris');
   await expect(page.getByTestId('music-collapse')).toBeVisible();
-  await expectClear(page, page.getByTestId('star-panel'));
+  await expectClear(page, page.getByTestId('selection-card'));
 });

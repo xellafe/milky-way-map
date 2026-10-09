@@ -49,9 +49,6 @@ async function enterTrappist(page: Page) {
   await input.click();
   await input.fill('trappist');
   await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
-  const button = page.getByTestId('view-system-button');
-  await expect(button).toBeEnabled({ timeout: 10_000 });
-  await button.click();
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
 }
 
@@ -136,6 +133,10 @@ test('the star surface is textured', async ({ page }) => {
   // At the default camera the disc is ~13 px wide-radius and the grid spans a
   // few pixels, so texture is only meaningful zoomed in: wheel in to the
   // OrbitControls minDistance clamp (disc radius >> 60 px).
+  // The canvas must fill the viewport before aiming the wheel at its centre.
+  await expect
+    .poll(async () => (await page.locator('canvas').boundingBox())?.width ?? 0)
+    .toBeGreaterThan(300);
   const box = (await page.locator('canvas').boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   for (let i = 0; i < 60; i++) await page.mouse.wheel(0, -200);
@@ -224,7 +225,9 @@ test('re-entering System View works', async ({ page }) => {
   await expect.poll(async () => (await hostStar(page))?.time ?? 0).toBeGreaterThan(0.5);
   await page.getByTestId('system-back').click();
   await expect(page.getByTestId('system-title')).toHaveCount(0);
-  await page.getByTestId('view-system-button').click();
+  // #23: TRAPPIST-1 is unanchored, so there is no card button: search it again.
+  await page.getByTestId('search-input').fill('trappist');
+  await page.getByRole('option').filter({ hasText: 'TRAPPIST-1' }).first().click();
   await expect(page.getByTestId('system-title')).toHaveText('TRAPPIST-1');
   await expect.poll(async () => (await hostStar(page)) !== undefined).toBe(true);
   const t0 = (await hostStar(page))!.time;

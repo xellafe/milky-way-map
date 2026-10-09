@@ -8,6 +8,77 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #23 — restyling UI desktop, include #10 (2026-10-08, branch `feat/ui-overhaul`, commit `c818aa1`, `4c449c0`, `3671482`, `e0361c5`, `7b3a81a`, `4fa0f02`, `bd105ab`, `b931e2d`, `d9847c3`)
+
+Spec: `docs/superpowers/specs/2026-10-07-ui-overhaul-design.md`; piano: `docs/superpowers/plans/2026-10-07-ui-overhaul.md`.
+
+**Perimetro**
+- Solo desktop (≥ 1024 px). Il mobile è il secondo sottoprogetto, ancora aperto
+  sotto #23: richiede una modifica di SPEC §1 (decisione umana).
+
+**Costruito**
+- HUD (`c818aa1`): `.hud-card` con staffe agli angoli, componenti base.
+- Controlli (`4c449c0`): switch, slider a doppio valore, chip.
+- Dock (`3671482`): pannello a schede sopra il bottom stack, barra del tempo.
+- Gauge (`e0361c5`): scale ridisegnate, asse della magnitudine invertito.
+- Card stella (`7b3a81a`): unica, modalità Base/Advanced, ancorata alla stella.
+- Follow del pianeta, #10 (`4fa0f02`): `followStep`/`approachTarget` in `lib/`.
+- Card pianeta (`bd105ab`): tile con gauge, selezione via `selectPlanet`.
+- System View (`b931e2d`): due pannelli laterali (stella, lista pianeti).
+- Rifiniture (`d9847c3`): posizionamento card, età, layout System View.
+
+**Decisioni (ruling R) che cambiano il comportamento o deviano da spec/piano**
+- R1: angoli squadrati (`--radius-hud: 0`) per card, tile, bottoni e input.
+- R3: staffe come 4 `linear-gradient` di sfondo su `.hud-card`, non
+  `::before/::after` (scorrevano via nelle card con overflow).
+- R6: tacca dei 10 mag senza etichetta (collide con quella a 9 a ~10 px).
+- R7: nessun fill sul gauge della magnitudine apparente (coprirebbe le zone);
+  deviazione da spec §1.
+- Soglia binocolo 9 mag: convenzione approssimata, non un dato.
+- R13: difetto del piano, `stellarRadiusScale(1)=0.5` contraddice
+  `logScale(0.1,100)` (=1/3); tenuto il range 0.1..100 R☉ e il test a 1/3.
+- R14/R15/R20: nel follow la proiezione si sposta (`setViewOffset`) perché il
+  pianeta stia a sinistra del bordo destro dell'area utile (a 1280×720 la card
+  Advanced da 470 px non entra a lato di un pianeta centrato). Lo shift resta
+  alla deselezione, si ricalcola al nuovo pianeta, si azzera uscendo dalla
+  System View, scatta solo se la card Advanced non entra e ha un limite per
+  tenere il pianeta ≥ `RING_HALF_PX` dal bordo sinistro. **Cambio visibile
+  dell'inquadratura: l'umano deve confermare.**
+- R18: l'età della stella compare una volta sola (`ArchiveSection` la omette
+  dove c'è `StarExtraRows`): AC1 prevale sull'elenco di spec §3.
+- R19 (sostituisce R10): il fondo dell'area utile è il top di dock bar e barra
+  del tempo; il pannello del dock aperto sta sopra la card (spec §3).
+- R2: un Esc chiude prima il dock, il successivo deseleziona.
+- R16: `layout.spec` 1920×1080 galassia con `test.slow()` (budget, non retry).
+- R21: test "planet card follows the planet" riscritto (ancora ferma, pianeta
+  che si muove nel mondo); tolto dai flaky.
+
+**Punti aperti per l'umano**
+- M10: nome dell'host in header (`system-title`) e nel pannello sinistro,
+  tenere entrambi o solo "← Galassia" nell'header.
+- R14/R15/R20: confermare la nuova inquadratura nel follow del pianeta.
+
+**Minor parcheggiati**
+- `aria-label` del conteggio visibile su uno span senza ruolo (usare sr-only).
+- `DockPanel` ha `aria-label` uguale al nav del dock (landmark non unico).
+- `usableArea.ts:11`: commento oltre 100 caratteri.
+- `SearchBox`, `LanguageSelector`, `WelcomeDialog`: `.hud-card` senza staffe.
+- `GalaxyScene`: il Canvas non ha `[&_canvas]:size-full`.
+- Risolti nel giro di fix finale (`d9847c3`): I1–I4, M1–M9 (tabpanel, label del
+  contatore, barra del tempo su una riga, tile compatti, shift al resize,
+  ritardo di apertura della card non ancorata).
+
+**Esiti AC**
+- AC1–AC11 PASS (AC1 con R18). Gate finale: typecheck, lint, format:check e
+  build verdi; unit **242/242** (30 file); e2e **205 passati, 1 flaky**
+  (`filters.spec` GPU mask, passa da solo); layout, a11y e uiOverhaul 29/29 in
+  isolamento. FPS non rimisurato.
+
+**Limite noto**
+- `placeCard` non limita `x`: con la card Advanced la card può uscire
+  dall'area in orizzontale a larghezze molto strette nella galassia (a ≥ 1024
+  px non succede). Il layout sotto 1024 px è fuori perimetro.
+
 ## Issue #18 — informazioni avanzate su stelle e pianeti (2026-10-06, branch `feat/advanced-info`, commit `e26897c`, `7420bfc`, `2899139`, `1099d15`)
 
 - Costruito: sezioni "Dati avanzati". Stella ospite: metallicità
@@ -420,6 +491,22 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - `system.spec` "orbit style: each style renders and the choice persists":
   ~30 s da solo contro un budget di 60 s; timeout sotto carico della suite
   completa due volte il 2026-10-06; da solo passa.
+- `orbit.spec` (riga 175) "ambient auto-orbit revolves around the locked star
+  until a manual drag": fallito una volta nella run completa (deriva della
+  distanza 0,119 contro < 0,05); da solo passa. Visto sul branch
+  `feat/ui-overhaul`, issue #23.
+- `starcloud.spec` (riga 6) "renders the star cloud from the fixture data":
+  fallito una volta nella run completa (conteggio stelle 0 dopo il timeout di
+  15 s); da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
+- `overlay.spec` (riga ~289) "Advanced to Base: animates out, then unmounts the
+  column": `data-mode` ancora "advanced" dopo 2 s nella run completa sotto
+  carico; da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
+- `filters.spec` (riga ~159) "filters visibly change the rendered cloud (GPU
+  mask)": `loading-overlay` ancora presente dopo 15 s in una run completa sotto
+  carico; da solo passa (13,7 s). Visto sul branch `feat/ui-overhaul`, issue #23.
+- `layout.spec` "1920x1080 galaxy": ≈1–1,3 min da solo con GL software, usa
+  `test.slow()`; due timeout nelle run complete prima dell'accelerazione. Visto
+  sul branch `feat/ui-overhaul`, issue #23.
 
 ## Come riprendere
 
