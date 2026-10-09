@@ -12,8 +12,9 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 
 - 3D point cloud of ~2.49M stars (AT-HYG + HYG) in a single draw call, with
   energy-faithful sizing/color and bloom.
-- Free-fly + click-to-orbit camera with animated fly-to; `prefers-reduced-motion`
-  aware.
+- Free-fly + click-to-orbit camera with animated fly-to; the movement-speed
+  option also scales the fly-to duration (faster = shorter, clamped 0.3–8 s);
+  `prefers-reduced-motion` aware (instant fly-to).
 - Sci-fi HUD UI: bottom control dock opening a single tabbed panel (Filters / View /
   Options); music player in the bottom-right corner (playlist with prev/next, play/pause, volume, track title from the file name; collapsible to an icon, state remembered across visits; playback continues across view changes); star card anchored to the selected star by a ring and leader line (the only place for star data; closed with ✕ or Esc) with a Base/Advanced toggle (animated, immediate with reduced motion, choice remembered across visits): Base shows stat tiles, gauges with labelled scales (distance, spectral class, luminosity, apparent magnitude; the latter has a brighter-to-the-right axis, naked-eye and approximate binoculars zones, and a three-state visibility verdict) and a "N known planets · View system →" button; Advanced widens the card to two columns with absolute magnitude, B–V, estimated age, a Catalog section and a NASA archive section (metallicity, mass, rotation for exoplanet hosts; the age is shown once); an exoplanet host not anchored to a catalog star, picked from search, opens the System View directly with a "not anchored" badge.
 - Welcome dialog with a short description and quick controls guide, shown on
@@ -26,7 +27,8 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 - System View: fly into an exoplanet system, real-scale orbits (Kepler solver),
   shared time-scale slider (time bar above the dock), habitable-zone overlay
   (approximate √L model), planet type filter and selectable orbit style
-  (trail / thick / simple), all in the dock's View tab.
+  (trail / thick / simple), all in the dock's View tab. In the System View the
+  Options tab shows only the Realism switch.
   Two fixed side panels: on the left the host star data (stat tiles; catalog
   rows for anchored hosts; a "not anchored" badge and archive tiles for
   temperature, luminosity and radius for unanchored hosts; a NASA archive

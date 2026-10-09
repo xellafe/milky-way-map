@@ -60,8 +60,8 @@ function lockedTarget(): THREE.Vector3 | null {
  *   over (drag) or releases the lock.
  * - Fly-to (search select AND click select — both land at the fixed
  *   ARRIVE_DISTANCE_LY): position+orientation tween, duration ∝ log of
- *   distance. prefers-reduced-motion → instant jump + no auto-orbit. Input
- *   is ignored while a tween runs (max 2.5 s, no cancel edge cases).
+ *   distance, scaled by the movement-speed setting (#23).
+ *   prefers-reduced-motion → instant jump + no auto-orbit. Input is ignored while a tween runs (bounded duration, no cancel edge cases).
  */
 export function CameraControls() {
   const { gl, camera } = useThree();
@@ -166,6 +166,7 @@ export function CameraControls() {
         camera.quaternion,
         new THREE.Vector3(...store.pendingFlyTo),
         prefersReducedMotion(),
+        useSettingsStore.getState().moveSpeedLyPerS,
       );
       store.clearFlyTo();
       keys.current.clear(); // held keys must not act the instant we arrive
