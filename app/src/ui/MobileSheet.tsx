@@ -71,7 +71,7 @@ export function MobileSheet({ label, children }: { label: string; children: Reac
   };
   const onClick = () => {
     if (dragged.current) dragged.current = false;
-    else setSnap(snap === 'expanded' ? 'base' : 'expanded');
+    else setSnap(snap === 'base' ? 'expanded' : 'base'); // closed reopens at base
   };
 
   const open = snap !== 'closed' || dragPx !== null;
@@ -88,8 +88,9 @@ export function MobileSheet({ label, children }: { label: string; children: Reac
       style={portrait ? { height: size } : { width: size }}
       className={`hud-card pointer-events-auto absolute z-30 flex ${
         portrait
-          ? 'inset-x-0 bottom-0 flex-col pb-[env(safe-area-inset-bottom)]'
-          : 'inset-y-0 right-0 max-w-[50vw] flex-row py-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)]'
+          ? // Bottom reserve (4.5rem + inset): the dock row sits over it, so it stays reachable under the sheet (#25).
+            'inset-x-0 bottom-0 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))]'
+          : 'inset-y-0 right-0 max-w-[50vw] flex-row pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]'
       } ${dragPx === null ? 'motion-safe:transition-[height,width] motion-safe:duration-200' : ''}`}
     >
       <button
@@ -110,14 +111,7 @@ export function MobileSheet({ label, children }: { label: string; children: Reac
           className={`rounded-full bg-hud-muted ${portrait ? 'h-1 w-10' : 'h-10 w-1'}`}
         />
       </button>
-      {open && (
-        <div
-          // Landscape: clears the help / language buttons pinned to the top-right corner.
-          className={`flex min-h-0 min-w-0 flex-1 flex-col ${portrait ? '' : 'pt-14'}`}
-        >
-          {children}
-        </div>
-      )}
+      {open && <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>}
     </aside>
   );
 }

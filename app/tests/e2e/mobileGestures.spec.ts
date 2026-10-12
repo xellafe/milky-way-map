@@ -118,6 +118,8 @@ async function openApp(page: Page) {
 }
 
 async function flyToPolaris(page: Page) {
+  const opener = page.getByTestId('search-open');
+  if (await opener.isVisible()) await opener.click();
   await page.getByTestId('search-input').fill('polaris');
   await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
   await waitForFlyToArrival(page);
@@ -168,6 +170,8 @@ test('spreading two fingers with no selection advances along the view direction'
 test('with a star selected, spreading dollies toward it and pinching in moves away', async ({
   page,
 }) => {
+  // software-GL phone canvas: each CDP touch ~1 s (#25)
+  test.slow();
   const f = await openApp(page);
   await flyToPolaris(page);
   const polaris = fixtureStarPosition('Polaris');

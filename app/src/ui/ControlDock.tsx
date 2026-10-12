@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { isDefaultFilters } from '../lib/filterMask';
 import { formatNumber } from '../lib/format';
+import { useLayoutMode } from '../lib/viewport';
 import { isDefaultSettings, useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore, type DockPanelId } from '../state/store';
 import { FiltersPanel } from './FiltersPanel';
@@ -62,6 +63,7 @@ function OptionsIcon() {
 export function ControlDock() {
   const { t } = useTranslation();
   const view = useGalaxyMapStore((s) => s.view);
+  const touch = useLayoutMode() !== 'desktop';
   const items: DockItem[] = [
     ...(view === 'galaxy'
       ? [
@@ -76,7 +78,7 @@ export function ControlDock() {
     { id: 'view', label: t('dock.view'), icon: <ViewIcon />, testId: 'view-toggle' },
     { id: 'options', label: t('dock.options'), icon: <OptionsIcon />, testId: 'options-toggle' },
   ];
-  return <Dock items={items} label={t('dock.label')} />;
+  return <Dock items={items} label={t('dock.label')} touch={touch} />;
 }
 
 /**
@@ -105,7 +107,7 @@ function SystemOptions() {
 }
 
 /** Reset button of the active tab; the View tab and the System View options have nothing to reset. */
-function ResetButton({ id }: { id: DockPanelId }) {
+function ResetButton({ id, touch }: { id: DockPanelId; touch: boolean }) {
   const { t } = useTranslation();
   const filters = useGalaxyMapStore((s) => s.filters);
   const resetFilters = useGalaxyMapStore((s) => s.resetFilters);
@@ -116,6 +118,7 @@ function ResetButton({ id }: { id: DockPanelId }) {
   return (
     <HudButton
       variant="secondary"
+      touch={touch}
       onClick={isFilters ? resetFilters : settings.resetSettings}
       disabled={isFilters ? isDefaultFilters(filters) : isDefaultSettings(settings)}
       data-testid={isFilters ? 'filters-reset' : 'options-reset'}
@@ -126,8 +129,11 @@ function ResetButton({ id }: { id: DockPanelId }) {
   );
 }
 
-/** Single tabbed panel of the dock: header (tabs, visible count, reset) + active content. */
-export function DockPanel() {
+/**
+ * Single tabbed panel of the dock: header (tabs, visible count, reset) + active content.
+ * `sheet`: body of the phone sheet (#25), which is itself the card, so no card of its own.
+ */
+export function DockPanel({ sheet = false }: { sheet?: boolean }) {
   const { t, i18n } = useTranslation();
   const view = useGalaxyMapStore((s) => s.view);
   const active = useGalaxyMapStore((s) => s.dockPanel);
@@ -145,16 +151,16 @@ export function DockPanel() {
   // toggleDockPanel on an inactive tab opens it (and keeps the compact player rule, #13).
   const select = (id: DockPanelId) => id !== active && toggleDockPanel(id);
 
-  return (
-    <HudCard
-      as="section"
-      aria-label={t('dock.label')}
-      data-testid="dock-panel"
-      // 22rem = panel width: aesthetic choice (not data).
-      className="pointer-events-auto w-[22rem] max-w-[calc(100vw-2rem)] p-3"
-    >
+  const body = (
+    <>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <Tabs items={tabs} active={active} onSelect={select} label={t('dock.label')} />
+        <Tabs
+          items={tabs}
+          active={active}
+          onSelect={select}
+          label={t('dock.label')}
+          touch={sheet}
+        />
         <div className="flex items-center gap-2">
           {view === 'galaxy' && visibleCount !== null && (
             <span
@@ -167,7 +173,7 @@ export function DockPanel() {
               {formatNumber(visibleCount, i18n.language)}
             </span>
           )}
-          <ResetButton id={active} />
+          <ResetButton id={active} touch={sheet} />
         </div>
       </div>
       {/* max-h is an aesthetic choice (not data): leaves room for the time bar and dock. */}
@@ -175,12 +181,34 @@ export function DockPanel() {
         id="dock-panel"
         role="tabpanel"
         aria-labelledby={`dock-tab-${active}`}
-        className="max-h-[50vh] overflow-y-auto"
+        className={sheet ? 'min-h-0 flex-1 overflow-y-auto' : 'max-h-[50vh] overflow-y-auto'}
       >
         {active === 'filters' && <FiltersPanel />}
         {active === 'view' && (view === 'galaxy' ? <ViewTogglesPanel /> : <SystemViewPanel />)}
         {active === 'options' && (view === 'galaxy' ? <OptionsPanel /> : <SystemOptions />)}
       </div>
+    </>
+  );
+  if (sheet) {
+    return (
+      <section
+        aria-label={t('dock.label')}
+        data-testid="dock-panel"
+        className="flex min-h-0 flex-1 flex-col p-3"
+      >
+        {body}
+      </section>
+    );
+  }
+  return (
+    <HudCard
+      as="section"
+      aria-label={t('dock.label')}
+      data-testid="dock-panel"
+      // 22rem = panel width: aesthetic choice (not data).
+      className="pointer-events-auto w-[22rem] max-w-[calc(100vw-2rem)] p-3"
+    >
+      {body}
     </HudCard>
   );
 }

@@ -4,7 +4,7 @@ import { prefersReducedMotion } from '../lib/motion';
 import type { PlanetType } from '../lib/planetType';
 import { readFlag, writeFlag } from '../lib/localFlag';
 import type { SheetSnap } from '../lib/sheet';
-import { isCompactViewport } from '../lib/viewport';
+import { currentLayoutMode, isCompactViewport } from '../lib/viewport';
 import { isWelcomeDismissed } from '../lib/welcome';
 
 export type CameraMode = 'free-fly' | 'orbit';
@@ -136,7 +136,9 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   },
   welcomeOpen: !isWelcomeDismissed(),
   setWelcomeOpen: (open) => set({ welcomeOpen: open }),
-  musicExpanded: !readFlag(MUSIC_COLLAPSED_KEY),
+  // Phone (#25): the expanded player is a sheet, so a first visit would open on a covered scene;
+  // it starts collapsed there.
+  musicExpanded: !readFlag(MUSIC_COLLAPSED_KEY) && currentLayoutMode() === 'desktop',
   // On compact viewports the expanded player and an open dock panel would
   // overlap, so opening one collapses the other (#13).
   setMusicExpanded: (expanded) => {
@@ -144,6 +146,8 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
     set((s) => ({
       musicExpanded: expanded,
       dockPanel: expanded && isCompactViewport() ? null : s.dockPanel,
+      // Phone sheet (#25): the new content opens at base; ignored on desktop.
+      sheetSnap: 'base',
     }));
   },
   selectionEpoch: 0,
@@ -220,7 +224,9 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       return {
         dockPanel: opening ? id : null,
         musicExpanded: collapsePlayer ? false : s.musicExpanded,
+        // Phone sheet (#25, spec §4.4): opening or closing a panel brings the sheet back to base.
+        sheetSnap: 'base' as const,
       };
     }),
-  closeDockPanel: () => set({ dockPanel: null }),
+  closeDockPanel: () => set({ dockPanel: null, sheetSnap: 'base' }),
 }));

@@ -4,6 +4,7 @@ import { loadExoplanets, searchHosts } from '../data/exoplanets';
 import { looksLikeCatalogId, searchByCatalogId } from '../data/idSearch';
 import { isNamesIndexReady, searchStars, type StarSearchResult } from '../data/namesIndex';
 import { getStarCore } from '../data/starCoreStore';
+import { useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 
 interface ResultItem {
@@ -26,6 +27,10 @@ export function SearchBox() {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
+  // Phone (#25): the box is an icon until tapped, then fills the top bar up to help / language.
+  const phone = useLayoutMode() !== 'desktop';
+  const [fieldShown, setFieldShown] = useState(false);
+  const collapsed = phone && !fieldShown;
   // Bumped when async catalogs (names index / exoplanets) finish loading,
   // so an already-typed query re-runs against the fresh data.
   const [dataVersion, setDataVersion] = useState(0);
@@ -48,6 +53,9 @@ export function SearchBox() {
     };
   }, [query]);
   const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (fieldShown) inputRef.current?.focus();
+  }, [fieldShown]);
   const selectStar = useGalaxyMapStore((s) => s.selectStar);
   const enterSystemView = useGalaxyMapStore((s) => s.enterSystemView);
   const requestFlyTo = useGalaxyMapStore((s) => s.requestFlyTo);
@@ -101,6 +109,7 @@ export function SearchBox() {
     }
     setOpen(false);
     setQuery('');
+    setFieldShown(false);
     inputRef.current?.blur();
   };
 
@@ -118,14 +127,40 @@ export function SearchBox() {
       // Mark handled so the dock's document-level Esc listener ignores it.
       e.preventDefault();
       setOpen(false);
+      setFieldShown(false);
       inputRef.current?.blur();
     }
   };
 
   const showList = open && query.trim().length >= 2;
 
+  if (collapsed) {
+    return (
+      <div role="search">
+        <button
+          type="button"
+          data-testid="search-open"
+          aria-label={t('ui.searchOpen')}
+          onClick={() => setFieldShown(true)}
+          className="hud-card flex h-11 w-11 items-center justify-center text-hud-text"
+        >
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+          >
+            <circle cx="11" cy="11" r="6.5" strokeWidth="1.6" />
+            <path strokeWidth="1.6" strokeLinecap="round" d="m16 16 4.5 4.5" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="absolute top-4 left-4 z-10 w-80" role="search">
+    <div className={phone ? 'min-w-0 flex-1' : 'absolute top-4 left-4 z-10 w-80'} role="search">
       <input
         ref={inputRef}
         type="text"
@@ -137,7 +172,7 @@ export function SearchBox() {
         placeholder={t('ui.searchPlaceholder')}
         data-testid="search-input"
         data-hud="search"
-        className="hud-card w-full px-3 py-2 font-hud text-sm text-hud-text placeholder-hud-muted outline-none focus:ring-2 focus:ring-hud-accent"
+        className={`hud-card w-full px-3 ${phone ? 'h-11 text-base' : 'py-2 text-sm'} font-hud text-hud-text placeholder-hud-muted outline-none focus:ring-2 focus:ring-hud-accent`}
         onChange={(e) => {
           setQuery(e.target.value);
           setActive(0);
@@ -150,6 +185,9 @@ export function SearchBox() {
             .then(() => setDataVersion((v) => v + 1))
             .catch(() => {});
         }}
+        onBlur={() => {
+          if (phone && query === '') setFieldShown(false);
+        }}
         onKeyDown={onKeyDown}
       />
       {showList && (
@@ -157,7 +195,12 @@ export function SearchBox() {
           id="search-results"
           role="listbox"
           data-testid="search-results"
-          className="hud-card mt-1 overflow-hidden font-hud text-sm"
+          className={`hud-card font-hud text-sm ${
+            phone
+              ? // Spans the top bar (the nearest positioned ancestor), scrolls inside the viewport.
+                'absolute inset-x-2 top-full mt-1 max-h-[calc(100dvh-5rem)] overflow-y-auto'
+              : 'mt-1 overflow-hidden'
+          }`}
         >
           {results.length === 0 && (
             <li className="px-3 py-2 text-hud-muted">
@@ -168,7 +211,7 @@ export function SearchBox() {
             <li key={item.key} role="option" aria-selected={i === activeIndex}>
               <button
                 type="button"
-                className={`flex w-full items-center justify-between px-3 py-2 text-left text-hud-text hover:bg-white/10 ${
+                className={`flex w-full items-center justify-between px-3 py-2 ${phone ? 'min-h-11' : ''} text-left text-hud-text hover:bg-white/10 ${
                   i === activeIndex ? 'bg-white/10' : ''
                 }`}
                 onMouseDown={(e) => {

@@ -9,6 +9,7 @@
     "loading": "Caricamento…",
     "loadingStars": "Caricamento del catalogo stellare… {{percent}}",
     "searchPlaceholder": "Cerca una stella o un sistema (es. Polaris, HD 209458, TRAPPIST-1)",
+    "searchOpen": "Apri la ricerca",
     "searchNoResults": "Nessun risultato",
     "searchUnanchored": "solo sistema"
   },

@@ -14,11 +14,14 @@ export function Tabs({
   active,
   onSelect,
   label,
+  touch = false,
 }: {
   items: TabItem[];
   active: DockPanelId;
   onSelect: (id: DockPanelId) => void;
   label: string;
+  /** 44 px high tabs (phone, #25). */
+  touch?: boolean;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -49,7 +52,7 @@ export function Tabs({
             tabIndex={selected ? 0 : -1}
             data-testid={item.testId}
             onClick={() => onSelect(item.id)}
-            className={`rounded-hud border px-2 py-1 font-hud text-xs ${
+            className={`rounded-hud border px-2 py-1 font-hud text-xs ${touch ? 'min-h-11 min-w-11' : ''} ${
               selected
                 ? 'border-hud-accent/60 bg-hud-accent/20 text-hud-bright'
                 : 'border-transparent text-hud-muted hover:text-hud-bright'

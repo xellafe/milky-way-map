@@ -3,6 +3,7 @@ import { type Filters } from '../lib/filterMask';
 import { getStarCore } from '../data/starCoreStore';
 import { formatNumber } from '../lib/format';
 import { spectralChipColor, type SpectralLetter } from '../lib/spectralChip';
+import { useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 import { HudSwitch } from './hud/HudInputs';
 import { RangeSlider } from './hud/RangeSlider';
@@ -18,6 +19,7 @@ const SPECTRAL_LABELS: SpectralLetter[] = ['O', 'B', 'A', 'F', 'G', 'K', 'M'];
 export function FiltersPanel() {
   const { t, i18n } = useTranslation();
   const visibleCount = useGalaxyMapStore((s) => s.visibleCount);
+  const touch = useLayoutMode() !== 'desktop';
   const total = getStarCore()?.count ?? null;
   const filters = useGalaxyMapStore((s) => s.filters);
   const setFilters = useGalaxyMapStore((s) => s.setFilters);
@@ -44,6 +46,7 @@ export function FiltersPanel() {
             <ToggleChip
               key={letter}
               label={letter}
+              touch={touch}
               pressed={filters.spectralClasses[code] === true}
               color={spectralChipColor(letter)}
               testId={`filter-class-${letter}`}
@@ -52,6 +55,7 @@ export function FiltersPanel() {
           ))}
           <ToggleChip
             label="?"
+            touch={touch}
             ariaLabel={t('filters.unknown')}
             color="var(--color-hud-muted)"
             pressed={filters.spectralClasses[7] === true}

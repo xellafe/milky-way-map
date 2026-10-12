@@ -62,14 +62,16 @@ export function SelectionOverlay() {
   );
   const epoch = useGalaxyMapStore((s) => s.selectionEpoch);
   const mobile = useLayoutMode() !== 'desktop';
-  // Deliberate simplification: dock panels and the player are not sheet content yet, so they
-  // are not passed in; upgrade when they move into the sheet (#25).
+  const dockPanel = useGalaxyMapStore((s) => s.dockPanel);
+  const musicExpanded = useGalaxyMapStore((s) => s.musicExpanded);
+  // Only the phone has one panel at a time: on desktop the card stays under an open dock
+  // panel or player.
   const content = sheetContent({
     view: 'galaxy',
     hasStar: index !== null,
     hasPlanet: false,
-    dockPanel: null,
-    musicExpanded: false,
+    dockPanel: mobile ? dockPanel : null,
+    musicExpanded: mobile && musicExpanded,
   });
 
   // Esc deselects, unless something else already used it: a dock panel (marks the

@@ -6,6 +6,7 @@ export function ToggleChip({
   color,
   testId,
   ariaLabel,
+  touch = false,
 }: {
   label: string;
   pressed: boolean;
@@ -13,6 +14,8 @@ export function ToggleChip({
   color?: string;
   testId: string;
   ariaLabel?: string;
+  /** 44x44 px minimum (phone, #25). */
+  touch?: boolean;
 }) {
   return (
     <button
@@ -22,7 +25,7 @@ export function ToggleChip({
       data-testid={testId}
       onClick={onToggle}
       style={pressed && color ? { backgroundColor: color } : undefined}
-      className={`border px-2 py-0.5 font-hud-mono text-xs ${
+      className={`border px-2 py-0.5 font-hud-mono text-xs ${touch ? 'min-h-11 min-w-11' : ''} ${
         pressed
           ? `border-transparent ${color ? 'text-black' : 'bg-hud-accent/30 text-hud-bright'}`
           : 'border-hud-accent/30 text-hud-muted hover:text-hud-text'

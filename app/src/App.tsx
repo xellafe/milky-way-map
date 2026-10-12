@@ -30,6 +30,7 @@ export default function App() {
   const setDataStatus = useGalaxyMapStore((s) => s.setDataStatus);
   const setDataProgress = useGalaxyMapStore((s) => s.setDataProgress);
   const layout = useLayoutMode();
+  const mobile = layout !== 'desktop';
 
   useEffect(() => {
     if (!webgl2Available) return;
@@ -91,7 +92,7 @@ export default function App() {
         <>
           <GalaxyScene />
           <StarLabelsLayer />
-          <SearchBox />
+          {!mobile && <SearchBox />}
           <SelectionOverlay />
           {/* No hover on touch: the label would stick at the last tap. */}
           {!isCoarsePointer() && <HoverLabel />}
@@ -105,10 +106,27 @@ export default function App() {
       <BottomStack />
       {/* Outside the view switch: the <audio> and playback survive view changes. */}
       <MusicPlayer />
-      <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
-        <HelpButton />
-        <LanguageSelector />
-      </div>
+      {mobile ? (
+        // Phone (#25): one row; landscape keeps to the scene area, left of the sheet.
+        <div
+          data-testid="top-bar"
+          data-hud="top-bar"
+          className={`absolute top-[max(0.5rem,env(safe-area-inset-top))] left-2 z-40 flex items-center gap-2 ${
+            layout === 'landscape' ? 'right-[calc(50vw+0.5rem)]' : 'right-2'
+          }`}
+        >
+          {view === 'galaxy' && <SearchBox />}
+          <div className="ml-auto flex items-center gap-2">
+            <HelpButton />
+            <LanguageSelector />
+          </div>
+        </div>
+      ) : (
+        <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+          <HelpButton />
+          <LanguageSelector />
+        </div>
+      )}
       {/* SPEC §6.3: animated transition into/out of the System View — a CSS
           fade keyed by view (motion-safe only: reduced motion = hard cut). */}
       <div

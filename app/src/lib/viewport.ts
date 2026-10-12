@@ -46,7 +46,7 @@ function subscribeLayout(onChange: () => void): () => void {
 }
 
 // A string snapshot is a stable primitive: useSyncExternalStore compares by identity.
-function getLayoutSnapshot(): LayoutMode {
+export function currentLayoutMode(): LayoutMode {
   if (typeof window === 'undefined') return 'desktop';
   const coarse =
     typeof window.matchMedia === 'function' && window.matchMedia(COARSE_POINTER_QUERY).matches;
@@ -55,5 +55,5 @@ function getLayoutSnapshot(): LayoutMode {
 
 /** Reactive phone layout mode (see `layoutMode`); follows resize/rotation. */
 export function useLayoutMode(): LayoutMode {
-  return useSyncExternalStore(subscribeLayout, getLayoutSnapshot, () => 'desktop');
+  return useSyncExternalStore(subscribeLayout, currentLayoutMode, () => 'desktop');
 }

@@ -12,7 +12,8 @@ const rectOf = (hud: string) =>
  * the side panels when present. Measured, not hard-coded: the HUD reflows.
  */
 export function readUsableArea(width: number, height: number): Area {
-  const top = rectOf('search')?.bottom ?? rectOf('system-header')?.bottom ?? 0;
+  const top =
+    rectOf('top-bar')?.bottom ?? rectOf('search')?.bottom ?? rectOf('system-header')?.bottom ?? 0;
   const bottom = Math.min(
     height,
     ...['dock', 'time-bar', 'music-player'].map((hud) => rectOf(hud)?.top ?? height),

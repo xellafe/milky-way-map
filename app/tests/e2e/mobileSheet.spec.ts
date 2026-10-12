@@ -49,6 +49,8 @@ async function open(page: Page) {
 }
 
 async function select(page: Page, query: string, name: string) {
+  const opener = page.getByTestId('search-open');
+  if (await opener.isVisible()) await opener.click();
   await page.getByTestId('search-input').fill(query);
   await page.getByRole('option').filter({ hasText: name }).first().click();
   await expect(page.getByTestId('mobile-sheet')).toHaveAttribute('data-snap', 'base');
