@@ -5,7 +5,7 @@ import { setStarCore } from './data/starCoreStore';
 import { DATA_BASE_URL, fetchManifest, loadStars } from './data/starData';
 import { setStarDetails } from './data/starDetailsStore';
 import { computeDataBounds } from './lib/filterMask';
-import { useLayoutMode } from './lib/viewport';
+import { isCoarsePointer, useLayoutMode } from './lib/viewport';
 import { isWebGL2Available } from './lib/webgl';
 import { GalaxyScene } from './scene/GalaxyScene';
 import { SystemScene } from './scene/SystemScene';
@@ -93,7 +93,8 @@ export default function App() {
           <StarLabelsLayer />
           <SearchBox />
           <SelectionOverlay />
-          <HoverLabel />
+          {/* No hover on touch: the label would stick at the last tap. */}
+          {!isCoarsePointer() && <HoverLabel />}
         </>
       ) : (
         <>

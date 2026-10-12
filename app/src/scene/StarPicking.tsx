@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarCore, getStarGeometry } from '../data/starCoreStore';
 import { canvasCursor } from '../lib/canvasCursor';
+import { isCoarsePointer } from '../lib/viewport';
 import starPickFrag from '../shaders/star-pick.frag?raw';
 import starPickVert from '../shaders/star-pick.vert?raw';
 import { useSettingsStore } from '../state/settings';
@@ -14,6 +15,8 @@ import { useGalaxyMapStore } from '../state/store';
 import { STAR_DIST_EXP, STAR_MAX_PX, STAR_PIXEL_SCALE } from './StarCloud';
 
 const PICK_MIN_PX = 7.0; // hover comfort: tiny stars get a larger hit target
+// Touch hit target: a fingertip is far less precise than a mouse (spec: mobile UI §3).
+const PICK_MIN_PX_TOUCH = 22; // CSS px, diameter; design choice (not data)
 const CLICK_MAX_DRAG_PX = 5; // pointerdown→up movement below this = click, not a look-drag
 const NO_STAR = 0xffffff; // clear color: ids >= count mean "nothing"
 
@@ -39,6 +42,7 @@ export function StarPicking() {
     downY: 0,
     down: false,
     click: null as { x: number; y: number } | null,
+    multiTouch: false, // two pointers were down during this gesture: never a click
     dragging: false, // left button held on the canvas: CameraControls look-drag
     over: false, // hovering a star
   });
@@ -56,6 +60,8 @@ export function StarPicking() {
 
   const pickScene = useMemo(() => {
     if (!geometry) return null;
+    // gl_PointSize is a framebuffer-pixel diameter, so scale CSS px by the pixel ratio.
+    const pickMinPx = isCoarsePointer() ? PICK_MIN_PX_TOUCH * gl.getPixelRatio() : PICK_MIN_PX;
     const material = new THREE.ShaderMaterial({
       glslVersion: THREE.GLSL3,
       vertexShader: starPickVert,
@@ -64,10 +70,11 @@ export function StarPicking() {
         uPixelScale: {
           value: STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, 2),
         },
-        uMaxPx: { value: STAR_MAX_PX },
+        // GLSL clamp(min > max) is undefined: never let the max fall below the min.
+        uMaxPx: { value: Math.max(STAR_MAX_PX, pickMinPx) },
         uSizeGamma: { value: useSettingsStore.getState().sizeGamma },
         uDistExp: { value: STAR_DIST_EXP },
-        uPickMinPx: { value: PICK_MIN_PX },
+        uPickMinPx: { value: pickMinPx },
       },
       depthTest: true,
       depthWrite: true,
@@ -77,7 +84,7 @@ export function StarPicking() {
     const scene = new THREE.Scene();
     scene.add(points);
     return { scene, material };
-  }, [geometry]);
+  }, [geometry, gl]);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -94,6 +101,8 @@ export function StarPicking() {
       pointer.current.moved = true;
     };
     const onDown = (e: PointerEvent) => {
+      // A primary down starts a new gesture; any other pointer joining it makes it multi-touch.
+      pointer.current.multiTouch = !e.isPrimary;
       pointer.current.downX = e.clientX;
       pointer.current.downY = e.clientY;
       pointer.current.down = true;
@@ -103,6 +112,7 @@ export function StarPicking() {
       }
     };
     const onUp = (e: PointerEvent) => {
+      const p = pointer.current;
       if (e.button === 0) {
         pointer.current.dragging = false;
         updateCursor();
@@ -112,12 +122,13 @@ export function StarPicking() {
       pointer.current.down = false;
       const dx = e.clientX - pointer.current.downX;
       const dy = e.clientY - pointer.current.downY;
-      if (e.button === 0 && Math.hypot(dx, dy) <= CLICK_MAX_DRAG_PX) {
+      if (!p.multiTouch && e.button === 0 && Math.hypot(dx, dy) <= CLICK_MAX_DRAG_PX) {
         const rect = el.getBoundingClientRect();
         pointer.current.click = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       }
     };
     const onCancel = () => {
+      pointer.current.multiTouch = false;
       pointer.current.down = false;
       pointer.current.dragging = false;
       updateCursor();

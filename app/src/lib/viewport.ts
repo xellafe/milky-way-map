@@ -25,7 +25,13 @@ export function useCompactViewport(): boolean {
   return useSyncExternalStore(subscribe, isCompactViewport, getServerSnapshot);
 }
 
-const COARSE_POINTER_QUERY = '(pointer: coarse)';
+export const COARSE_POINTER_QUERY = '(pointer: coarse)';
+
+export function isCoarsePointer(): boolean {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(COARSE_POINTER_QUERY).matches
+    : false;
+}
 
 function subscribeLayout(onChange: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
