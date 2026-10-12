@@ -226,6 +226,13 @@
       "dock": {
         "action": "Filtri, opzioni di vista e impostazioni",
         "command": "Barra in basso"
+      },
+      "touch": {
+        "look": "Trascina con un dito",
+        "move": "Pinch: allarga o stringi le dita",
+        "zoom": "Pinch",
+        "select": "Tocca",
+        "search": "Icona di ricerca"
       }
     },
     "dontShowAgain": "Non mostrare più",

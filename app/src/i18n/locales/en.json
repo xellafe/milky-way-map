@@ -226,6 +226,13 @@
       "dock": {
         "action": "Filters, view options and settings",
         "command": "Bottom bar"
+      },
+      "touch": {
+        "look": "Drag with one finger",
+        "move": "Pinch: spread or squeeze two fingers",
+        "zoom": "Pinch",
+        "select": "Tap",
+        "search": "Search icon"
       }
     },
     "dontShowAgain": "Don't show again",

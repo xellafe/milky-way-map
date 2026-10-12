@@ -226,6 +226,13 @@
       "dock": {
         "action": "Filtres, options d'affichage et réglages",
         "command": "Barre du bas"
+      },
+      "touch": {
+        "look": "Glissez avec un doigt",
+        "move": "Pincement : écartez ou rapprochez les doigts",
+        "zoom": "Pincement",
+        "select": "Touchez",
+        "search": "Icône de recherche"
       }
     },
     "dontShowAgain": "Ne plus afficher",

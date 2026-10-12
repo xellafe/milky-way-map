@@ -226,6 +226,13 @@
       "dock": {
         "action": "Filter, Ansichtsoptionen und Einstellungen",
         "command": "Untere Leiste"
+      },
+      "touch": {
+        "look": "Mit einem Finger ziehen",
+        "move": "Pinch: Finger auseinander- oder zusammenführen",
+        "zoom": "Pinch",
+        "select": "Tippen",
+        "search": "Suchsymbol"
       }
     },
     "dontShowAgain": "Nicht mehr anzeigen",

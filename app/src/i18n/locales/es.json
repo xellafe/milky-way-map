@@ -226,6 +226,13 @@
       "dock": {
         "action": "Filtros, opciones de vista y ajustes",
         "command": "Barra inferior"
+      },
+      "touch": {
+        "look": "Arrastra con un dedo",
+        "move": "Pellizco: separa o junta los dedos",
+        "zoom": "Pellizco",
+        "select": "Toca",
+        "search": "Icono de búsqueda"
       }
     },
     "dontShowAgain": "No volver a mostrar",
