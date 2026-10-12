@@ -26,11 +26,11 @@
 
 ## 1. Overview & Non-Goals
 
-**Cos'è.** *Galaxy Map* è una **web app desktop** che visualizza in **3D** il vicinato stellare locale in coordinate **eliocentriche**, usando i dati reali dei cataloghi **HYG** e **AT-HYG**. L'utente naviga la nuvola di stelle, ne ispeziona i dettagli, e può entrare ("zoom in") nel sistema di una stella che ospita esopianeti per vederne le orbite animate in tempo reale e in scala.
+**Cos'è.** *Galaxy Map* è una **web app per desktop e telefono** che visualizza in **3D** il vicinato stellare locale in coordinate **eliocentriche**, usando i dati reali dei cataloghi **HYG** e **AT-HYG**. L'utente naviga la nuvola di stelle, ne ispeziona i dettagli, e può entrare ("zoom in") nel sistema di una stella che ospita esopianeti per vederne le orbite animate in tempo reale e in scala.
 
 **Cosa NON è (Non-Goals, vincolanti):**
 - ❌ Non rappresenta *tutte* le stelle della Via Lattea in posizione 3D reale (impossibile — vedi nota sotto).
-- ❌ Nessun supporto mobile/touch in v1 (solo desktop web).
+- ❌ Nessun layout dedicato ai tablet: usano il layout desktop (i gesti touch funzionano comunque). Telefoni supportati in verticale e in orizzontale; viewport minimo 360 × 640 (in orizzontale 640 × 360).
 - ❌ Nessun funzionamento offline.
 - ❌ Nessun backend applicativo in v1 (dati statici serviti da CDN).
 - ❌ Nessuna galassia procedurale/artistica di sfondo (sfondo nero pieno).
@@ -282,6 +282,7 @@ Campi: nome proprio, ID catalogo, tipo spettrale, classe MS, distanza (ly), mag.
 
 `[Non verificato — sono target da misurare]`
 - **60 FPS** su desktop di fascia medio-alta con la nuvola completa AT-HYG, tramite: single draw call, buffer SoA, **GPU picking**, culling per frustum e LOD per distanza, caricamento lazy dell'index nomi/metadati.
+- **30 FPS** stabili su telefono Android di fascia media, nuvola completa e System View. `[Non verificato — da misurare su dispositivo reale]`
 - **Caricamento progressivo**: mostrare la nuvola il prima possibile (streaming/chunk), non bloccare sul download completo.
 - Baseline **WebGL2**; messaggio di fallback chiaro se non supportato.
 - Budget dimensione bundle definito in M0 e verificato in M9.
