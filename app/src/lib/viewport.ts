@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { layoutMode, type LayoutMode } from './layoutMode';
 
 /** Below Tailwind's `lg` breakpoint, where the dock and the music player compete for space. */
 export const COMPACT_VIEWPORT_QUERY = '(max-width: 1023px)';
@@ -22,4 +23,31 @@ const getServerSnapshot = () => false;
 /** Reactive `isCompactViewport()`: follows the media query across resizes. */
 export function useCompactViewport(): boolean {
   return useSyncExternalStore(subscribe, isCompactViewport, getServerSnapshot);
+}
+
+const COARSE_POINTER_QUERY = '(pointer: coarse)';
+
+function subscribeLayout(onChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('resize', onChange);
+  const mql =
+    typeof window.matchMedia === 'function' ? window.matchMedia(COARSE_POINTER_QUERY) : null;
+  mql?.addEventListener('change', onChange);
+  return () => {
+    window.removeEventListener('resize', onChange);
+    mql?.removeEventListener('change', onChange);
+  };
+}
+
+// A string snapshot is a stable primitive: useSyncExternalStore compares by identity.
+function getLayoutSnapshot(): LayoutMode {
+  if (typeof window === 'undefined') return 'desktop';
+  const coarse =
+    typeof window.matchMedia === 'function' && window.matchMedia(COARSE_POINTER_QUERY).matches;
+  return layoutMode(window.innerWidth, window.innerHeight, coarse);
+}
+
+/** Reactive phone layout mode (see `layoutMode`); follows resize/rotation. */
+export function useLayoutMode(): LayoutMode {
+  return useSyncExternalStore(subscribeLayout, getLayoutSnapshot, () => 'desktop');
 }

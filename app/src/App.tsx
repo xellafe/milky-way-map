@@ -5,6 +5,7 @@ import { setStarCore } from './data/starCoreStore';
 import { DATA_BASE_URL, fetchManifest, loadStars } from './data/starData';
 import { setStarDetails } from './data/starDetailsStore';
 import { computeDataBounds } from './lib/filterMask';
+import { useLayoutMode } from './lib/viewport';
 import { isWebGL2Available } from './lib/webgl';
 import { GalaxyScene } from './scene/GalaxyScene';
 import { SystemScene } from './scene/SystemScene';
@@ -28,6 +29,7 @@ export default function App() {
   const view = useGalaxyMapStore((s) => s.view);
   const setDataStatus = useGalaxyMapStore((s) => s.setDataStatus);
   const setDataProgress = useGalaxyMapStore((s) => s.setDataProgress);
+  const layout = useLayoutMode();
 
   useEffect(() => {
     if (!webgl2Available) return;
@@ -84,7 +86,7 @@ export default function App() {
   }
 
   return (
-    <div className="relative h-full w-full bg-black">
+    <div data-layout={layout} className="relative h-full w-full bg-black">
       {view === 'galaxy' ? (
         <>
           <GalaxyScene />
