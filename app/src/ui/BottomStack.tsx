@@ -10,8 +10,8 @@ import { TimeBar } from './TimeBar';
  * by flow instead of computed offsets keeps the parts from overlapping; the
  * column ignores pointer events so only its cards capture them.
  *
- * Phone (#25): the dock panel moves into the sheet, and the bar sits over the
- * sheet's bottom reserve (landscape: only under the scene area, left of the sheet).
+ * Phone (#25): the dock panel moves into the sheet (the time bar becomes its Time
+ * tab), and the bar sits over the sheet's bottom reserve (landscape: only under the scene area, left of the sheet).
  */
 export function BottomStack() {
   const { t } = useTranslation();
@@ -43,7 +43,6 @@ export function BottomStack() {
           layout === 'landscape' ? 'right-[50vw]' : 'right-0'
         }`}
       >
-        {view === 'system' && <TimeBar />}
         <ControlDock />
       </div>
     </>

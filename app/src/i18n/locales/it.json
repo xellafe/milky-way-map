@@ -66,6 +66,7 @@
     "filters": "Filtri",
     "view": "Vista",
     "options": "Opzioni",
+    "time": "Tempo",
     "visibleOf": "{{visible}} di {{total}} visibili",
     "visibleCount": "{{value}} stelle visibili"
   },
@@ -107,6 +108,9 @@
   "system": {
     "back": "Torna alla galassia",
     "planets": "Pianeti",
+    "tabStar": "Stella",
+    "sheetTabs": "Stella e pianeti",
+    "tabPlanets": "Pianeti ({{count}})",
     "timeScale": "Scala temporale",
     "daysPerSecond": "{{value}} giorni/s",
     "logScale": "Scala log",

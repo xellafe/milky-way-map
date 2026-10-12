@@ -2,24 +2,27 @@ import { useRef } from 'react';
 import { nextTabIndex } from '../../lib/tabs';
 import type { DockPanelId } from '../../state/store';
 
-export interface TabItem {
-  id: DockPanelId;
+export interface TabItem<T extends string = DockPanelId> {
+  id: T;
   label: string;
   testId: string;
 }
 
-/** Tablist of the dock panel; the single tabpanel is `#dock-panel`. */
-export function Tabs({
+/** Tablist of the dock panel; the single tabpanel is `#dock-panel` unless `panelId` says otherwise. */
+export function Tabs<T extends string = DockPanelId>({
   items,
   active,
   onSelect,
   label,
   touch = false,
+  panelId = 'dock-panel',
 }: {
-  items: TabItem[];
-  active: DockPanelId;
-  onSelect: (id: DockPanelId) => void;
+  items: TabItem<T>[];
+  active: T;
+  onSelect: (id: T) => void;
   label: string;
+  /** DOM id of the tabpanel the tabs control. */
+  panelId?: string;
   /** 44 px high tabs (phone, #25). */
   touch?: boolean;
 }) {
@@ -48,7 +51,7 @@ export function Tabs({
             role="tab"
             id={`dock-tab-${item.id}`}
             aria-selected={selected}
-            aria-controls="dock-panel"
+            aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
             data-testid={item.testId}
             onClick={() => onSelect(item.id)}

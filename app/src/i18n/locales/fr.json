@@ -66,6 +66,7 @@
     "filters": "Filtres",
     "view": "Vue",
     "options": "Options",
+    "time": "Temps",
     "visibleOf": "{{visible}} sur {{total}} visibles",
     "visibleCount": "{{value}} étoiles visibles"
   },
@@ -107,6 +108,9 @@
   "system": {
     "back": "Retour à la galaxie",
     "planets": "Planètes",
+    "tabStar": "Étoile",
+    "sheetTabs": "Étoile et planètes",
+    "tabPlanets": "Planètes ({{count}})",
     "timeScale": "Échelle de temps",
     "daysPerSecond": "{{value}} jours/s",
     "logScale": "Échelle log",

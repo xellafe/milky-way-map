@@ -12,6 +12,7 @@ import { HudSwitch } from './hud/HudInputs';
 import { Tabs, type TabItem } from './hud/Tabs';
 import { OptionsPanel } from './OptionsPanel';
 import { SystemViewPanel } from './SystemViewPanel';
+import { TimeBar } from './TimeBar';
 import { ViewTogglesPanel } from './ViewTogglesPanel';
 
 function FiltersIcon() {
@@ -41,6 +42,15 @@ function ViewIcon() {
   );
 }
 
+function TimeIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor">
+      <circle cx="12" cy="12" r="9" strokeWidth="1.6" />
+      <path strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
 function OptionsIcon() {
   return (
     <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor">
@@ -57,7 +67,8 @@ function OptionsIcon() {
 
 /**
  * Bottom control dock (#3): one icon per panel; the galaxy view has Filters,
- * View and Options, the System View View and Options. The panel itself is
+ * View and Options, the System View View and Options (plus Time on phones, where
+ * the time bar lives in the sheet, #25). The panel itself is
  * `DockPanel`, stacked above the bar by BottomStack.
  */
 export function ControlDock() {
@@ -77,6 +88,9 @@ export function ControlDock() {
       : []),
     { id: 'view', label: t('dock.view'), icon: <ViewIcon />, testId: 'view-toggle' },
     { id: 'options', label: t('dock.options'), icon: <OptionsIcon />, testId: 'options-toggle' },
+    ...(view === 'system' && touch
+      ? [{ id: 'time' as const, label: t('dock.time'), icon: <TimeIcon />, testId: 'time-toggle' }]
+      : []),
   ];
   return <Dock items={items} label={t('dock.label')} touch={touch} />;
 }
@@ -106,14 +120,14 @@ function SystemOptions() {
   );
 }
 
-/** Reset button of the active tab; the View tab and the System View options have nothing to reset. */
+/** Reset button of the active tab; the View and Time tabs and the System View options have nothing to reset. */
 function ResetButton({ id, touch }: { id: DockPanelId; touch: boolean }) {
   const { t } = useTranslation();
   const filters = useGalaxyMapStore((s) => s.filters);
   const resetFilters = useGalaxyMapStore((s) => s.resetFilters);
   const settings = useSettingsStore();
   const view = useGalaxyMapStore((s) => s.view);
-  if (id === 'view' || (id === 'options' && view === 'system')) return null;
+  if (id === 'view' || id === 'time' || (id === 'options' && view === 'system')) return null;
   const isFilters = id === 'filters';
   return (
     <HudButton
@@ -147,6 +161,10 @@ export function DockPanel({ sheet = false }: { sheet?: boolean }) {
       : []),
     { id: 'view', label: t('dock.view'), testId: 'tab-view' },
     { id: 'options', label: t('dock.options'), testId: 'tab-options' },
+    // Phone only: DockPanel is in the sheet there (#25).
+    ...(sheet && view === 'system'
+      ? [{ id: 'time' as const, label: t('dock.time'), testId: 'tab-time' }]
+      : []),
   ];
   // toggleDockPanel on an inactive tab opens it (and keeps the compact player rule, #13).
   const select = (id: DockPanelId) => id !== active && toggleDockPanel(id);
@@ -186,6 +204,7 @@ export function DockPanel({ sheet = false }: { sheet?: boolean }) {
         {active === 'filters' && <FiltersPanel />}
         {active === 'view' && (view === 'galaxy' ? <ViewTogglesPanel /> : <SystemViewPanel />)}
         {active === 'options' && (view === 'galaxy' ? <OptionsPanel /> : <SystemOptions />)}
+        {active === 'time' && <TimeBar sheet />}
       </div>
     </>
   );

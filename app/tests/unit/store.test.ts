@@ -132,6 +132,18 @@ describe('galaxy map store', () => {
     expect(s().dockPanel).toBeNull();
   });
 
+  it('dock: the time panel opens and closes like the others (#25)', () => {
+    const s = () => useGalaxyMapStore.getState();
+    s().toggleDockPanel('time');
+    expect(s().dockPanel).toBe('time');
+    s().toggleDockPanel('view');
+    expect(s().dockPanel).toBe('view');
+    s().toggleDockPanel('time');
+    expect(s().dockPanel).toBe('time');
+    s().toggleDockPanel('time');
+    expect(s().dockPanel).toBeNull();
+  });
+
   it('dock: view changes close the open panel', () => {
     const s = () => useGalaxyMapStore.getState();
     s().toggleDockPanel('filters');

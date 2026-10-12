@@ -39,8 +39,9 @@ function fromSlider(slider: number, log: boolean): number {
  * System View time-scale bar (SPEC §6.7): pause, slider, value and log mode on one row.
  * Part of BottomStack, so it never overlaps the dock panel. The expanded
  * player takes the bar's band on compact viewports.
+ * `sheet`: body of the dock's Time tab in the phone sheet (#25), which is itself the card.
  */
-export function TimeBar() {
+export function TimeBar({ sheet = false }: { sheet?: boolean }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const timeScale = useGalaxyMapStore((s) => s.timeScaleDaysPerSecond);
@@ -51,7 +52,64 @@ export function TimeBar() {
   const [pausedFrom, setPausedFrom] = useState<number | null>(null);
   const paused = timeScale === 0;
 
-  if (musicExpanded && compact) return null;
+  if (musicExpanded && compact && !sheet) return null;
+  const row = (
+    <div className={`flex items-center gap-3 ${sheet ? 'flex-wrap' : ''}`}>
+      <HudButton
+        variant="secondary"
+        touch={sheet}
+        data-testid="time-pause"
+        onClick={() => {
+          if (paused) {
+            setTimeScale(pausedFrom ?? 2);
+            setPausedFrom(null);
+          } else {
+            setPausedFrom(timeScale);
+            setTimeScale(0);
+          }
+        }}
+      >
+        {paused ? '▶' : '⏸'}
+        <span className="sr-only">{t(paused ? 'system.resume' : 'system.pause')}</span>
+      </HudButton>
+      <HudSlider
+        min={0}
+        max={SLIDER_STEPS}
+        step={1}
+        value={toSlider(paused ? (pausedFrom ?? 2) : timeScale, logMode)}
+        disabled={paused}
+        data-testid="time-slider"
+        aria-label={t('system.timeScale')}
+        onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
+        className={sheet ? 'min-w-32 flex-1' : 'min-w-0 flex-1'}
+      />
+      <span
+        className="font-hud-mono whitespace-nowrap text-hud-bright"
+        data-testid="time-scale-value"
+      >
+        {t('system.daysPerSecond', {
+          value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
+        })}
+      </span>
+      <HudSwitch
+        // The wrapping label bakes in text-sm; a same-specificity text-xs in
+        // className would conflict with it by stylesheet order, not intent, so
+        // the smaller size is set on the label text itself instead.
+        label={<span className="text-xs">{t('system.logScale')}</span>}
+        checked={logMode}
+        data-testid="time-log-mode"
+        onChange={(e) => setLogMode(e.target.checked)}
+        className="whitespace-nowrap"
+      />
+    </div>
+  );
+  if (sheet) {
+    return (
+      <section aria-label={t('system.timeScale')} data-testid="time-scale" className="text-sm">
+        {row}
+      </section>
+    );
+  }
   return (
     <HudCard
       as="section"
@@ -60,53 +118,7 @@ export function TimeBar() {
       data-hud="time-bar"
       className="pointer-events-auto w-[28rem] max-w-[calc(100vw-2rem)] p-3 text-sm"
     >
-      <div className="flex items-center gap-3">
-        <HudButton
-          variant="secondary"
-          data-testid="time-pause"
-          onClick={() => {
-            if (paused) {
-              setTimeScale(pausedFrom ?? 2);
-              setPausedFrom(null);
-            } else {
-              setPausedFrom(timeScale);
-              setTimeScale(0);
-            }
-          }}
-        >
-          {paused ? '▶' : '⏸'}
-          <span className="sr-only">{t(paused ? 'system.resume' : 'system.pause')}</span>
-        </HudButton>
-        <HudSlider
-          min={0}
-          max={SLIDER_STEPS}
-          step={1}
-          value={toSlider(paused ? (pausedFrom ?? 2) : timeScale, logMode)}
-          disabled={paused}
-          data-testid="time-slider"
-          aria-label={t('system.timeScale')}
-          onChange={(e) => setTimeScale(fromSlider(Number(e.target.value), logMode))}
-          className="min-w-0 flex-1"
-        />
-        <span
-          className="font-hud-mono whitespace-nowrap text-hud-bright"
-          data-testid="time-scale-value"
-        >
-          {t('system.daysPerSecond', {
-            value: formatNumber(timeScale, lang, { maximumFractionDigits: 1 }),
-          })}
-        </span>
-        <HudSwitch
-          // The wrapping label bakes in text-sm; a same-specificity text-xs in
-          // className would conflict with it by stylesheet order, not intent, so
-          // the smaller size is set on the label text itself instead.
-          label={<span className="text-xs">{t('system.logScale')}</span>}
-          checked={logMode}
-          data-testid="time-log-mode"
-          onChange={(e) => setLogMode(e.target.checked)}
-          className="whitespace-nowrap"
-        />
-      </div>
+      {row}
     </HudCard>
   );
 }

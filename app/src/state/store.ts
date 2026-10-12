@@ -10,7 +10,7 @@ import { isWelcomeDismissed } from '../lib/welcome';
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
 export type DataStatus = 'idle' | 'loading' | 'ready' | 'error';
-export type DockPanelId = 'filters' | 'view' | 'options';
+export type DockPanelId = 'filters' | 'view' | 'options' | 'time';
 
 /**
  * Current selection: a star of the cloud (by SoA index). Hosts with no
