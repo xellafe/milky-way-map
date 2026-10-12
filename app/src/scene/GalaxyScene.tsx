@@ -1,9 +1,12 @@
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { Stats } from '@react-three/drei';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
+import type * as THREE from 'three';
 import { ensureStarGeometry, getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
+import { centerShift } from '../lib/sheet';
+import { useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 import { CameraControls } from './CameraControls';
 import { ConstellationLines } from './ConstellationLines';
@@ -12,6 +15,7 @@ import { SelectionTracker } from './SelectionTracker';
 import { StarLabels } from './StarLabels';
 import { applyFilterMask, buildStarGeometry } from './starGeometry';
 import { StarPicking } from './StarPicking';
+import { readUsableArea } from './usableArea';
 
 const urlParams = new URLSearchParams(globalThis.location?.search ?? '');
 // ?pdb=1 → preserveDrawingBuffer, used by e2e tests to read real pixels back.
@@ -26,8 +30,33 @@ function CameraDebugBridge() {
       position: camera.position.toArray(),
       quaternion: camera.quaternion.toArray(),
       mode: useGalaxyMapStore.getState().cameraMode,
+      viewOffset: {
+        x: camera.view?.enabled ? camera.view.offsetX : 0,
+        y: camera.view?.enabled ? camera.view.offsetY : 0,
+      },
     };
   });
+  return null;
+}
+
+/**
+ * Phone only (#25): shifts the projection so the camera axis (where the fly-to puts the
+ * selected star) lands in the middle of the area the sheet leaves free. Cleared on
+ * unmount, so going back to the desktop layout restores the plain projection.
+ */
+function SheetViewOffset() {
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  useFrame(({ size }) => {
+    // Without a sheet the whole viewport is free: no shift.
+    if (!document.querySelector('[data-hud=mobile-sheet]')) {
+      if (camera.view?.enabled) camera.clearViewOffset();
+      return;
+    }
+    const shift = centerShift(readUsableArea(size.width, size.height), size.width, size.height);
+    // The window moves opposite to the picture: +x moves the scene left.
+    camera.setViewOffset(size.width, size.height, -shift.x, -shift.y, size.width, size.height);
+  });
+  useEffect(() => () => camera.clearViewOffset(), [camera]);
   return null;
 }
 
@@ -47,6 +76,7 @@ export function GalaxyScene() {
   const filters = useGalaxyMapStore((s) => s.filters);
   // dataBounds flips when the detail sections land → re-apply range filters.
   const dataBounds = useGalaxyMapStore((s) => s.dataBounds);
+  const mobile = useLayoutMode() !== 'desktop';
 
   const geometry = useMemo(() => {
     const core = dataReady ? getStarCore() : null;
@@ -89,6 +119,7 @@ export function GalaxyScene() {
         <Bloom intensity={1.1} luminanceThreshold={0.05} luminanceSmoothing={0.2} mipmapBlur />
       </EffectComposer>
       {showStats && <Stats />}
+      {mobile && <SheetViewOffset />}
       {preserveDrawingBuffer && <CameraDebugBridge />}
     </Canvas>
   );

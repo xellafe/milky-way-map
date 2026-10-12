@@ -21,7 +21,10 @@ export function ObjectCard({
   footer,
   testId,
   titleTestId,
+  variant = 'floating',
 }: {
+  /** `floating`: anchored desktop card; `sheet`: full-width body of the phone sheet. */
+  variant?: 'floating' | 'sheet';
   title: string;
   subtitle?: ReactNode;
   onClose: () => void;
@@ -52,6 +55,44 @@ export function ObjectCard({
     document.addEventListener('animationcancel', onCancel);
     return () => document.removeEventListener('animationcancel', onCancel);
   }, [leaving]);
+  const expanded = useGalaxyMapStore((s) => s.sheetSnap === 'expanded');
+  if (variant === 'sheet') {
+    // Phone sheet (#25): the sheet itself is the .hud-card; the sheet's snap, not the persisted cardMode, drives Advanced,
+    // so the desktop preference is untouched. Advanced stacks under Base.
+    return (
+      <section
+        aria-label={title}
+        data-testid={testId}
+        data-hud="selection-card"
+        data-mode={expanded ? 'advanced' : 'base'}
+        // The card itself scrolls (a taller card would overflow the sheet); keyboard access: axe scrollable-region-focusable.
+        tabIndex={0}
+        className="relative flex min-h-0 w-full flex-col overflow-y-auto"
+      >
+        <CloseButton onClick={onClose} label={t('overlay.close')} testId={closeTestId} touch />
+        <div className="flex flex-col gap-2 p-2">
+          <div>
+            <h3 className="pr-11 font-hud text-sm text-hud-bright" data-testid={titleTestId}>
+              {title}
+            </h3>
+            {subtitle && <div className="text-xs text-hud-muted">{subtitle}</div>}
+          </div>
+          {base}
+          {footer}
+        </div>
+        {expanded && (
+          <div
+            data-testid="card-advanced"
+            role="region"
+            aria-label={t('card.advanced')}
+            className="border-t border-hud-accent/20 p-2 text-sm"
+          >
+            {advanced}
+          </div>
+        )}
+      </section>
+    );
+  }
   const showAdvanced = mode === 'advanced' || leaving;
   return (
     <HudCard

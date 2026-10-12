@@ -172,7 +172,17 @@ export function StarPicking() {
     pickScene.material.uniforms.uSizeGamma!.value = useSettingsStore.getState().sizeGamma;
     const dpr = gl.getPixelRatio();
     const cam = camera as THREE.PerspectiveCamera;
-    cam.setViewOffset(size.width * dpr, size.height * dpr, x * dpr, y * dpr, 1, 1);
+    // A scene-wide view offset (phone sheet, #25) shifts what is drawn under the pointer: pick
+    // in the shifted frame, then restore it instead of clearing it.
+    const prevView = cam.view?.enabled ? { ...cam.view } : null;
+    cam.setViewOffset(
+      size.width * dpr,
+      size.height * dpr,
+      (x + (prevView?.offsetX ?? 0)) * dpr,
+      (y + (prevView?.offsetY ?? 0)) * dpr,
+      1,
+      1,
+    );
 
     const prevTarget = gl.getRenderTarget();
     const prevAutoClear = gl.autoClear;
@@ -188,7 +198,16 @@ export function StarPicking() {
     gl.setRenderTarget(prevTarget);
     gl.setClearColor(prevClearColor, prevClearAlpha);
     gl.autoClear = prevAutoClear;
-    cam.clearViewOffset();
+    if (prevView) {
+      cam.setViewOffset(
+        prevView.fullWidth,
+        prevView.fullHeight,
+        prevView.offsetX,
+        prevView.offsetY,
+        prevView.width,
+        prevView.height,
+      );
+    } else cam.clearViewOffset();
 
     const id = pixel[0]! | (pixel[1]! << 8) | (pixel[2]! << 16);
     const count = geometry.getAttribute('aSize').count;

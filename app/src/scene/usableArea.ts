@@ -17,10 +17,15 @@ export function readUsableArea(width: number, height: number): Area {
     height,
     ...['dock', 'time-bar', 'music-player'].map((hud) => rectOf(hud)?.top ?? height),
   );
+  // Phone sheet (#25): it spans the full width in portrait (takes the bottom edge) and
+  // is narrower than the viewport in landscape (takes the right edge).
+  const sheet = rectOf('mobile-sheet');
+  const sheetBelow = sheet && sheet.width >= width - 1 ? sheet.top : height;
+  const sheetRight = sheet && sheet.width < width - 1 ? sheet.left : width;
   return {
     left: (rectOf('side-panel-left')?.right ?? 0) + MARGIN_PX,
     top: top + MARGIN_PX,
-    right: (rectOf('side-panel-right')?.left ?? width) - MARGIN_PX,
-    bottom: bottom - MARGIN_PX,
+    right: Math.min(rectOf('side-panel-right')?.left ?? width, sheetRight) - MARGIN_PX,
+    bottom: Math.min(bottom, sheetBelow) - MARGIN_PX,
   };
 }

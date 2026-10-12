@@ -5,6 +5,7 @@
   },
   "ui": {
     "appName": "Galaxy Map",
+    "sheetHandle": "Panel-Größe ändern",
     "loading": "Wird geladen…",
     "loadingStars": "Sternkatalog wird geladen… {{percent}}",
     "searchPlaceholder": "Stern oder System suchen (z. B. Polaris, HD 209458, TRAPPIST-1)",

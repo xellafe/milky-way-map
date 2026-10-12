@@ -298,4 +298,35 @@ describe('galaxy map store', () => {
       expect(s().musicExpanded).toBe(true);
     });
   });
+
+  describe('sheetSnap (#25)', () => {
+    it('starts closed', () => {
+      expect(useGalaxyMapStore.getState().sheetSnap).toBe('closed');
+    });
+
+    it('selecting a star opens the sheet at base', () => {
+      useGalaxyMapStore.getState().selectStar(5);
+      expect(useGalaxyMapStore.getState().sheetSnap).toBe('base');
+    });
+
+    it('entering the system view opens the sheet at base', () => {
+      useGalaxyMapStore.getState().enterSystemView('x');
+      expect(useGalaxyMapStore.getState().sheetSnap).toBe('base');
+    });
+
+    it('setSheetSnap does not touch cardMode nor the persisted Advanced flag', () => {
+      const data = new Map<string, string>();
+      vi.stubGlobal('localStorage', {
+        getItem: (k: string) => data.get(k) ?? null,
+        setItem: (k: string, v: string) => void data.set(k, v),
+        removeItem: (k: string) => void data.delete(k),
+      } as unknown as Storage);
+      const before = useGalaxyMapStore.getState().cardMode;
+      useGalaxyMapStore.getState().setSheetSnap('expanded');
+      expect(useGalaxyMapStore.getState().sheetSnap).toBe('expanded');
+      expect(useGalaxyMapStore.getState().cardMode).toBe(before);
+      expect(data.has(CARD_ADVANCED_KEY)).toBe(false);
+      vi.unstubAllGlobals();
+    });
+  });
 });

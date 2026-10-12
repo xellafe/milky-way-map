@@ -3,6 +3,7 @@ import { DEFAULT_FILTERS, type DataBounds, type Filters } from '../lib/filterMas
 import { prefersReducedMotion } from '../lib/motion';
 import type { PlanetType } from '../lib/planetType';
 import { readFlag, writeFlag } from '../lib/localFlag';
+import type { SheetSnap } from '../lib/sheet';
 import { isCompactViewport } from '../lib/viewport';
 import { isWelcomeDismissed } from '../lib/welcome';
 
@@ -78,6 +79,9 @@ export interface GalaxyMapState {
   setMusicExpanded: (expanded: boolean) => void;
   /** Bumped by every star selection: remounts the overlay, restarting its opening sequence. */
   selectionEpoch: number;
+  /** Phone bottom/right sheet height (#25); not persisted. */
+  sheetSnap: SheetSnap;
+  setSheetSnap: (snap: SheetSnap) => void;
 
   selectStar: (index: number | null) => void;
   setHoveredStar: (index: number | null) => void;
@@ -143,6 +147,8 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
     }));
   },
   selectionEpoch: 0,
+  sheetSnap: 'closed',
+  setSheetSnap: (snap) => set({ sheetSnap: snap }),
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
   // deselecting releases the lock.
@@ -154,6 +160,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
             selection: { kind: 'star', index },
             cameraMode: 'orbit',
             selectionEpoch: s.selectionEpoch + 1,
+            sheetSnap: 'base',
           },
     ),
   setHoveredStar: (index) => set({ hoveredStarIndex: index }),
@@ -178,6 +185,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       selectedPlanet: null,
       selectedPlanetType: null,
       dockPanel: null,
+      sheetSnap: 'base',
       ...(prefersReducedMotion() ? { timeScaleDaysPerSecond: 0 } : {}),
     }),
   // The galaxy selection survives: leaving the system brings back the same
