@@ -36,12 +36,13 @@ export function readUsableArea(width: number, height: number): Area {
  * Phone only (#25, spec §5): `readUsableArea` forces a layout on every call, too much
  * per frame. This reader returns the last measurement and measures again only after a
  * HUD element changed size or the HUD tree changed (sheet snap and content, panels
- * appearing), or the canvas size changed.
+ * appearing), or the canvas size changed. `enabled: false` installs no observers (desktop).
  */
-export function useCachedUsableArea(): (width: number, height: number) => Area {
+export function useCachedUsableArea(enabled = true): (width: number, height: number) => Area {
   const dirty = useRef(true);
   const last = useRef<{ width: number; height: number; area: Area } | null>(null);
   useEffect(() => {
+    if (!enabled) return;
     const invalidate = () => {
       dirty.current = true;
     };
@@ -60,7 +61,7 @@ export function useCachedUsableArea(): (width: number, height: number) => Area {
       mutations.disconnect();
       window.removeEventListener('resize', invalidate);
     };
-  }, []);
+  }, [enabled]);
   return useCallback((width, height) => {
     const l = last.current;
     if (dirty.current || !l || l.width !== width || l.height !== height) {

@@ -52,6 +52,19 @@ function expectInside(b: Box, vp: { width: number; height: number }, what: strin
   expect(b.y + b.height, `${what} bottom`).toBeLessThanOrEqual(vp.height + 0.5);
 }
 
+/** Visible buttons under the 44 px touch target (AC9), as "id: WxH" strings. */
+const smallButtons = (page: Page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('#root button')]
+      .map((el) => ({
+        id: el.getAttribute('data-testid') ?? el.getAttribute('aria-label') ?? el.outerHTML,
+        r: el.getBoundingClientRect(),
+      }))
+      .filter(({ r }) => r.width > 0 && r.height > 0)
+      .filter(({ r }) => r.width < 43.5 || r.height < 43.5)
+      .map(({ id, r }) => `${id}: ${r.width}x${r.height}`),
+  );
+
 const SIZES = [
   { width: 375, height: 812 },
   { width: 812, height: 375 },
@@ -141,28 +154,42 @@ for (const size of SIZES) {
 
     test('AC9: every visible button is at least 44x44', async ({ page }) => {
       await open(page);
-      const small = () =>
-        page.evaluate(() =>
-          [...document.querySelectorAll('#root button')]
-            .map((el) => ({
-              id: el.getAttribute('data-testid') ?? el.getAttribute('aria-label') ?? el.outerHTML,
-              r: el.getBoundingClientRect(),
-            }))
-            .filter(({ r }) => r.width > 0 && r.height > 0)
-            .filter(({ r }) => r.width < 43.5 || r.height < 43.5)
-            .map(({ id, r }) => `${id}: ${r.width}x${r.height}`),
-        );
-      expect(await small(), 'idle').toEqual([]);
+      expect(await smallButtons(page), 'idle').toEqual([]);
 
       await page.getByTestId('search-open').click();
-      expect(await small(), 'search open').toEqual([]);
+      expect(await smallButtons(page), 'search open').toEqual([]);
       await page.keyboard.press('Escape');
 
       await select(page, 'polaris', 'Polaris');
-      expect(await small(), 'card at base').toEqual([]);
+      expect(await smallButtons(page), 'card at base').toEqual([]);
       await page.getByTestId('filters-toggle').click();
       await expect(page.getByTestId('dock-panel')).toBeVisible();
-      expect(await small(), 'dock panel').toEqual([]);
+      expect(await smallButtons(page), 'dock panel').toEqual([]);
+    });
+
+    test('AC9: buttons stay at least 44x44 with the music controls and the language menu open', async ({
+      page,
+    }) => {
+      await open(page);
+      await page.getByTestId('music-expand').click();
+      await expect(page.getByTestId('mobile-sheet').getByTestId('music-toggle')).toBeVisible();
+      expect(await smallButtons(page), 'music controls in the sheet').toEqual([]);
+      await page.getByTestId('music-collapse').click();
+
+      await page.getByTestId('language-button').click();
+      await expect(page.getByTestId('language-menu')).toBeVisible();
+      expect(await smallButtons(page), 'language menu').toEqual([]);
+    });
+
+    test('Esc on an empty search returns focus to search-open', async ({ page }) => {
+      await open(page);
+      await page.getByTestId('search-open').click();
+      await expect(page.getByTestId('search-input')).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('search-input')).toBeHidden();
+      await expect
+        .poll(() => page.evaluate(() => document.activeElement?.getAttribute('data-testid')))
+        .toBe('search-open');
     });
   });
 }

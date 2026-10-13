@@ -230,7 +230,7 @@
       "touch": {
         "look": "Mit einem Finger ziehen",
         "move": "Pinch: Finger auseinander- oder zusammenführen",
-        "zoom": "Pinch",
+        "zoom": "Pinch-Geste",
         "select": "Tippen",
         "search": "Suchsymbol"
       }

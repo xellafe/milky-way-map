@@ -8,8 +8,15 @@ import { HudSwitch } from './hud/HudInputs';
 
 const GUIDE_ROWS = ['look', 'move', 'zoom', 'select', 'search', 'system', 'dock'] as const;
 
-// Rows whose mouse/keyboard command has a touch counterpart (spec §4.5); system and dock are device-neutral.
-const TOUCH_ROWS = new Set<string>(['look', 'move', 'zoom', 'select', 'search']);
+// Rows whose mouse/keyboard command has a touch counterpart (#25, spec §4.5); system and dock
+// are device-neutral.
+const TOUCH_ROWS = new Set<(typeof GUIDE_ROWS)[number]>([
+  'look',
+  'move',
+  'zoom',
+  'select',
+  'search',
+]);
 
 /**
  * Modal welcome guide (#12). Native <dialog>: showModal() gives focus trap,

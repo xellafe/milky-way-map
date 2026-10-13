@@ -80,6 +80,20 @@ async function enterSystem(page: Page, query: string, name: string) {
 
 const sheet = (page: Page) => page.getByTestId('mobile-sheet');
 
+/** Drags the sheet handle from its centre to (toX, toY) with real mouse events. */
+async function dragHandle(page: Page, toX: number, toY: number) {
+  // The handle moves while the sheet transitions between snaps: drag from its settled position.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+  const h = (await page.getByTestId('sheet-handle').boundingBox())!;
+  const x = h.x + h.width / 2;
+  const y = h.y + h.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move((x + toX) / 2, (y + toY) / 2, { steps: 5 });
+  await page.mouse.move(toX, toY, { steps: 5 });
+  await page.mouse.up();
+}
+
 /** Longest host name in the golden fixture, to stress the header. */
 const longestHost = () =>
   Object.keys(readFixtureExoplanets().hosts).reduce((a, b) => (b.length > a.length ? b : a));
@@ -92,6 +106,7 @@ const SIZES = [
 for (const size of SIZES) {
   test.describe(`${size.width}x${size.height}`, () => {
     test.use({ viewport: size });
+    const portrait = size.height > size.width;
 
     test('entering the system opens the base sheet on the Star tab; Planets lists the chips', async ({
       page,
@@ -197,6 +212,21 @@ for (const size of SIZES) {
       await page.getByTestId('sheet-handle').click();
       await expect(sheet(page)).toHaveAttribute('data-snap', 'expanded');
       await expectHudInViewport(page);
+      await page.getByTestId('sheet-handle').click();
+      await dragHandle(page, portrait ? size.width / 2 : size.width - 2, size.height - 1);
+      await expect(sheet(page)).toHaveAttribute('data-snap', 'closed');
+      await frames(page);
+      await expectHudInViewport(page);
+    });
+
+    test('dragging the handle changes the snap', async ({ page }) => {
+      await enterSystem(page, 'trappist', 'TRAPPIST-1');
+      await dragHandle(page, portrait ? size.width / 2 : size.width - 2, size.height - 1);
+      await expect(sheet(page)).toHaveAttribute('data-snap', 'closed');
+      await page.getByTestId('sheet-handle').click();
+      await expect(sheet(page)).toHaveAttribute('data-snap', 'base');
+      await dragHandle(page, portrait ? size.width / 2 : 20, portrait ? 20 : size.height / 2);
+      await expect(sheet(page)).toHaveAttribute('data-snap', 'expanded');
     });
   });
 }

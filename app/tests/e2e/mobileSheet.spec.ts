@@ -73,6 +73,20 @@ async function expectHudInViewport(page: Page) {
   expect(offenders).toEqual([]);
 }
 
+/** Drags the sheet handle from its centre to (toX, toY) with real mouse events. */
+async function dragHandle(page: Page, toX: number, toY: number) {
+  // The handle moves while the sheet transitions between snaps: drag from its settled position.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+  const h = (await page.getByTestId('sheet-handle').boundingBox())!;
+  const x = h.x + h.width / 2;
+  const y = h.y + h.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move((x + toX) / 2, (y + toY) / 2, { steps: 5 });
+  await page.mouse.move(toX, toY, { steps: 5 });
+  await page.mouse.up();
+}
+
 const sheetBox = async (page: Page) => (await page.getByTestId('mobile-sheet').boundingBox())!;
 
 for (const [name, size] of [
@@ -143,6 +157,33 @@ for (const [name, size] of [
       await page.getByTestId('sheet-handle').click();
       await expect(page.getByTestId('mobile-sheet')).toHaveAttribute('data-snap', 'expanded');
       await expectHudInViewport(page);
+      await page.getByTestId('sheet-handle').click();
+      await dragHandle(
+        page,
+        name === 'portrait' ? size.width / 2 : size.width - 2,
+        size.height - 1,
+      );
+      await expect(page.getByTestId('mobile-sheet')).toHaveAttribute('data-snap', 'closed');
+      await frames(page);
+      await expectHudInViewport(page);
+    });
+
+    test('dragging the handle toward the free edge closes, back toward the scene opens', async ({
+      page,
+    }) => {
+      await open(page);
+      await select(page, 'polaris', 'Polaris');
+      const sheet = page.getByTestId('mobile-sheet');
+      const close: [number, number] =
+        name === 'portrait' ? [size.width / 2, size.height - 1] : [size.width - 2, size.height / 2];
+      await dragHandle(page, ...close);
+      await expect(sheet).toHaveAttribute('data-snap', 'closed');
+      await page.getByTestId('sheet-handle').click();
+      await expect(sheet).toHaveAttribute('data-snap', 'base');
+      const far: [number, number] =
+        name === 'portrait' ? [size.width / 2, 20] : [20, size.height / 2];
+      await dragHandle(page, ...far);
+      await expect(sheet).toHaveAttribute('data-snap', 'expanded');
     });
 
     test('the selected star is not hidden behind the sheet once the fly-to ends', async ({

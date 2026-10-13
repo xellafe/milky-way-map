@@ -103,9 +103,9 @@ export function GalaxyScene() {
 
   return (
     <Canvas
-      // Without this the browser claims touch gestures (scroll/zoom) and cancels our pointers.
-      // Desktop sets none: the Canvas default ([1, 2]) applies.
+      // Desktop sets no dpr: the Canvas default ([1, 2]) applies.
       dpr={mobile ? [1, MOBILE_MAX_DPR] : undefined}
+      // Without this the browser claims touch gestures (scroll/zoom) and cancels our pointers.
       style={{ touchAction: 'none' }}
       camera={{ position: [0, 0, 40], fov: 60, near: 0.1, far: 2_000_000 }}
       gl={{ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer }}

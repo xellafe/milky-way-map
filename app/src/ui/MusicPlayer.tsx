@@ -21,7 +21,7 @@ const CONTROLS_ID = 'music-player-controls';
 
 const BUTTON_CLASS =
   'rounded-hud border border-hud-accent/30 bg-white/5 px-1.5 py-0.5 font-hud text-sm text-hud-text hover:bg-white/10';
-// 44x44 px touch target (#25); a separate class because a className cannot override the sizes above.
+// 44x44 px touch target on phones (#25). Separate class: it must beat the padding-driven size above.
 const TOUCH_BUTTON_CLASS = `${BUTTON_CLASS} min-h-11 min-w-11`;
 
 /**

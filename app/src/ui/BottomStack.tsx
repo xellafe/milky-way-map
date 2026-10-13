@@ -11,7 +11,8 @@ import { TimeBar } from './TimeBar';
  * column ignores pointer events so only its cards capture them.
  *
  * Phone (#25): the dock panel moves into the sheet (the time bar becomes its Time
- * tab), and the bar sits over the sheet's bottom reserve (landscape: only under the scene area, left of the sheet).
+ * tab), and the bar sits over the sheet's bottom reserve (landscape: only under the
+ * scene area, left of the sheet).
  */
 export function BottomStack() {
   const { t } = useTranslation();

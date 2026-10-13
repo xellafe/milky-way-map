@@ -52,12 +52,15 @@ export function SystemOverlay() {
   const header = (
     <header
       data-hud="system-header"
-      // Phone: the top row is shared with help and language (8rem on the right; in
-      // landscape the sheet also takes the right half), so a long host name truncates.
+      // Phone: the top row is shared with help and language (8rem = 128 px reserved on the
+      // right, room for two 44 px buttons plus gaps; aesthetic choice, not data; in landscape
+      // the sheet also takes the right half), so a long host name truncates.
       // z-50 on the phone: the full-width top bar (z-40) would otherwise cover the back button.
+      // pointer-events-none: the empty part of the header must not shadow the language button
+      // at 360 px; the button and title opt back in.
       className={
         mobile
-          ? `absolute top-[max(0.5rem,env(safe-area-inset-top))] left-2 z-50 flex items-center gap-2 ${
+          ? `pointer-events-none absolute top-[max(0.5rem,env(safe-area-inset-top))] left-2 z-50 flex items-center gap-2 ${
               layout === 'landscape' ? 'right-[calc(50vw+8rem)]' : 'right-32'
             }`
           : 'absolute top-4 left-4 z-10 flex items-center gap-3'
@@ -68,11 +71,14 @@ export function SystemOverlay() {
         touch={mobile}
         onClick={exitSystemView}
         data-testid="system-back"
-        className="shrink-0"
+        className={`shrink-0 ${mobile ? 'pointer-events-auto' : ''}`}
       >
         ← {t('system.back')}
       </HudButton>
-      <h1 className="min-w-0 truncate font-hud text-lg text-hud-bright" data-testid="system-title">
+      <h1
+        className={`min-w-0 truncate font-hud text-lg text-hud-bright ${mobile ? 'pointer-events-auto' : ''}`}
+        data-testid="system-title"
+      >
         {hostname}
       </h1>
     </header>
@@ -106,6 +112,9 @@ export function SystemOverlay() {
             key={planet.pl_name}
             planet={planet}
             sheet
+            // Deliberate simplification: no separate "‹" back button to the planet list (spec
+            // §4.2); the sheet's ✕ deselects the planet and opens the Planets tab. Upgrade when
+            // a user test shows people miss an explicit back control on the planet card.
             onClose={() => {
               useGalaxyMapStore.getState().selectPlanet(null);
               setTab('planets');

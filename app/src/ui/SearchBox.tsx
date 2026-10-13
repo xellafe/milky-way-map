@@ -53,8 +53,15 @@ export function SearchBox() {
     };
   }, [query]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const openButtonRef = useRef<HTMLButtonElement>(null);
+  // Set by Esc: the focused input unmounts, so focus goes back to the icon (keyboard a11y).
+  const restoreFocus = useRef(false);
   useEffect(() => {
     if (fieldShown) inputRef.current?.focus();
+    else if (restoreFocus.current) {
+      restoreFocus.current = false;
+      openButtonRef.current?.focus();
+    }
   }, [fieldShown]);
   const selectStar = useGalaxyMapStore((s) => s.selectStar);
   const enterSystemView = useGalaxyMapStore((s) => s.enterSystemView);
@@ -127,6 +134,7 @@ export function SearchBox() {
       // Mark handled so the dock's document-level Esc listener ignores it.
       e.preventDefault();
       setOpen(false);
+      restoreFocus.current = true;
       setFieldShown(false);
       inputRef.current?.blur();
     }
@@ -138,6 +146,7 @@ export function SearchBox() {
     return (
       <div role="search">
         <button
+          ref={openButtonRef}
           type="button"
           data-testid="search-open"
           aria-label={t('ui.searchOpen')}
@@ -198,6 +207,7 @@ export function SearchBox() {
           className={`hud-card font-hud text-sm ${
             phone
               ? // Spans the top bar (the nearest positioned ancestor), scrolls inside the viewport.
+                // 5rem = 80 px: top bar height plus gap kept free below the viewport top; aesthetic choice (not data).
                 'absolute inset-x-2 top-full mt-1 max-h-[calc(100dvh-5rem)] overflow-y-auto'
               : 'mt-1 overflow-hidden'
           }`}

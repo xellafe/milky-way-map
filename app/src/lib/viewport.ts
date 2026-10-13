@@ -25,7 +25,7 @@ export function useCompactViewport(): boolean {
   return useSyncExternalStore(subscribe, isCompactViewport, getServerSnapshot);
 }
 
-export const COARSE_POINTER_QUERY = '(pointer: coarse)';
+const COARSE_POINTER_QUERY = '(pointer: coarse)';
 
 export function isCoarsePointer(): boolean {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -48,9 +48,7 @@ function subscribeLayout(onChange: () => void): () => void {
 // A string snapshot is a stable primitive: useSyncExternalStore compares by identity.
 export function currentLayoutMode(): LayoutMode {
   if (typeof window === 'undefined') return 'desktop';
-  const coarse =
-    typeof window.matchMedia === 'function' && window.matchMedia(COARSE_POINTER_QUERY).matches;
-  return layoutMode(window.innerWidth, window.innerHeight, coarse);
+  return layoutMode(window.innerWidth, window.innerHeight, isCoarsePointer());
 }
 
 /** Reactive phone layout mode (see `layoutMode`); follows resize/rotation. */

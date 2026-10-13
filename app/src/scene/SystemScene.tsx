@@ -309,7 +309,7 @@ function PlanetFollow({
   const size = useThree((s) => s.size);
   const run = useRef<{ name: string; start: THREE.Vector3; elapsed: number } | null>(null);
   const mobile = useLayoutMode() !== 'desktop';
-  const readAreaCached = useCachedUsableArea();
+  const readAreaCached = useCachedUsableArea(mobile);
   // Applied and wanted projection shift, px (#23 AC7); y stays 0 on desktop.
   const viewShift = useRef({ x: 0, y: 0 });
   const wantShift = useRef({ x: 0, y: 0 });

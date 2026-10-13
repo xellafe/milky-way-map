@@ -89,6 +89,7 @@ export function MobileSheet({ label, children }: { label: string; children: Reac
       className={`hud-card pointer-events-auto absolute z-30 flex ${
         portrait
           ? // Bottom reserve (4.5rem + inset): the dock row sits over it, so it stays reachable under the sheet (#25).
+            // 4.5rem = 72 px: 44 px dock button + padding + offset; derived, aesthetic margin (not data).
             'inset-x-0 bottom-0 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))]'
           : 'inset-y-0 right-0 max-w-[50vw] flex-row pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]'
       } ${dragPx === null ? 'motion-safe:transition-[height,width] motion-safe:duration-200' : ''}`}
