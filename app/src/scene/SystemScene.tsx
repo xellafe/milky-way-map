@@ -7,7 +7,7 @@ import { canvasCursor } from '../lib/canvasCursor';
 import { approachTarget, followStep, followViewShift } from '../lib/follow';
 import { centerShift } from '../lib/sheet';
 import { useLayoutMode } from '../lib/viewport';
-import { prefersReducedMotion } from '../lib/motion';
+import { MOBILE_MAX_DPR, prefersReducedMotion } from '../lib/motion';
 import { hzBoundsAU, hzInclinationDeg, type HzBounds } from '../lib/habitableZone';
 import {
   nameSeed,
@@ -33,7 +33,7 @@ import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
 import { HostStar } from './HostStar';
 import { placeAnchor } from './placeAnchor';
 import { getSelectionAnchor } from './selectionAnchor';
-import { readUsableArea } from './usableArea';
+import { readUsableArea, useCachedUsableArea } from './usableArea';
 
 const SUN_RADIUS_AU = 0.00465;
 // Orbits are real-scale; BODY sizes and looks are not (pscomppars has no
@@ -309,6 +309,7 @@ function PlanetFollow({
   const size = useThree((s) => s.size);
   const run = useRef<{ name: string; start: THREE.Vector3; elapsed: number } | null>(null);
   const mobile = useLayoutMode() !== 'desktop';
+  const readAreaCached = useCachedUsableArea();
   // Applied and wanted projection shift, px (#23 AC7); y stays 0 on desktop.
   const viewShift = useRef({ x: 0, y: 0 });
   const wantShift = useRef({ x: 0, y: 0 });
@@ -319,7 +320,7 @@ function PlanetFollow({
     const mesh = name ? meshes.current[planets.findIndex((p) => p.record.pl_name === name)] : null;
     if (mobile) {
       // The window moves opposite to the picture: +x moves the scene left.
-      const c = centerShift(readUsableArea(size.width, size.height), size.width, size.height);
+      const c = centerShift(readAreaCached(size.width, size.height), size.width, size.height);
       wantShift.current = { x: -c.x, y: -c.y };
     } else if (mesh) {
       // Recomputed only while a planet is followed: on deselect the view stays put.
@@ -536,6 +537,7 @@ export function SystemScene() {
 
   // Host data is a module holder read (already loaded by the entry panel).
   const host = hostname ? getHost(hostname) : null;
+  const mobile = useLayoutMode() !== 'desktop';
   const allPlanets = useMemo(() => {
     if (!host) return [];
     const maxA = Math.max(...host.planets.map((p) => p.pl_orbsmax ?? 0), 0.01);
@@ -565,6 +567,8 @@ export function SystemScene() {
     // the top-left corner under the star panel (#23) and losing pointer input.
     <Canvas
       className="[&_canvas]:size-full"
+      // Desktop sets none: the Canvas default ([1, 2]) applies.
+      dpr={mobile ? [1, MOBILE_MAX_DPR] : undefined}
       camera={{
         position: [maxA * 1.7, maxA * 1.1, maxA * 1.7],
         fov: 50,

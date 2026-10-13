@@ -68,7 +68,7 @@ export function StarPicking() {
       fragmentShader: starPickFrag,
       uniforms: {
         uPixelScale: {
-          value: STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, 2),
+          value: STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, gl.getPixelRatio()),
         },
         // GLSL clamp(min > max) is undefined: never let the max fall below the min.
         uMaxPx: { value: Math.max(STAR_MAX_PX, pickMinPx) },
@@ -171,6 +171,9 @@ export function StarPicking() {
     // Same size law as the visible cloud (user-tunable gamma).
     pickScene.material.uniforms.uSizeGamma!.value = useSettingsStore.getState().sizeGamma;
     const dpr = gl.getPixelRatio();
+    // Same ratio as the visible cloud, so hit targets match the drawn stars (capped on phones, #25).
+    pickScene.material.uniforms.uPixelScale!.value =
+      STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, dpr);
     const cam = camera as THREE.PerspectiveCamera;
     // A scene-wide view offset (phone sheet, #25) shifts what is drawn under the pointer: pick
     // in the shifted frame, then restore it instead of clearing it.

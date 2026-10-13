@@ -5,6 +5,7 @@ import { useEffect, useMemo } from 'react';
 import type * as THREE from 'three';
 import { ensureStarGeometry, getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
+import { MOBILE_MAX_DPR } from '../lib/motion';
 import { centerShift } from '../lib/sheet';
 import { useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
@@ -15,7 +16,7 @@ import { SelectionTracker } from './SelectionTracker';
 import { StarLabels } from './StarLabels';
 import { applyFilterMask, buildStarGeometry } from './starGeometry';
 import { StarPicking } from './StarPicking';
-import { readUsableArea } from './usableArea';
+import { useCachedUsableArea } from './usableArea';
 
 const urlParams = new URLSearchParams(globalThis.location?.search ?? '');
 // ?pdb=1 → preserveDrawingBuffer, used by e2e tests to read real pixels back.
@@ -46,13 +47,14 @@ function CameraDebugBridge() {
  */
 function SheetViewOffset() {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const readArea = useCachedUsableArea();
   useFrame(({ size }) => {
     // Without a sheet the whole viewport is free: no shift.
     if (!document.querySelector('[data-hud=mobile-sheet]')) {
       if (camera.view?.enabled) camera.clearViewOffset();
       return;
     }
-    const shift = centerShift(readUsableArea(size.width, size.height), size.width, size.height);
+    const shift = centerShift(readArea(size.width, size.height), size.width, size.height);
     // The window moves opposite to the picture: +x moves the scene left.
     camera.setViewOffset(size.width, size.height, -shift.x, -shift.y, size.width, size.height);
   });
@@ -102,6 +104,8 @@ export function GalaxyScene() {
   return (
     <Canvas
       // Without this the browser claims touch gestures (scroll/zoom) and cancels our pointers.
+      // Desktop sets none: the Canvas default ([1, 2]) applies.
+      dpr={mobile ? [1, MOBILE_MAX_DPR] : undefined}
       style={{ touchAction: 'none' }}
       camera={{ position: [0, 0, 40], fov: 60, near: 0.1, far: 2_000_000 }}
       gl={{ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer }}

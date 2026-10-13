@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from 'react';
 import type { Area } from '../lib/overlayPlacement';
 
 // Clearance between a card and the HUD around it, px. Aesthetic choice (not data).
@@ -29,4 +30,43 @@ export function readUsableArea(width: number, height: number): Area {
     right: Math.min(rectOf('side-panel-right')?.left ?? width, sheetRight) - MARGIN_PX,
     bottom: Math.min(bottom, sheetBelow) - MARGIN_PX,
   };
+}
+
+/**
+ * Phone only (#25, spec §5): `readUsableArea` forces a layout on every call, too much
+ * per frame. This reader returns the last measurement and measures again only after a
+ * HUD element changed size or the HUD tree changed (sheet snap and content, panels
+ * appearing), or the canvas size changed.
+ */
+export function useCachedUsableArea(): (width: number, height: number) => Area {
+  const dirty = useRef(true);
+  const last = useRef<{ width: number; height: number; area: Area } | null>(null);
+  useEffect(() => {
+    const invalidate = () => {
+      dirty.current = true;
+    };
+    const resizes = new ResizeObserver(invalidate);
+    const watch = () => {
+      resizes.disconnect();
+      document.querySelectorAll('[data-hud]').forEach((el) => resizes.observe(el));
+      invalidate();
+    };
+    const mutations = new MutationObserver(watch);
+    mutations.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('resize', invalidate);
+    watch();
+    return () => {
+      resizes.disconnect();
+      mutations.disconnect();
+      window.removeEventListener('resize', invalidate);
+    };
+  }, []);
+  return useCallback((width, height) => {
+    const l = last.current;
+    if (dirty.current || !l || l.width !== width || l.height !== height) {
+      last.current = { width, height, area: readUsableArea(width, height) };
+      dirty.current = false;
+    }
+    return last.current!.area;
+  }, []);
 }
