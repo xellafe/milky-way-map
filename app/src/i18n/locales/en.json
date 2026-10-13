@@ -5,9 +5,11 @@
   },
   "ui": {
     "appName": "Galaxy Map",
+    "sheetHandle": "Resize the panel",
     "loading": "Loading…",
     "loadingStars": "Loading star catalog… {{percent}}",
     "searchPlaceholder": "Search a star or system (e.g. Polaris, HD 209458, TRAPPIST-1)",
+    "searchOpen": "Open search",
     "searchNoResults": "No results",
     "searchUnanchored": "system only"
   },
@@ -64,6 +66,7 @@
     "filters": "Filters",
     "view": "View",
     "options": "Options",
+    "time": "Time",
     "visibleOf": "{{visible}} of {{total}} visible",
     "visibleCount": "{{value}} stars visible"
   },
@@ -105,6 +108,9 @@
   "system": {
     "back": "Back to galaxy",
     "planets": "Planets",
+    "tabStar": "Star",
+    "sheetTabs": "Star and planets",
+    "tabPlanets": "Planets ({{count}})",
     "timeScale": "Time scale",
     "daysPerSecond": "{{value}} days/s",
     "logScale": "Log scale",
@@ -220,6 +226,13 @@
       "dock": {
         "action": "Filters, view options and settings",
         "command": "Bottom bar"
+      },
+      "touch": {
+        "look": "Drag with one finger",
+        "move": "Pinch: spread or squeeze two fingers",
+        "zoom": "Pinch",
+        "select": "Tap",
+        "search": "Search icon"
       }
     },
     "dontShowAgain": "Don't show again",

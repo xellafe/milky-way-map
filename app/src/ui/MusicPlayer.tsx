@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildPlaylist, nextIndex, prevIndex } from '../lib/playlist';
-import { useCompactViewport } from '../lib/viewport';
+import { useCompactViewport, useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 import { HudSlider } from './hud/HudInputs';
 import { HudCard } from './hud/HudCard';
+import { MobileSheet } from './MobileSheet';
 
 const DEFAULT_VOLUME = 0.4;
 const MUSIC_SELECTOR = '[data-music-zone]';
@@ -20,6 +21,8 @@ const CONTROLS_ID = 'music-player-controls';
 
 const BUTTON_CLASS =
   'rounded-hud border border-hud-accent/30 bg-white/5 px-1.5 py-0.5 font-hud text-sm text-hud-text hover:bg-white/10';
+// 44x44 px touch target on phones (#25). Separate class: it must beat the padding-driven size above.
+const TOUCH_BUTTON_CLASS = `${BUTTON_CLASS} min-h-11 min-w-11`;
 
 /**
  * Playlist playback: play/pause, volume, prev/next, and the
@@ -129,6 +132,10 @@ export function MusicPlayer() {
     onPause,
   } = useMusic();
   const expanded = useGalaxyMapStore((s) => s.musicExpanded);
+  const dockPanel = useGalaxyMapStore((s) => s.dockPanel);
+  const layout = useLayoutMode();
+  const phone = layout !== 'desktop';
+  const buttonClass = phone ? TOUCH_BUTTON_CLASS : BUTTON_CLASS;
   const setExpanded = useGalaxyMapStore((s) => s.setMusicExpanded);
   // Compact: the expanded player and a dock panel compete for the same band;
   // the player yields when the viewport shrinks into compact with a panel open.
@@ -156,6 +163,95 @@ export function MusicPlayer() {
 
   if (!track) return null;
 
+  // Stays mounted in every layout: collapsing or moving the controls never stops playback.
+  const audio = (
+    <audio
+      ref={audioRef}
+      src={track.src}
+      preload="none"
+      data-testid="music-audio"
+      onPlay={onPlay}
+      onPause={onPause}
+      onEnded={onEnded}
+    />
+  );
+
+  const controls = (
+    <div id={CONTROLS_ID} className="flex flex-col gap-1">
+      <p data-testid="music-title" className="truncate font-hud text-xs text-hud-text">
+        <span className="sr-only">{t('music.nowPlaying')}: </span>
+        {track.title}
+      </p>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          data-testid="music-prev"
+          aria-label={t('music.prev')}
+          onClick={prev}
+          className={buttonClass}
+        >
+          <span aria-hidden>⏮&#xFE0E;</span>
+        </button>
+        <button
+          type="button"
+          data-testid="music-toggle"
+          aria-label={playing ? t('music.pause') : t('music.play')}
+          onClick={toggle}
+          className={buttonClass}
+        >
+          <span aria-hidden>{playing ? '❚❚' : '▶'}</span>
+        </button>
+        <button
+          type="button"
+          data-testid="music-next"
+          aria-label={t('music.next')}
+          onClick={next}
+          className={buttonClass}
+        >
+          <span aria-hidden>⏭&#xFE0E;</span>
+        </button>
+        <HudSlider
+          min={0}
+          max={1}
+          step={0.05}
+          value={volume}
+          aria-label={t('music.volume')}
+          data-testid="music-volume"
+          className="min-w-0 flex-1"
+          onChange={(event) => setVolume(Number(event.target.value))}
+        />
+        <button
+          ref={collapseRef}
+          type="button"
+          data-testid="music-collapse"
+          aria-label={t('music.collapse')}
+          aria-expanded={true}
+          aria-controls={CONTROLS_ID}
+          onClick={() => change(false)}
+          className={buttonClass}
+        >
+          <span aria-hidden>▾</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  // Phone (#25): the expanded controls are the sheet's `music` content (a dock panel wins).
+  if (phone && expanded) {
+    return (
+      <>
+        {audio}
+        {!dockPanel && (
+          <MobileSheet label={t('music.label')}>
+            <div data-music-zone className="p-3">
+              {controls}
+            </div>
+          </MobileSheet>
+        )}
+      </>
+    );
+  }
+
   return (
     <HudCard
       as="section"
@@ -164,75 +260,18 @@ export function MusicPlayer() {
       data-testid="music-control"
       data-music-zone
       data-expanded={expanded}
-      className={`absolute bottom-4 right-4 z-20 px-2 py-1 ${expanded ? 'w-64 max-lg:bottom-20 max-lg:max-w-[calc(100%-2rem)]' : ''}`}
+      className={
+        phone
+          ? // Same row as the dock; landscape stays left of the sheet.
+            `absolute bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-40 p-2 ${
+              layout === 'landscape' ? 'right-[calc(50vw+0.5rem)]' : 'right-2'
+            }`
+          : `absolute bottom-4 right-4 z-20 px-2 py-1 ${expanded ? 'w-64 max-lg:bottom-20 max-lg:max-w-[calc(100%-2rem)]' : ''}`
+      }
     >
-      <audio
-        ref={audioRef}
-        src={track.src}
-        preload="none"
-        data-testid="music-audio"
-        onPlay={onPlay}
-        onPause={onPause}
-        onEnded={onEnded}
-      />
+      {audio}
       {expanded ? (
-        <div id={CONTROLS_ID} className="flex flex-col gap-1">
-          <p data-testid="music-title" className="truncate font-hud text-xs text-hud-text">
-            <span className="sr-only">{t('music.nowPlaying')}: </span>
-            {track.title}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              data-testid="music-prev"
-              aria-label={t('music.prev')}
-              onClick={prev}
-              className={BUTTON_CLASS}
-            >
-              <span aria-hidden>⏮&#xFE0E;</span>
-            </button>
-            <button
-              type="button"
-              data-testid="music-toggle"
-              aria-label={playing ? t('music.pause') : t('music.play')}
-              onClick={toggle}
-              className={BUTTON_CLASS}
-            >
-              <span aria-hidden>{playing ? '❚❚' : '▶'}</span>
-            </button>
-            <button
-              type="button"
-              data-testid="music-next"
-              aria-label={t('music.next')}
-              onClick={next}
-              className={BUTTON_CLASS}
-            >
-              <span aria-hidden>⏭&#xFE0E;</span>
-            </button>
-            <HudSlider
-              min={0}
-              max={1}
-              step={0.05}
-              value={volume}
-              aria-label={t('music.volume')}
-              data-testid="music-volume"
-              className="min-w-0 flex-1"
-              onChange={(event) => setVolume(Number(event.target.value))}
-            />
-            <button
-              ref={collapseRef}
-              type="button"
-              data-testid="music-collapse"
-              aria-label={t('music.collapse')}
-              aria-expanded={true}
-              aria-controls={CONTROLS_ID}
-              onClick={() => change(false)}
-              className={BUTTON_CLASS}
-            >
-              <span aria-hidden>▾</span>
-            </button>
-          </div>
-        </div>
+        controls
       ) : (
         <button
           ref={expandRef}
@@ -242,7 +281,7 @@ export function MusicPlayer() {
           aria-expanded={false}
           aria-controls={CONTROLS_ID}
           onClick={() => change(true)}
-          className={BUTTON_CLASS}
+          className={buttonClass}
         >
           <span aria-hidden>♪</span>
         </button>

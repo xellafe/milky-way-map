@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarCore } from '../data/starCoreStore';
 import { prefersReducedMotion } from '../lib/motion';
+import { pinchAdvanceLy, pinchDistance, pinchDollyFactor } from '../lib/pinch';
 import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
 import { getSavedCameraPose, saveCameraPose } from './cameraPoseStore';
@@ -52,7 +53,9 @@ function lockedTarget(): THREE.Vector3 | null {
  * - Free-fly: drag-to-look follows the MOUSE DELTA 1:1 in the grab direction
  *   (drag right → view turns left, #11). Stop the mouse → rotation stops
  *   (regression-tested against three's FlyControls hold-at-offset model).
- *   WASD move, R/F up/down, Q/E roll.
+ *   WASD move, R/F up/down, Q/E roll. Touch: one finger looks/orbits like the
+ *   mouse; a two-finger pinch dollies toward the locked star, or advances along
+ *   the view direction in free-fly.
  * - Orbit (entered automatically on star selection, store-side): drag orbits
  *   rigidly around the target, wheel dollies in/out, translation keys release
  *   the lock back to free-fly (selection stays). A fresh lock starts an
@@ -66,7 +69,8 @@ function lockedTarget(): THREE.Vector3 | null {
 export function CameraControls() {
   const { gl, camera } = useThree();
   const keys = useRef(new Set<string>());
-  const last = useRef<{ x: number; y: number } | null>(null);
+  // Active pointers (mouse button held or fingers down) with their last position.
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
   const tween = useRef<CameraTween | null>(null);
   const lastLockedStar = useRef<number | null>(null);
   // True from lock acquisition until the user orbits manually.
@@ -84,16 +88,43 @@ export function CameraControls() {
   useEffect(() => {
     const el = gl.domElement;
 
+    // Distance between the two fingers at the previous event; null unless exactly two are down.
+    let pinchPrevPx: number | null = null;
+    const twoFingerDistance = () => {
+      const [a, b] = [...pointers.current.values()];
+      return pinchDistance(a!, b!);
+    };
+
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
-      last.current = { x: e.clientX, y: e.clientY };
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      // Restart from the current positions whenever the pointer count changes,
+      // so a finger lifting or landing never produces a jump.
+      pinchPrevPx = pointers.current.size === 2 ? twoFingerDistance() : null;
       el.setPointerCapture(e.pointerId);
     };
     const onPointerMove = (e: PointerEvent) => {
-      if (!last.current || (e.buttons & 1) === 0) return;
-      const dx = e.clientX - last.current.x;
-      const dy = e.clientY - last.current.y;
-      last.current = { x: e.clientX, y: e.clientY };
+      const prev = pointers.current.get(e.pointerId);
+      if (!prev || (e.buttons & 1) === 0) return;
+      const cur = { x: e.clientX, y: e.clientY };
+      pointers.current.set(e.pointerId, cur);
+      if (pointers.current.size === 2) {
+        const curPx = twoFingerDistance();
+        const prevPx = pinchPrevPx ?? curPx;
+        pinchPrevPx = curPx;
+        if (tween.current) return;
+        const target = lockedTarget();
+        if (target) {
+          dollyTowardTarget(camera.position, target, pinchDollyFactor(prevPx, curPx));
+        } else {
+          const speed = useSettingsStore.getState().moveSpeedLyPerS;
+          camera.translateZ(-pinchAdvanceLy(prevPx, curPx, speed));
+        }
+        return;
+      }
+      if (pointers.current.size !== 1) return;
+      const dx = cur.x - prev.x;
+      const dy = cur.y - prev.y;
       if (tween.current) return;
       const target = lockedTarget();
       if (target) {
@@ -112,7 +143,8 @@ export function CameraControls() {
       }
     };
     const onPointerEnd = (e: PointerEvent) => {
-      last.current = null;
+      pointers.current.delete(e.pointerId);
+      pinchPrevPx = pointers.current.size === 2 ? twoFingerDistance() : null;
       if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
     };
     const onWheel = (e: WheelEvent) => {

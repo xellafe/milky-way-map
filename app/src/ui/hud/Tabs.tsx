@@ -2,23 +2,29 @@ import { useRef } from 'react';
 import { nextTabIndex } from '../../lib/tabs';
 import type { DockPanelId } from '../../state/store';
 
-export interface TabItem {
-  id: DockPanelId;
+export interface TabItem<T extends string = DockPanelId> {
+  id: T;
   label: string;
   testId: string;
 }
 
-/** Tablist of the dock panel; the single tabpanel is `#dock-panel`. */
-export function Tabs({
+/** Tablist of the dock panel; the single tabpanel is `#dock-panel` unless `panelId` says otherwise. */
+export function Tabs<T extends string = DockPanelId>({
   items,
   active,
   onSelect,
   label,
+  touch = false,
+  panelId = 'dock-panel',
 }: {
-  items: TabItem[];
-  active: DockPanelId;
-  onSelect: (id: DockPanelId) => void;
+  items: TabItem<T>[];
+  active: T;
+  onSelect: (id: T) => void;
   label: string;
+  /** DOM id of the tabpanel the tabs control. */
+  panelId?: string;
+  /** 44 px high tabs (phone, #25). */
+  touch?: boolean;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -45,11 +51,11 @@ export function Tabs({
             role="tab"
             id={`dock-tab-${item.id}`}
             aria-selected={selected}
-            aria-controls="dock-panel"
+            aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
             data-testid={item.testId}
             onClick={() => onSelect(item.id)}
-            className={`rounded-hud border px-2 py-1 font-hud text-xs ${
+            className={`rounded-hud border px-2 py-1 font-hud text-xs ${touch ? 'min-h-11 min-w-11' : ''} ${
               selected
                 ? 'border-hud-accent/60 bg-hud-accent/20 text-hud-bright'
                 : 'border-transparent text-hud-muted hover:text-hud-bright'

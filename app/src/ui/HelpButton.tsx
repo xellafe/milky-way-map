@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 import { HudButton } from './hud/HudButton';
 
@@ -8,6 +9,7 @@ export function HelpButton() {
   return (
     <HudButton
       variant="secondary"
+      touch={useLayoutMode() !== 'desktop'}
       aria-label={t('welcome.helpButton')}
       data-testid="help-button"
       onClick={() => setOpen(true)}

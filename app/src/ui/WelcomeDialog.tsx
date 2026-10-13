@@ -1,11 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isCoarsePointer } from '../lib/viewport';
 import { isWelcomeDismissed, setWelcomeDismissed } from '../lib/welcome';
 import { useGalaxyMapStore } from '../state/store';
 import { HudButton } from './hud/HudButton';
 import { HudSwitch } from './hud/HudInputs';
 
 const GUIDE_ROWS = ['look', 'move', 'zoom', 'select', 'search', 'system', 'dock'] as const;
+
+// Rows whose mouse/keyboard command has a touch counterpart (#25, spec §4.5); system and dock
+// are device-neutral.
+const TOUCH_ROWS = new Set<(typeof GUIDE_ROWS)[number]>([
+  'look',
+  'move',
+  'zoom',
+  'select',
+  'search',
+]);
 
 /**
  * Modal welcome guide (#12). Native <dialog>: showModal() gives focus trap,
@@ -19,6 +30,8 @@ export function WelcomeDialog() {
   const ref = useRef<HTMLDialogElement>(null);
   const startRef = useRef<HTMLButtonElement>(null);
   const [dontShow, setDontShow] = useState(isWelcomeDismissed);
+  // Evaluated at render: the dialog is re-rendered on open, and the pointer type does not change mid-session.
+  const touch = isCoarsePointer();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -55,7 +68,9 @@ export function WelcomeDialog() {
           <div key={row} className="contents">
             <dt>{t(`welcome.guide.${row}.action`)}</dt>
             <dd className="text-hud-muted text-right">
-              {row === 'move' ? (
+              {touch && TOUCH_ROWS.has(row) ? (
+                t(`welcome.guide.touch.${row}`)
+              ) : row === 'move' ? (
                 <>
                   <kbd>W</kbd>
                   <kbd>A</kbd>
@@ -77,7 +92,7 @@ export function WelcomeDialog() {
           checked={dontShow}
           onChange={(e) => setDontShow(e.target.checked)}
         />
-        <HudButton ref={startRef} type="submit" data-testid="welcome-start">
+        <HudButton ref={startRef} type="submit" data-testid="welcome-start" touch={touch}>
           {t('welcome.start')}
         </HudButton>
       </form>

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '../i18n';
+import { useLayoutMode } from '../lib/viewport';
 import { HudButton } from './hud/HudButton';
 
 /**
@@ -36,6 +37,7 @@ export function LanguageSelector() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const menuId = useId();
+  const touch = useLayoutMode() !== 'desktop';
 
   // Close on outside click.
   useEffect(() => {
@@ -111,6 +113,7 @@ export function LanguageSelector() {
       <HudButton
         ref={buttonRef}
         variant="secondary"
+        touch={touch}
         data-testid="language-button"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -143,7 +146,7 @@ export function LanguageSelector() {
                 tabIndex={lng === current ? 0 : -1}
                 onClick={() => choose(lng)}
                 onKeyDown={(e) => onItemKeyDown(e, index)}
-                className="flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm text-hud-text hover:bg-white/10 focus:bg-white/15 focus:outline-none"
+                className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 ${touch ? 'min-h-11' : ''} text-left text-sm text-hud-text hover:bg-white/10 focus:bg-white/15 focus:outline-none`}
               >
                 {LANGUAGE_NAMES[lng]}
                 {lng === current && <span aria-hidden>✓</span>}

@@ -12,17 +12,20 @@ const variantClass = {
 export function HudButton({
   variant = 'primary',
   className = '',
+  touch = false,
   ref,
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'secondary';
+  /** 44x44 px minimum (phone, #25); a prop because a className cannot override the size. */
+  touch?: boolean;
   ref?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button
       ref={ref}
       type="button"
-      className={`rounded-hud border px-3 py-1.5 font-hud text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${variantClass[variant]} ${className}`}
+      className={`rounded-hud border px-3 py-1.5 font-hud text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${touch ? 'min-h-11 min-w-11' : ''} ${variantClass[variant]} ${className}`}
       {...rest}
     />
   );

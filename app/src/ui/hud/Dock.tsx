@@ -20,7 +20,16 @@ export interface DockItem {
  * handling keeps working unchanged. It marks the event handled so later Esc
  * handlers (star deselect) skip it.
  */
-export function Dock({ items, label }: { items: DockItem[]; label: string }) {
+export function Dock({
+  items,
+  label,
+  touch = false,
+}: {
+  items: DockItem[];
+  label: string;
+  /** 44x44 px buttons (phone, #25) instead of 36; a prop because a className cannot override the size. */
+  touch?: boolean;
+}) {
   const dockPanel = useGalaxyMapStore((s) => s.dockPanel);
   const toggleDockPanel = useGalaxyMapStore((s) => s.toggleDockPanel);
   const closeDockPanel = useGalaxyMapStore((s) => s.closeDockPanel);
@@ -61,7 +70,7 @@ export function Dock({ items, label }: { items: DockItem[]; label: string }) {
           aria-controls="dock-panel"
           data-testid={item.testId}
           onClick={() => toggleDockPanel(item.id)}
-          className="relative flex h-9 w-9 items-center justify-center rounded-hud border border-hud-accent/30 bg-white/5 text-hud-text hover:bg-white/10"
+          className={`relative flex ${touch ? 'h-11 w-11' : 'h-9 w-9'} items-center justify-center rounded-hud border border-hud-accent/30 bg-white/5 text-hud-text hover:bg-white/10`}
         >
           {item.icon}
         </button>

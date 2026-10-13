@@ -57,22 +57,23 @@ function UnanchoredTiles({ host }: { host: ExoHost }) {
 }
 
 /** Left panel of the System View: host-star data (SPEC §6.7). Anchored hosts
- * reuse the star card sections; unanchored ones show archive values only. */
-export function SystemStarPanel({ hostname, host }: { hostname: string; host: ExoHost }) {
+ * reuse the star card sections; unanchored ones show archive values only.
+ * `sheet`: bare body of the phone sheet's Star tab (#25), whose tabpanel scrolls. */
+export function SystemStarPanel({
+  hostname,
+  host,
+  sheet = false,
+}: {
+  hostname: string;
+  host: ExoHost;
+  sheet?: boolean;
+}) {
   const { t } = useTranslation();
   const index = host.starRef.matchedIndex;
   const anchored = index !== null;
   const cls = anchored ? spectralClassLetter(getStarCore()?.spectralClass[index] ?? 7) : null;
-  return (
-    <HudCard
-      as="aside"
-      data-hud="side-panel-left"
-      data-testid="system-star-panel"
-      aria-label={t('system.starPanel')}
-      // Scrollable: needs keyboard access (axe scrollable-region-focusable).
-      tabIndex={0}
-      className={`${SIDE_PANEL_CLASS} left-4`}
-    >
+  const body = (
+    <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="font-hud text-base text-hud-bright">{hostname}</h2>
         {!host.starRef.matched && (
@@ -98,6 +99,26 @@ export function SystemStarPanel({ hostname, host }: { hostname: string; host: Ex
       <div className="mt-3">
         <ArchiveSection host={host} withAge={!anchored} />
       </div>
+    </>
+  );
+  if (sheet) {
+    return (
+      <section data-testid="system-star-panel" aria-label={t('system.starPanel')}>
+        {body}
+      </section>
+    );
+  }
+  return (
+    <HudCard
+      as="aside"
+      data-hud="side-panel-left"
+      data-testid="system-star-panel"
+      aria-label={t('system.starPanel')}
+      // Scrollable: needs keyboard access (axe scrollable-region-focusable).
+      tabIndex={0}
+      className={`${SIDE_PANEL_CLASS} left-4`}
+    >
+      {body}
     </HudCard>
   );
 }

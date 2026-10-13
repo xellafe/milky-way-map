@@ -2,8 +2,9 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarGeometry } from '../data/starCoreStore';
-import { prefersReducedMotion } from '../lib/motion';
+import { effectiveTwinkle, prefersReducedMotion } from '../lib/motion';
 import { STAR_COLOR_GAMMA } from '../lib/starColor';
+import { useLayoutMode } from '../lib/viewport';
 import { DEFAULT_SETTINGS, useSettingsStore } from '../state/settings';
 import starFrag from '../shaders/star.frag?raw';
 import starVert from '../shaders/star.vert?raw';
@@ -39,6 +40,7 @@ export const STAR_TWINKLE_FAR_LY = 200;
  */
 export function StarCloud() {
   const geometry = getStarGeometry();
+  const mobile = useLayoutMode() !== 'desktop';
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -66,13 +68,20 @@ export function StarCloud() {
   );
 
   const pointsRef = useRef<THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
-  useFrame((_, delta) => {
+  useFrame(({ gl }, delta) => {
     const uniforms = pointsRef.current?.material.uniforms;
     if (!uniforms) return;
     const s = useSettingsStore.getState();
     // Accumulated (not elapsedTime · speed) so a speed change doesn't jump phase.
     uniforms.uTime!.value += delta * s.twinkleSpeed;
-    uniforms.uTwinkle!.value = prefersReducedMotion() || s.realism ? 0 : s.twinkleAmplitude;
+    // Follows the Canvas pixel ratio, which is capped on phones: point sizes stay constant in CSS px.
+    uniforms.uPixelScale!.value =
+      STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, gl.getPixelRatio());
+    uniforms.uTwinkle!.value = effectiveTwinkle(s.twinkleAmplitude, {
+      reducedMotion: prefersReducedMotion(),
+      realism: s.realism,
+      mobile,
+    });
     uniforms.uSizeGamma!.value = s.sizeGamma;
     uniforms.uColorGamma!.value = s.realism ? 1 : STAR_COLOR_GAMMA;
     uniforms.uFireball!.value = s.realism ? 0 : 1;

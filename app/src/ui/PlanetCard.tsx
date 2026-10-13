@@ -92,38 +92,45 @@ function PlanetAdvanced({ planet }: { planet: ExoplanetRecord }) {
 }
 
 /** The single planet card (#23): Base/Advanced, anchored to the selected planet
- * (or alone beside the right panel when its orbit position is unknown). */
-export function PlanetCard({ planet }: { planet: ExoplanetRecord }) {
+ * (or alone beside the right panel when its orbit position is unknown).
+ * `sheet`: body of the phone sheet (#25), not anchored; `onClose` lets the sheet
+ * go back to its Planets tab. */
+export function PlanetCard({
+  planet,
+  sheet = false,
+  onClose,
+}: {
+  planet: ExoplanetRecord;
+  sheet?: boolean;
+  onClose?: () => void;
+}) {
   const { t } = useTranslation();
   const anchored = planet.pl_orbsmax !== null;
-  return (
-    <AnchoredCard
-      anchorRef={setSelectionAnchor}
-      anchored={anchored}
-      card={
-        <ObjectCard
-          testId="planet-panel"
-          titleTestId="planet-panel-title"
-          closeTestId="planet-close"
-          title={planet.pl_name}
-          onClose={() => useGalaxyMapStore.getState().selectPlanet(null)}
-          base={
-            <>
-              <PlanetStatTiles planet={planet} />
-              <p className="text-xs text-hud-muted">
-                {t('system.type')}:{' '}
-                <span className="text-hud-bright">{t(`planetType.${classifyPlanet(planet)}`)}</span>
-              </p>
-              {!anchored && (
-                <p className="text-xs text-hud-warn" data-testid="planet-no-position">
-                  {t('system.noOrbitPosition')}
-                </p>
-              )}
-            </>
-          }
-          advanced={<PlanetAdvanced planet={planet} />}
-        />
+  const card = (
+    <ObjectCard
+      variant={sheet ? 'sheet' : 'floating'}
+      testId="planet-panel"
+      titleTestId="planet-panel-title"
+      closeTestId="planet-close"
+      title={planet.pl_name}
+      onClose={onClose ?? (() => useGalaxyMapStore.getState().selectPlanet(null))}
+      base={
+        <>
+          <PlanetStatTiles planet={planet} />
+          <p className="text-xs text-hud-muted">
+            {t('system.type')}:{' '}
+            <span className="text-hud-bright">{t(`planetType.${classifyPlanet(planet)}`)}</span>
+          </p>
+          {!anchored && (
+            <p className="text-xs text-hud-warn" data-testid="planet-no-position">
+              {t('system.noOrbitPosition')}
+            </p>
+          )}
+        </>
       }
+      advanced={<PlanetAdvanced planet={planet} />}
     />
   );
+  if (sheet) return card;
+  return <AnchoredCard anchorRef={setSelectionAnchor} anchored={anchored} card={card} />;
 }

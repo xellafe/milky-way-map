@@ -5,9 +5,11 @@
   },
   "ui": {
     "appName": "Galaxy Map",
+    "sheetHandle": "Redimensionner le panneau",
     "loading": "Chargement…",
     "loadingStars": "Chargement du catalogue stellaire… {{percent}}",
     "searchPlaceholder": "Recherchez une étoile ou un système (ex. Polaris, HD 209458, TRAPPIST-1)",
+    "searchOpen": "Ouvrir la recherche",
     "searchNoResults": "Aucun résultat",
     "searchUnanchored": "système seul"
   },
@@ -64,6 +66,7 @@
     "filters": "Filtres",
     "view": "Vue",
     "options": "Options",
+    "time": "Temps",
     "visibleOf": "{{visible}} sur {{total}} visibles",
     "visibleCount": "{{value}} étoiles visibles"
   },
@@ -105,6 +108,9 @@
   "system": {
     "back": "Retour à la galaxie",
     "planets": "Planètes",
+    "tabStar": "Étoile",
+    "sheetTabs": "Étoile et planètes",
+    "tabPlanets": "Planètes ({{count}})",
     "timeScale": "Échelle de temps",
     "daysPerSecond": "{{value}} jours/s",
     "logScale": "Échelle log",
@@ -220,6 +226,13 @@
       "dock": {
         "action": "Filtres, options d'affichage et réglages",
         "command": "Barre du bas"
+      },
+      "touch": {
+        "look": "Glissez avec un doigt",
+        "move": "Pincement : écartez ou rapprochez les doigts",
+        "zoom": "Pincement",
+        "select": "Touchez",
+        "search": "Icône de recherche"
       }
     },
     "dontShowAgain": "Ne plus afficher",

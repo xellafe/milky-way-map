@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
 import { canvasCursor } from '../lib/canvasCursor';
 import { approachTarget, followStep, followViewShift } from '../lib/follow';
-import { prefersReducedMotion } from '../lib/motion';
+import { centerShift } from '../lib/sheet';
+import { useLayoutMode } from '../lib/viewport';
+import { MOBILE_MAX_DPR, prefersReducedMotion } from '../lib/motion';
 import { hzBoundsAU, hzInclinationDeg, type HzBounds } from '../lib/habitableZone';
 import {
   nameSeed,
@@ -31,7 +33,7 @@ import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
 import { HostStar } from './HostStar';
 import { placeAnchor } from './placeAnchor';
 import { getSelectionAnchor } from './selectionAnchor';
-import { readUsableArea } from './usableArea';
+import { readUsableArea, useCachedUsableArea } from './usableArea';
 
 const SUN_RADIUS_AU = 0.00465;
 // Orbits are real-scale; BODY sizes and looks are not (pscomppars has no
@@ -232,6 +234,7 @@ function PlanetAnimator({
 }) {
   const tDays = useRef(0);
   const controls = useThree((s) => s.controls) as { target: THREE.Vector3 } | null;
+  const camera = useThree((s) => s.camera);
 
   useFrame((_, delta) => {
     tDays.current += delta * useGalaxyMapStore.getState().timeScaleDaysPerSecond;
@@ -255,6 +258,7 @@ function PlanetAnimator({
       (globalThis as Record<string, unknown>).__system = {
         tDays: tDays.current,
         cameraTarget: controls?.target.toArray() ?? null,
+        cameraPosition: camera.position.toArray(),
         timeScale: useGalaxyMapStore.getState().timeScaleDaysPerSecond,
         hz: hz && { ...hz, inclinationDeg: hzIncl },
         planets: planets.map((p) => ({
@@ -290,6 +294,8 @@ const VIEW_SLIDE_RATE = 8;
  * centred planet; this changes picking and PlanetTracker's projection too. The
  * shift is kept on deselect and dies with the Canvas. Must be mounted after
  * PlanetAnimator so it reads this frame's planet positions.
+ * Phone (#25): the view is always centred on the area the sheet leaves free instead
+ * (both axes), as in the galaxy view.
  */
 function PlanetFollow({
   planets,
@@ -302,42 +308,61 @@ function PlanetFollow({
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
   const run = useRef<{ name: string; start: THREE.Vector3; elapsed: number } | null>(null);
-  // Applied and wanted horizontal projection shift, px (#23 AC7).
-  const viewShift = useRef(0);
-  const wantShift = useRef(0);
+  const mobile = useLayoutMode() !== 'desktop';
+  const readAreaCached = useCachedUsableArea(mobile);
+  // Applied and wanted projection shift, px (#23 AC7); y stays 0 on desktop.
+  const viewShift = useRef({ x: 0, y: 0 });
+  const wantShift = useRef({ x: 0, y: 0 });
   const lastWidth = useRef(size.width);
 
   useFrame((_, delta) => {
     const name = useGalaxyMapStore.getState().selectedPlanet;
     const mesh = name ? meshes.current[planets.findIndex((p) => p.record.pl_name === name)] : null;
-    // Recomputed only while a planet is followed: on deselect the view stays put.
-    if (mesh) {
-      wantShift.current = followViewShift(
-        readUsableArea(size.width, size.height),
-        size.width,
-        ADVANCED_CARD_WIDTH_PX,
-        CARD_GAP_PX,
-      );
+    if (mobile) {
+      // The window moves opposite to the picture: +x moves the scene left.
+      const c = centerShift(readAreaCached(size.width, size.height), size.width, size.height);
+      wantShift.current = { x: -c.x, y: -c.y };
+    } else if (mesh) {
+      // Recomputed only while a planet is followed: on deselect the view stays put.
+      wantShift.current = {
+        x: followViewShift(
+          readUsableArea(size.width, size.height),
+          size.width,
+          ADVANCED_CARD_WIDTH_PX,
+          CARD_GAP_PX,
+        ),
+        y: 0,
+      };
     } else if (lastWidth.current !== size.width) {
       // The parked shift was computed for another viewport width; park the view at the centre.
-      wantShift.current = 0;
+      wantShift.current = { x: 0, y: 0 };
     }
     lastWidth.current = size.width;
-    const gap = wantShift.current - viewShift.current;
-    viewShift.current =
-      prefersReducedMotion() || Math.abs(gap) < 0.5
-        ? wantShift.current
-        : viewShift.current + gap * Math.min(1, delta * VIEW_SLIDE_RATE);
-    if (viewShift.current === 0) {
+    const gapX = wantShift.current.x - viewShift.current.x;
+    const gapY = wantShift.current.y - viewShift.current.y;
+    if (prefersReducedMotion() || Math.hypot(gapX, gapY) < 0.5) {
+      viewShift.current = { ...wantShift.current };
+    } else {
+      const k = Math.min(1, delta * VIEW_SLIDE_RATE);
+      viewShift.current = { x: viewShift.current.x + gapX * k, y: viewShift.current.y + gapY * k };
+    }
+    if (viewShift.current.x === 0 && viewShift.current.y === 0) {
       if (camera.view?.enabled) camera.clearViewOffset();
     } else {
-      camera.setViewOffset(size.width, size.height, viewShift.current, 0, size.width, size.height);
+      camera.setViewOffset(
+        size.width,
+        size.height,
+        viewShift.current.x,
+        viewShift.current.y,
+        size.width,
+        size.height,
+      );
     }
     if (exposeBridge) {
       const bridge = (globalThis as Record<string, unknown>).__system as
         | { viewShiftPx?: number }
         | undefined;
-      if (bridge) bridge.viewShiftPx = viewShift.current;
+      if (bridge) bridge.viewShiftPx = viewShift.current.x;
     }
     if (!controls || !name || !mesh) {
       run.current = null;
@@ -369,7 +394,8 @@ function PlanetFollow({
  * Projects the selected planet onto the card's anchor, like SelectionTracker
  * does for stars. A planet without a mesh (no semi-major axis) has no position:
  * its card sits against the right edge of the usable area instead. Mounted
- * after PlanetAnimator so it reads this frame's positions.
+ * after PlanetAnimator so it reads this frame's positions. In test mode it also
+ * publishes where the followed planet is on screen (`followedScreen`).
  */
 function PlanetTracker({
   planets,
@@ -384,8 +410,19 @@ function PlanetTracker({
   useFrame(() => {
     const el = getSelectionAnchor();
     const name = useGalaxyMapStore.getState().selectedPlanet;
+    const mesh = name ? meshes.current[planets.findIndex((p) => p.record.pl_name === name)] : null;
+    if (exposeBridge) {
+      const bridge = (globalThis as Record<string, unknown>).__system as
+        | { followedScreen?: [number, number] | null }
+        | undefined;
+      if (bridge) {
+        camera.updateMatrixWorld();
+        const q = mesh ? v.current.copy(mesh.position).project(camera) : null;
+        bridge.followedScreen = q && [((q.x + 1) / 2) * size.width, ((1 - q.y) / 2) * size.height];
+      }
+    }
+    // The phone card is not anchored: there is no element to place.
     if (!el || !name) return;
-    const mesh = meshes.current[planets.findIndex((p) => p.record.pl_name === name)];
     if (!mesh) {
       const area = readUsableArea(size.width, size.height);
       placeAnchor(el, area.right + CARD_GAP_PX, area.top - CARD_TOP_OFFSET_PX, true, size);
@@ -500,6 +537,7 @@ export function SystemScene() {
 
   // Host data is a module holder read (already loaded by the entry panel).
   const host = hostname ? getHost(hostname) : null;
+  const mobile = useLayoutMode() !== 'desktop';
   const allPlanets = useMemo(() => {
     if (!host) return [];
     const maxA = Math.max(...host.planets.map((p) => p.pl_orbsmax ?? 0), 0.01);
@@ -529,6 +567,8 @@ export function SystemScene() {
     // the top-left corner under the star panel (#23) and losing pointer input.
     <Canvas
       className="[&_canvas]:size-full"
+      // Desktop sets none: the Canvas default ([1, 2]) applies.
+      dpr={mobile ? [1, MOBILE_MAX_DPR] : undefined}
       camera={{
         position: [maxA * 1.7, maxA * 1.1, maxA * 1.7],
         fov: 50,

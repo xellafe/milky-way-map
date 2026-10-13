@@ -129,6 +129,22 @@ test('overlay-close removes overlay and card within 1 s (closing deselects)', as
   await expect(page.getByTestId('selection-card')).toHaveCount(0);
 });
 
+// Guards against the Advanced column covering the ✕.
+test('overlay-close is clickable in Advanced mode (no overlap by the column)', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await openApp(page);
+  await selectBySearch(page, 'polaris', 'Polaris');
+  await page.getByTestId('card-mode-advanced').click();
+  await expect(page.getByTestId('card-advanced')).toBeVisible();
+  await page
+    .getByTestId('card-advanced')
+    .evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)));
+
+  // Not forced: Playwright fails if another element intercepts the pointer.
+  await page.getByTestId('overlay-close').click();
+  await expect(page.getByTestId('selection-card')).toHaveCount(0);
+});
+
 test('Escape deselects the star (card closes)', async ({ page }) => {
   await openApp(page);
   await selectBySearch(page, 'polaris', 'Polaris');

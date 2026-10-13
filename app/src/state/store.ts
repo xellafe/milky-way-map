@@ -3,13 +3,14 @@ import { DEFAULT_FILTERS, type DataBounds, type Filters } from '../lib/filterMas
 import { prefersReducedMotion } from '../lib/motion';
 import type { PlanetType } from '../lib/planetType';
 import { readFlag, writeFlag } from '../lib/localFlag';
-import { isCompactViewport } from '../lib/viewport';
+import type { SheetSnap } from '../lib/sheet';
+import { currentLayoutMode, isCompactViewport } from '../lib/viewport';
 import { isWelcomeDismissed } from '../lib/welcome';
 
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
 export type DataStatus = 'idle' | 'loading' | 'ready' | 'error';
-export type DockPanelId = 'filters' | 'view' | 'options';
+export type DockPanelId = 'filters' | 'view' | 'options' | 'time';
 
 /**
  * Current selection: a star of the cloud (by SoA index). Hosts with no
@@ -78,6 +79,9 @@ export interface GalaxyMapState {
   setMusicExpanded: (expanded: boolean) => void;
   /** Bumped by every star selection: remounts the overlay, restarting its opening sequence. */
   selectionEpoch: number;
+  /** Phone bottom/right sheet height (#25); not persisted. */
+  sheetSnap: SheetSnap;
+  setSheetSnap: (snap: SheetSnap) => void;
 
   selectStar: (index: number | null) => void;
   setHoveredStar: (index: number | null) => void;
@@ -102,6 +106,15 @@ export interface GalaxyMapState {
   togglePlanetType: (type: PlanetType) => void;
   toggleDockPanel: (id: DockPanelId) => void;
   closeDockPanel: () => void;
+}
+
+/**
+ * Phone (#25): the sheet holds one content at a time, so a new selection must
+ * evict an open dock panel or expanded player or its card stays hidden.
+ * Desktop keeps them side by side.
+ */
+function phoneCardOverrides(): { dockPanel?: null; musicExpanded?: false } {
+  return currentLayoutMode() === 'desktop' ? {} : { dockPanel: null, musicExpanded: false };
 }
 
 export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
@@ -132,7 +145,9 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   },
   welcomeOpen: !isWelcomeDismissed(),
   setWelcomeOpen: (open) => set({ welcomeOpen: open }),
-  musicExpanded: !readFlag(MUSIC_COLLAPSED_KEY),
+  // Phone (#25): the expanded player is a sheet, so a first visit would open on a covered scene;
+  // it starts collapsed there.
+  musicExpanded: !readFlag(MUSIC_COLLAPSED_KEY) && currentLayoutMode() === 'desktop',
   // On compact viewports the expanded player and an open dock panel would
   // overlap, so opening one collapses the other (#13).
   setMusicExpanded: (expanded) => {
@@ -140,9 +155,13 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
     set((s) => ({
       musicExpanded: expanded,
       dockPanel: expanded && isCompactViewport() ? null : s.dockPanel,
+      // Phone sheet (#25): the new content opens at base; ignored on desktop.
+      sheetSnap: 'base',
     }));
   },
   selectionEpoch: 0,
+  sheetSnap: 'closed',
+  setSheetSnap: (snap) => set({ sheetSnap: snap }),
 
   // SPEC §6.3: locking a body switches the camera to orbit around it;
   // deselecting releases the lock.
@@ -154,6 +173,8 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
             selection: { kind: 'star', index },
             cameraMode: 'orbit',
             selectionEpoch: s.selectionEpoch + 1,
+            sheetSnap: 'base',
+            ...phoneCardOverrides(),
           },
     ),
   setHoveredStar: (index) => set({ hoveredStarIndex: index }),
@@ -178,6 +199,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       selectedPlanet: null,
       selectedPlanetType: null,
       dockPanel: null,
+      sheetSnap: 'base',
       ...(prefersReducedMotion() ? { timeScaleDaysPerSecond: 0 } : {}),
     }),
   // The galaxy selection survives: leaving the system brings back the same
@@ -189,9 +211,14 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       selectedPlanet: null,
       selectedPlanetType: null,
       dockPanel: null,
+      sheetSnap: 'base',
     }),
   selectPlanet: (planet) =>
-    set({ selectedPlanet: planet?.name ?? null, selectedPlanetType: planet?.type ?? null }),
+    set({
+      selectedPlanet: planet?.name ?? null,
+      selectedPlanetType: planet?.type ?? null,
+      ...(planet ? { sheetSnap: 'base' as const, ...phoneCardOverrides() } : {}),
+    }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),
   toggleConstellations: () => set((s) => ({ showConstellations: !s.showConstellations })),
   toggleHabitableZone: () => set((s) => ({ showHabitableZone: !s.showHabitableZone })),
@@ -212,7 +239,9 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       return {
         dockPanel: opening ? id : null,
         musicExpanded: collapsePlayer ? false : s.musicExpanded,
+        // Phone sheet (#25, spec §4.4): opening or closing a panel brings the sheet back to base.
+        sheetSnap: 'base' as const,
       };
     }),
-  closeDockPanel: () => set({ dockPanel: null }),
+  closeDockPanel: () => set({ dockPanel: null, sheetSnap: 'base' }),
 }));

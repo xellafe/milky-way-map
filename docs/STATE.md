@@ -4,9 +4,57 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-09-29 (issue #1 mergiata; issue #2: stili pianeti e orbite; issue #3 UI sci-fi completa su `feat/sci-fi-ui`, prossimo passo: push, PR, merge, deploy)
+- **Data ultimo aggiornamento:** 2026-10-14 (issue #25, interfaccia mobile completa su `feat/mobile-ui`; prossimo passo: push e PR, serve l'approvazione dell'umano)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
+
+## Issue #25 — interfaccia mobile (2026-10-12/14, branch `feat/mobile-ui`, completa)
+
+Spec: `docs/superpowers/specs/2026-10-12-mobile-ui-design.md`; piano: `docs/superpowers/plans/2026-10-12-mobile-ui.md`.
+Commit: `88722e1` spec, `e6203b5` piano, `dee3754` (T1), `ba0fe78` (T2), `2f9f631` (T3), `236dbae` (T4), `f2dcba8` (T5), `a50a0d0` (T6), `0e79b9d` (T7), `b1bc8b3` (T8), `7480b50` (checkpoint), `e9118bf` (fix ✕), `cfef1d2` (T9), `0019911` (fix della review finale).
+
+**Costruito**
+- T1 (`dee3754`): SPEC §1/§7 aggiornati (telefoni in verticale e orizzontale), approvati dall'umano.
+- T2 (`ba0fe78`): `layoutMode` (`desktop | portrait | landscape`), `useLayoutMode`, progetto Playwright mobile.
+- T3 (`2f9f631`): pinch e gesti a un dito nella galassia; target di picking touch più grande.
+- T4 (`236dbae`): bottom sheet unico per la card stella (chiuso/base/espanso), centratura nell'area libera.
+- T5 (`f2dcba8`): top bar, dock e music player nel sheet; ricerca ridotta a icona.
+- T6 (`a50a0d0`): System View nel sheet (tab pianeti, tempo); follow del pianeta nell'area libera.
+- T7 (`0e79b9d`): comandi touch nella guida di benvenuto, 5 lingue.
+- T8 (`b1bc8b3`): pixel ratio limitato sui telefoni, luccichio ridotto, niente letture DOM per frame.
+- `e9118bf`: ✕ della card desktop non più coperto da `.card-advanced` in modalità Advanced (bug preesistente da `7b3a81a`/#23, incluso qui su richiesta dell'umano).
+- T9 (`cfef1d2`): `axe` sulle viewport telefono, pulizia dei minor, README.
+- `0019911`: fix della review finale (sheet riaperto a ogni nuova selezione, stato `sheetSnap` coerente, test helper in `fixtures.ts`).
+
+**Decisioni (ruling) che cambiano il comportamento o deviano da spec/piano**
+- T5: la dock bar resta visibile e toccabile sotto la card sui telefoni (costo: ~4,5 rem di scena in verticale).
+  Deviazione da spec §4.3, **confermata dall'umano (2026-10-13)**; motivo: spec §4.4/AC6.
+- T5: sui telefoni il music player parte compresso, per non aprire un sheet sulla scena alla prima visita.
+- Review finale: sui telefoni una nuova selezione (stella o pianeta) chiude il pannello dock e comprime il music player
+  (solo store, solo telefono; non scrive il flag `MUSIC_COLLAPSED`). Costo: un tab del dock si chiude toccando una stella.
+- Review finale: la wave di fix include anche i minor 3, 4, 6 (codice) e 5 (helper di test); il minor 3 non ha e2e
+  (il passaggio telefono→desktop con tab Time aperto non è emulabile in modo affidabile).
+- T6: nessun "‹" separato nella card pianeta (deviazione dichiarata dal piano).
+- T3: diametro di picking 22 px CSS (`PICK_MIN_PX_TOUCH`), scalato per il pixel ratio del renderer.
+- T3: `isPrimary` per ignorare i multi-touch; T8: `min(devicePixelRatio, gl.getPixelRatio())` condiviso da nuvola e picking.
+- T4: con `?pdb=1`, `__camera.viewOffset` e (T6) `__system.cameraPosition`/`followedScreen` per l'AC7.
+- T5/T8: `test.slow()` sul test pinch di `mobileGestures` (31 s misurati su 60 s, ma 65 s sotto carico); budget, non retry.
+- Nota test: gli e2e mobile girano con `--workers=1` (canvas 750×1624 in GL software); T8: 8,7 min contro 14,4.
+
+**Esiti AC** (spec §6)
+- AC1–AC10 PASS (T1–T7; AC2 unit `layoutMode`, AC3 unit + e2e touch emulato, AC4–AC10 e2e mobile).
+- AC11 PASS: `axe` su entrambe le viewport, `mobileA11y` 10/10 (T9).
+- AC12 PASS: nessun test desktop modificato salvo `overlay.spec` (test di regressione del ✕).
+- AC13 PASS: FPS ok su un Android di fascia media, misura dell'umano (2026-10-13).
+- Gate finale (`0019911`): unit 296, chromium 213, mobile 87; typecheck, lint, format:check e build verdi.
+
+**Minor ancora aperti**
+- `layoutMode.test.ts:20`: asserzione ridondante.
+- `App.tsx`: `isCoarsePointer()` non reattivo.
+- `mobileHelpers.ts` `dragHandle`: il commento dice "fails loudly" ma il timeout di 2 s si risolve in silenzio;
+  il codice resta (attesa limitata voluta), da correggere al prossimo intervento. Costo: una animazione bloccata appare come drag flaky.
+
+**Prossimo passo:** push di `feat/mobile-ui` e PR, previa approvazione dell'umano.
 
 ## Issue #27 — lint delle classi Tailwind attaccate a `${…}` (2026-10-09, branch `chore/lint-tailwind-interpolation`, commit `0940829`)
 
@@ -497,6 +545,12 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 
 ## Test flaky noti
 
+- `music.spec` test di riproduzione (righe :42, :65 next/prev, :87, :106): falliscono a
+  intermittenza, già prima di #25 (riprodotti su `dee3754`, in un worktree temporaneo).
+- `mobileSheet.spec` "no HUD element leaves the viewport…" (era riga 135): fallito una volta in una run
+  interrotta dal timeout della shell del tester (issue #25, T7); non riprodotto.
+- `mobileSheet.spec` "closing the card removes the sheet" (verticale, riga 78): fallito una volta in una run
+  interrotta dal timeout della shell (issue #25, wave finale); da solo e nella run completa passa.
 - `system.spec` "orbit style: each style renders and the choice persists":
   ~30 s da solo contro un budget di 60 s; timeout sotto carico della suite
   completa due volte il 2026-10-06; da solo passa.

@@ -24,7 +24,18 @@ export default defineConfig({
       ],
     },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      testIgnore: /mobile.*\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'mobile',
+      testMatch: /mobile.*\.spec\.ts/,
+      use: { ...devices['Pixel 7'], viewport: { width: 375, height: 812 } },
+    },
+  ],
   webServer: {
     command: 'npm run preview',
     port: 4173,
