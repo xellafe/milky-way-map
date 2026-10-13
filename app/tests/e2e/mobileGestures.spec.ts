@@ -3,14 +3,10 @@
  * synthesized through CDP so Chromium emits real touch pointer events, one
  * explicit id per finger. Uses the ?pdb=1 camera bridge (window.__camera).
  */
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test, type CDPSession, type Page } from '@playwright/test';
 import * as THREE from 'three';
 import { serveFixtureData, waitForFlyToArrival } from './fixtures';
-
-const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import.meta.url));
+import { fixtureStarPosition, frames } from './mobileHelpers';
 
 interface CameraPose {
   position: [number, number, number];
@@ -30,27 +26,6 @@ const quatDelta = (a: CameraPose, b: CameraPose) =>
   a.quaternion.reduce((sum, v, i) => sum + Math.abs(v - b.quaternion[i]!), 0);
 
 const vec = (p: CameraPose) => new THREE.Vector3(...p.position);
-
-/** World position of a fixture star by proper name (manifest + stars.bin). */
-function fixtureStarPosition(properName: string): THREE.Vector3 {
-  const names = JSON.parse(
-    readFileSync(path.join(FIXTURES, 'names.index.json'), 'utf-8'),
-  ) as Record<string, { proper?: string }>;
-  const manifest = JSON.parse(
-    readFileSync(path.join(FIXTURES, 'stars.manifest.json'), 'utf-8'),
-  ) as { count: number; attributes: { name: string; byteOffset: number }[] };
-  const entry = Object.entries(names).find(([, e]) => e.proper === properName);
-  if (!entry) throw new Error(`${properName} not in fixture`);
-  const index = Number(entry[0]);
-  const bin = readFileSync(path.join(FIXTURES, 'stars.bin'));
-  const meta = manifest.attributes.find((a) => a.name === 'position')!;
-  const pos = new Float32Array(
-    bin.buffer.slice(bin.byteOffset, bin.byteOffset + bin.byteLength),
-    meta.byteOffset,
-    manifest.count * 3,
-  );
-  return new THREE.Vector3(pos[index * 3]!, pos[index * 3 + 1]!, pos[index * 3 + 2]!);
-}
 
 /** Multi-finger touch driver; every dispatch carries all active fingers. */
 class Fingers {
@@ -102,12 +77,6 @@ class Fingers {
     await this.send('touchEnd', [{ id, x: p.x, y: p.y }]);
   }
 }
-
-/** The software-rendered mobile canvas runs at a few fps: wait for whole frames, not wall time. */
-const frames = (page: Page, n = 2) =>
-  page.evaluate(async (count) => {
-    for (let i = 0; i < count; i++) await new Promise((r) => requestAnimationFrame(r));
-  }, n);
 
 async function openApp(page: Page) {
   await serveFixtureData(page);

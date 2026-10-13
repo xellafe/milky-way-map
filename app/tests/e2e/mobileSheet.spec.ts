@@ -5,86 +5,22 @@
  * Star-vs-sheet check: the selected star is projected from window.__camera
  * (the selection ring is desktop-only and not rendered on phones).
  */
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import * as THREE from 'three';
-import { serveFixtureData, waitForFlyToArrival } from './fixtures';
-
-const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import.meta.url));
-
-/** World position of a fixture star by proper name (manifest + stars.bin). */
-function fixtureStarPosition(properName: string): THREE.Vector3 {
-  const names = JSON.parse(
-    readFileSync(path.join(FIXTURES, 'names.index.json'), 'utf-8'),
-  ) as Record<string, { proper?: string }>;
-  const manifest = JSON.parse(
-    readFileSync(path.join(FIXTURES, 'stars.manifest.json'), 'utf-8'),
-  ) as { count: number; attributes: { name: string; byteOffset: number }[] };
-  const entry = Object.entries(names).find(([, e]) => e.proper === properName);
-  if (!entry) throw new Error(`${properName} not in fixture`);
-  const index = Number(entry[0]);
-  const bin = readFileSync(path.join(FIXTURES, 'stars.bin'));
-  const meta = manifest.attributes.find((a) => a.name === 'position')!;
-  const pos = new Float32Array(
-    bin.buffer.slice(bin.byteOffset, bin.byteOffset + bin.byteLength),
-    meta.byteOffset,
-    manifest.count * 3,
-  );
-  return new THREE.Vector3(pos[index * 3]!, pos[index * 3 + 1]!, pos[index * 3 + 2]!);
-}
-
-/** The software-rendered canvas runs at a few fps: wait for whole frames, not wall time. */
-const frames = (page: Page, n = 2) =>
-  page.evaluate(async (count) => {
-    for (let i = 0; i < count; i++) await new Promise((r) => requestAnimationFrame(r));
-  }, n);
+import { serveFixtureData } from './fixtures';
+import {
+  dragHandle,
+  expectHudInViewport,
+  fixtureStarPosition,
+  frames,
+  select,
+} from './mobileHelpers';
 
 async function open(page: Page) {
   await serveFixtureData(page);
   await page.goto('/?pdb=1');
   await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
   await frames(page, 3);
-}
-
-async function select(page: Page, query: string, name: string) {
-  const opener = page.getByTestId('search-open');
-  if (await opener.isVisible()) await opener.click();
-  await page.getByTestId('search-input').fill(query);
-  await page.getByRole('option').filter({ hasText: name }).first().click();
-  await expect(page.getByTestId('mobile-sheet')).toHaveAttribute('data-snap', 'base');
-  await waitForFlyToArrival(page);
-  await frames(page);
-}
-
-/** Every visible [data-hud] element must lie inside the viewport. */
-async function expectHudInViewport(page: Page) {
-  const vp = page.viewportSize()!;
-  const offenders = await page.evaluate(
-    ({ w, h }) =>
-      [...document.querySelectorAll('[data-hud]')]
-        .map((el) => ({ hud: el.getAttribute('data-hud'), r: el.getBoundingClientRect() }))
-        .filter(({ r }) => r.width > 0 && r.height > 0)
-        .filter(({ r }) => r.left < -0.5 || r.top < -0.5 || r.right > w + 0.5 || r.bottom > h + 0.5)
-        .map(({ hud, r }) => `${hud}: ${r.left},${r.top},${r.right},${r.bottom}`),
-    { w: vp.width, h: vp.height },
-  );
-  expect(offenders).toEqual([]);
-}
-
-/** Drags the sheet handle from its centre to (toX, toY) with real mouse events. */
-async function dragHandle(page: Page, toX: number, toY: number) {
-  // The handle moves while the sheet transitions between snaps: drag from its settled position.
-  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
-  const h = (await page.getByTestId('sheet-handle').boundingBox())!;
-  const x = h.x + h.width / 2;
-  const y = h.y + h.height / 2;
-  await page.mouse.move(x, y);
-  await page.mouse.down();
-  await page.mouse.move((x + toX) / 2, (y + toY) / 2, { steps: 5 });
-  await page.mouse.move(toX, toY, { steps: 5 });
-  await page.mouse.up();
 }
 
 const sheetBox = async (page: Page) => (await page.getByTestId('mobile-sheet').boundingBox())!;

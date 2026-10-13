@@ -326,6 +326,27 @@ describe('galaxy map store', () => {
       expect(useGalaxyMapStore.getState().sheetSnap).toBe('base');
     });
 
+    it('selecting a planet reopens a sheet the user dragged closed', () => {
+      useGalaxyMapStore.setState({ sheetSnap: 'closed' });
+      useGalaxyMapStore.getState().selectPlanet({ name: 'b', type: 'rocky' } as never);
+      expect(useGalaxyMapStore.getState().sheetSnap).toBe('base');
+    });
+
+    it('deselecting a planet leaves the sheet snap alone', () => {
+      useGalaxyMapStore.setState({ sheetSnap: 'expanded' });
+      useGalaxyMapStore.getState().selectPlanet(null);
+      expect(useGalaxyMapStore.getState().sheetSnap).toBe('expanded');
+    });
+
+    it.each(['closed', 'expanded'] as const)(
+      'leaving the system view restores the star card at base (from %s)',
+      (snap) => {
+        useGalaxyMapStore.setState({ view: 'system', sheetSnap: snap });
+        useGalaxyMapStore.getState().exitSystemView();
+        expect(useGalaxyMapStore.getState().sheetSnap).toBe('base');
+      },
+    );
+
     it('setSheetSnap does not touch cardMode nor the persisted Advanced flag', () => {
       const data = new Map<string, string>();
       vi.stubGlobal('localStorage', {
@@ -339,6 +360,58 @@ describe('galaxy map store', () => {
       expect(useGalaxyMapStore.getState().cardMode).toBe(before);
       expect(data.has(CARD_ADVANCED_KEY)).toBe(false);
       vi.unstubAllGlobals();
+    });
+  });
+
+  describe('new selection clears the phone overlays (#25)', () => {
+    const s = () => useGalaxyMapStore.getState();
+
+    function stubLayout(phone: boolean) {
+      vi.stubGlobal('localStorage', {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+      } as unknown as Storage);
+      vi.stubGlobal('window', {
+        innerWidth: phone ? 375 : 1280,
+        innerHeight: phone ? 812 : 800,
+        matchMedia: () => ({ matches: phone }),
+      });
+      useGalaxyMapStore.setState({ dockPanel: 'filters', musicExpanded: true });
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('phone: selectStar closes the dock panel and collapses the player', () => {
+      stubLayout(true);
+      s().selectStar(5);
+      expect(s().dockPanel).toBeNull();
+      expect(s().musicExpanded).toBe(false);
+    });
+
+    it('phone: selectPlanet closes the dock panel and collapses the player', () => {
+      stubLayout(true);
+      s().selectPlanet({ name: 'b', type: 'rocky' } as never);
+      expect(s().dockPanel).toBeNull();
+      expect(s().musicExpanded).toBe(false);
+    });
+
+    it('phone: deselecting leaves the dock panel and the player alone', () => {
+      stubLayout(true);
+      s().selectStar(null);
+      s().selectPlanet(null);
+      expect(s().dockPanel).toBe('filters');
+      expect(s().musicExpanded).toBe(true);
+    });
+
+    it('desktop: selecting keeps the dock panel and the player (they coexist with the card)', () => {
+      stubLayout(false);
+      s().selectStar(5);
+      s().selectPlanet({ name: 'b', type: 'rocky' } as never);
+      expect(s().dockPanel).toBe('filters');
+      expect(s().musicExpanded).toBe(true);
     });
   });
 });

@@ -108,6 +108,15 @@ export interface GalaxyMapState {
   closeDockPanel: () => void;
 }
 
+/**
+ * Phone (#25): the sheet holds one content at a time, so a new selection must
+ * evict an open dock panel or expanded player or its card stays hidden.
+ * Desktop keeps them side by side.
+ */
+function phoneCardOverrides(): { dockPanel?: null; musicExpanded?: false } {
+  return currentLayoutMode() === 'desktop' ? {} : { dockPanel: null, musicExpanded: false };
+}
+
 export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   selection: null,
   hoveredStarIndex: null,
@@ -165,6 +174,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
             cameraMode: 'orbit',
             selectionEpoch: s.selectionEpoch + 1,
             sheetSnap: 'base',
+            ...phoneCardOverrides(),
           },
     ),
   setHoveredStar: (index) => set({ hoveredStarIndex: index }),
@@ -201,9 +211,14 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
       selectedPlanet: null,
       selectedPlanetType: null,
       dockPanel: null,
+      sheetSnap: 'base',
     }),
   selectPlanet: (planet) =>
-    set({ selectedPlanet: planet?.name ?? null, selectedPlanetType: planet?.type ?? null }),
+    set({
+      selectedPlanet: planet?.name ?? null,
+      selectedPlanetType: planet?.type ?? null,
+      ...(planet ? { sheetSnap: 'base' as const, ...phoneCardOverrides() } : {}),
+    }),
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),
   toggleConstellations: () => set((s) => ({ showConstellations: !s.showConstellations })),
   toggleHabitableZone: () => set((s) => ({ showHabitableZone: !s.showHabitableZone })),

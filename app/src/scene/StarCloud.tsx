@@ -1,11 +1,10 @@
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarGeometry } from '../data/starCoreStore';
 import { effectiveTwinkle, prefersReducedMotion } from '../lib/motion';
-import { layoutMode } from '../lib/layoutMode';
 import { STAR_COLOR_GAMMA } from '../lib/starColor';
-import { isCoarsePointer } from '../lib/viewport';
+import { useLayoutMode } from '../lib/viewport';
 import { DEFAULT_SETTINGS, useSettingsStore } from '../state/settings';
 import starFrag from '../shaders/star.frag?raw';
 import starVert from '../shaders/star.vert?raw';
@@ -41,9 +40,7 @@ export const STAR_TWINKLE_FAR_LY = 200;
  */
 export function StarCloud() {
   const geometry = getStarGeometry();
-  // Inside the Canvas: derived from the canvas size, not from the DOM-bound hook.
-  const size = useThree((s) => s.size);
-  const mobile = layoutMode(size.width, size.height, isCoarsePointer()) !== 'desktop';
+  const mobile = useLayoutMode() !== 'desktop';
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({

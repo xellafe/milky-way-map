@@ -6,47 +6,16 @@
  *   followedScreen: [x, y] | null        viewport px of the followed planet
  * The scene runs at a few fps in software rendering: wait on rAF frames.
  */
-import { expect, test, type CDPSession, type Locator, type Page } from '@playwright/test';
+import { expect, test, type CDPSession, type Page } from '@playwright/test';
 import { readFixtureExoplanets, serveFixtureData } from './fixtures';
-
-const frames = (page: Page, n = 2) =>
-  page.evaluate(async (count) => {
-    for (let i = 0; i < count; i++) await new Promise((r) => requestAnimationFrame(r));
-  }, n);
-
-interface Box {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-const box = async (l: Locator): Promise<Box> => (await l.boundingBox())!;
-const overlaps = (a: Box, b: Box) =>
-  a.x < b.x + b.width - 0.5 &&
-  b.x < a.x + a.width - 0.5 &&
-  a.y < b.y + b.height - 0.5 &&
-  b.y < a.y + a.height - 0.5;
-
-function expectInside(b: Box, vp: { width: number; height: number }, what: string) {
-  expect(b.x, `${what} left`).toBeGreaterThanOrEqual(-0.5);
-  expect(b.y, `${what} top`).toBeGreaterThanOrEqual(-0.5);
-  expect(b.x + b.width, `${what} right`).toBeLessThanOrEqual(vp.width + 0.5);
-  expect(b.y + b.height, `${what} bottom`).toBeLessThanOrEqual(vp.height + 0.5);
-}
-
-async function expectHudInViewport(page: Page) {
-  const vp = page.viewportSize()!;
-  const offenders = await page.evaluate(
-    ({ w, h }) =>
-      [...document.querySelectorAll('[data-hud]')]
-        .map((el) => ({ hud: el.getAttribute('data-hud'), r: el.getBoundingClientRect() }))
-        .filter(({ r }) => r.width > 0 && r.height > 0)
-        .filter(({ r }) => r.left < -0.5 || r.top < -0.5 || r.right > w + 0.5 || r.bottom > h + 0.5)
-        .map(({ hud, r }) => `${hud}: ${r.left},${r.top},${r.right},${r.bottom}`),
-    { w: vp.width, h: vp.height },
-  );
-  expect(offenders).toEqual([]);
-}
+import {
+  box,
+  dragHandle,
+  expectHudInViewport,
+  expectInside,
+  frames,
+  overlaps,
+} from './mobileHelpers';
 
 interface SystemBridge {
   cameraTarget: [number, number, number];
@@ -79,20 +48,6 @@ async function enterSystem(page: Page, query: string, name: string) {
 }
 
 const sheet = (page: Page) => page.getByTestId('mobile-sheet');
-
-/** Drags the sheet handle from its centre to (toX, toY) with real mouse events. */
-async function dragHandle(page: Page, toX: number, toY: number) {
-  // The handle moves while the sheet transitions between snaps: drag from its settled position.
-  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
-  const h = (await page.getByTestId('sheet-handle').boundingBox())!;
-  const x = h.x + h.width / 2;
-  const y = h.y + h.height / 2;
-  await page.mouse.move(x, y);
-  await page.mouse.down();
-  await page.mouse.move((x + toX) / 2, (y + toY) / 2, { steps: 5 });
-  await page.mouse.move(toX, toY, { steps: 5 });
-  await page.mouse.up();
-}
 
 /** Longest host name in the golden fixture, to stress the header. */
 const longestHost = () =>

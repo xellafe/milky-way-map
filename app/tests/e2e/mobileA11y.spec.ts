@@ -6,24 +6,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { serveFixtureData, waitForFlyToArrival } from './fixtures';
-
-const frames = (page: Page, n = 2) =>
-  page.evaluate(async (count) => {
-    for (let i = 0; i < count; i++) await new Promise((r) => requestAnimationFrame(r));
-  }, n);
+import { frames, search } from './mobileHelpers';
 
 async function open(page: Page) {
   await serveFixtureData(page);
   await page.goto('/');
   await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
   await frames(page, 3);
-}
-
-async function search(page: Page, query: string, name: string) {
-  const opener = page.getByTestId('search-open');
-  if (await opener.isVisible()) await opener.click();
-  await page.getByTestId('search-input').fill(query);
-  await page.getByRole('option').filter({ hasText: name }).first().click();
 }
 
 async function selectPolaris(page: Page) {

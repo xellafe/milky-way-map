@@ -2,15 +2,11 @@
  * Issue #25 (spec §5): on phones the usable-area read (querySelector +
  * getBoundingClientRect, forced layout) must not run every frame.
  */
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { serveFixtureData, waitForFlyToArrival } from './fixtures';
+import { frames } from './mobileHelpers';
 
 test.use({ viewport: { width: 375, height: 812 } });
-
-const frames = (page: Page, n: number) =>
-  page.evaluate(async (count) => {
-    for (let i = 0; i < count; i++) await new Promise((r) => requestAnimationFrame(r));
-  }, n);
 
 test('a settled selection does not read layout every frame', async ({ page }) => {
   await page.addInitScript(() => {

@@ -2,54 +2,17 @@
  * Issue #25 (spec §4.1, §4.3, §4.4): phone top bar, dock and music player.
  * The scene runs at a few fps in software rendering: wait on rAF frames.
  */
-import { expect, test, type Locator, type Page } from '@playwright/test';
-import { serveFixtureData, waitForFlyToArrival } from './fixtures';
-
-const frames = (page: Page, n = 2) =>
-  page.evaluate(async (count) => {
-    for (let i = 0; i < count; i++) await new Promise((r) => requestAnimationFrame(r));
-  }, n);
+import { expect, test, type Page } from '@playwright/test';
+import { serveFixtureData } from './fixtures';
+import { box, expectInside, frames, overlaps, search, select } from './mobileHelpers';
 
 async function open(page: Page) {
   await serveFixtureData(page);
-  // The player starts expanded by default; these tests start from the collapsed note button.
+  // Phones start with the player collapsed; the flag pins it so the tests start from the note button.
   await page.addInitScript(() => localStorage.setItem('galaxy-map-music-collapsed', '1'));
   await page.goto('/');
   await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
   await frames(page, 3);
-}
-
-/** Selects through the search box, opening the phone search field first when it is an icon. */
-async function select(page: Page, query: string, name: string) {
-  const opener = page.getByTestId('search-open');
-  if (await opener.isVisible()) await opener.click();
-  await page.getByTestId('search-input').fill(query);
-  await page.getByRole('option').filter({ hasText: name }).first().click();
-  await expect(page.getByTestId('mobile-sheet')).toHaveAttribute('data-snap', 'base');
-  await waitForFlyToArrival(page);
-  await frames(page);
-}
-
-interface Box {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-const box = async (l: Locator): Promise<Box> => (await l.boundingBox())!;
-
-const overlaps = (a: Box, b: Box) =>
-  a.x < b.x + b.width - 0.5 &&
-  b.x < a.x + a.width - 0.5 &&
-  a.y < b.y + b.height - 0.5 &&
-  b.y < a.y + a.height - 0.5;
-
-function expectInside(b: Box, vp: { width: number; height: number }, what: string) {
-  expect(b.x, `${what} left`).toBeGreaterThanOrEqual(-0.5);
-  expect(b.y, `${what} top`).toBeGreaterThanOrEqual(-0.5);
-  expect(b.x + b.width, `${what} right`).toBeLessThanOrEqual(vp.width + 0.5);
-  expect(b.y + b.height, `${what} bottom`).toBeLessThanOrEqual(vp.height + 0.5);
 }
 
 /** Visible buttons under the 44 px touch target (AC9), as "id: WxH" strings. */
@@ -133,6 +96,31 @@ for (const size of SIZES) {
       await expect(page.getByTestId('dock-panel')).toHaveCount(0);
       await expect(page.getByTestId('selection-card')).toBeVisible();
       await expect(sheet).toHaveAttribute('data-snap', 'base');
+    });
+
+    test('a new selection with a dock panel open shows the card and closes the panel', async ({
+      page,
+    }) => {
+      await open(page);
+      await page.getByTestId('filters-toggle').click();
+      await expect(page.getByTestId('dock-panel')).toBeVisible();
+      await search(page, 'polaris', 'Polaris');
+      const sheet = page.getByTestId('mobile-sheet');
+      await expect(sheet.getByTestId('selection-card')).toBeVisible();
+      await expect(page.getByTestId('dock-panel')).toHaveCount(0);
+      await expect(sheet).toHaveAttribute('data-snap', 'base');
+    });
+
+    test('a new selection with the player expanded shows the card instead of the player', async ({
+      page,
+    }) => {
+      await open(page);
+      await page.getByTestId('music-expand').click();
+      await expect(page.getByTestId('mobile-sheet').getByTestId('music-toggle')).toBeVisible();
+      await search(page, 'polaris', 'Polaris');
+      await expect(page.getByTestId('mobile-sheet').getByTestId('selection-card')).toBeVisible();
+      await expect(page.getByTestId('music-toggle')).toHaveCount(0);
+      await expect(page.getByTestId('music-expand')).toBeVisible();
     });
 
     test('music-expand puts the controls in the sheet and keeps the audio mounted', async ({

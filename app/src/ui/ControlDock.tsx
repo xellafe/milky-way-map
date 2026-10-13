@@ -204,7 +204,7 @@ export function DockPanel({ sheet = false }: { sheet?: boolean }) {
         {active === 'filters' && <FiltersPanel />}
         {active === 'view' && (view === 'galaxy' ? <ViewTogglesPanel /> : <SystemViewPanel />)}
         {active === 'options' && (view === 'galaxy' ? <OptionsPanel /> : <SystemOptions />)}
-        {active === 'time' && <TimeBar sheet />}
+        {active === 'time' && sheet && <TimeBar sheet />}
       </div>
     </>
   );
