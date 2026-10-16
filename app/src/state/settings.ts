@@ -13,6 +13,8 @@ export interface Settings {
   moveSpeedLyPerS: number;
   /** Ambient camera revolution around a freshly locked star. */
   autoOrbit: boolean;
+  /** Ambient auto-orbit angular speed, degrees per second. */
+  autoOrbitSpeedDegPerS: number;
   /** Realism: no hue exaggeration, no twinkle, no fireball core/corona. */
   realism: boolean;
   /** Time scale of the twinkle waves (1 = shader base frequencies). */
@@ -28,6 +30,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   moveSpeedLyPerS: 25,
   autoOrbit: true,
+  autoOrbitSpeedDegPerS: 2, // human choice
   realism: false,
   twinkleSpeed: 2 / 3,
   twinkleAmplitude: 0.5,

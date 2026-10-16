@@ -87,6 +87,16 @@ export function OptionsPanel() {
             onChange={(e) => settings.setSettings({ autoOrbit: e.target.checked })}
           />
         </div>
+        <SliderSetting
+          id="autoOrbitSpeedDegPerS"
+          label={t('options.autoOrbitSpeed')}
+          min={0.5}
+          max={10}
+          step={0.5}
+          digits={1}
+          suffix="°/s"
+          disabled={!settings.autoOrbit}
+        />
       </DataSection>
       <DataSection title={t('options.sectionStars')} list={false}>
         <div>

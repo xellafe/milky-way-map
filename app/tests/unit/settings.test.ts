@@ -11,17 +11,22 @@ describe('settings store', () => {
       twinkleAmplitude: 0.5,
       sizeGamma: 1.2,
       orbitStyle: 'trail',
+      autoOrbitSpeedDegPerS: 2,
     });
     expect(isDefaultSettings(useSettingsStore.getState())).toBe(true);
   });
 
   it('updates and resets', () => {
-    useSettingsStore.getState().setSettings({ realism: true, moveSpeedLyPerS: 100 });
+    useSettingsStore
+      .getState()
+      .setSettings({ realism: true, moveSpeedLyPerS: 100, autoOrbitSpeedDegPerS: 5 });
     const s = useSettingsStore.getState();
     expect(s.realism).toBe(true);
     expect(s.moveSpeedLyPerS).toBe(100);
+    expect(s.autoOrbitSpeedDegPerS).toBe(5);
     expect(isDefaultSettings(s)).toBe(false);
     s.resetSettings();
     expect(isDefaultSettings(useSettingsStore.getState())).toBe(true);
+    expect(useSettingsStore.getState().autoOrbitSpeedDegPerS).toBe(2);
   });
 });

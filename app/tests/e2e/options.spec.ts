@@ -38,6 +38,29 @@ test('options: realism, persistence and reset', async ({ page }) => {
   await expect(page.getByTestId('options-reset')).toBeDisabled();
 });
 
+// #8: auto-orbit speed slider.
+test('auto-orbit speed: disabled when off, persists, reset to 2', async ({ page }) => {
+  await openApp(page);
+  await page.getByTestId('options-toggle').click();
+  const slider = page.getByTestId('option-autoOrbitSpeedDegPerS');
+  await expect(slider).toBeEnabled();
+  await expect(slider).toHaveValue('2');
+
+  await slider.fill('6');
+  await page.getByTestId('option-autoOrbit').uncheck();
+  await expect(slider).toBeDisabled();
+  await page.getByTestId('option-autoOrbit').check();
+  await expect(slider).toBeEnabled();
+
+  await page.reload();
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  await page.getByTestId('options-toggle').click();
+  await expect(page.getByTestId('option-autoOrbitSpeedDegPerS')).toHaveValue('6');
+
+  await page.getByTestId('options-reset').click();
+  await expect(page.getByTestId('option-autoOrbitSpeedDegPerS')).toHaveValue('2');
+});
+
 // #23 B2: in the System View only realism has an effect.
 test('System View options: realism only, no reset; galaxy options unchanged', async ({ page }) => {
   await openApp(page);
@@ -46,6 +69,7 @@ test('System View options: realism only, no reset; galaxy options unchanged', as
     'option-realism',
     'option-moveSpeedLyPerS',
     'option-autoOrbit',
+    'option-autoOrbitSpeedDegPerS',
     'option-twinkleSpeed',
     'option-twinkleAmplitude',
     'option-sizeGamma',
@@ -63,6 +87,7 @@ test('System View options: realism only, no reset; galaxy options unchanged', as
   for (const id of [
     'option-moveSpeedLyPerS',
     'option-autoOrbit',
+    'option-autoOrbitSpeedDegPerS',
     'option-twinkleSpeed',
     'option-twinkleAmplitude',
     'option-sizeGamma',
