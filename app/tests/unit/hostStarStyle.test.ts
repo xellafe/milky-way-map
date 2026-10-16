@@ -11,7 +11,7 @@ describe('hostStarLook', () => {
     [
       false,
       false,
-      { colorGamma: 2.5, spots: 1, coronaIntensity: 1, pulseAmplitude: 0.1, animate: true },
+      { colorGamma: 3.1, spots: 1, coronaIntensity: 1, pulseAmplitude: 0.1, animate: true },
     ],
     [
       true,
@@ -21,7 +21,7 @@ describe('hostStarLook', () => {
     [
       false,
       true,
-      { colorGamma: 2.5, spots: 1, coronaIntensity: 1, pulseAmplitude: 0, animate: false },
+      { colorGamma: 3.1, spots: 1, coronaIntensity: 1, pulseAmplitude: 0, animate: false },
     ],
     [
       true,
@@ -29,7 +29,18 @@ describe('hostStarLook', () => {
       { colorGamma: 1, spots: 0, coronaIntensity: 0.5, pulseAmplitude: 0, animate: false },
     ],
   ])('realism=%s reducedMotion=%s', (realism, reducedMotion, expected) => {
-    expect(hostStarLook(realism, reducedMotion)).toEqual(expected);
+    expect(hostStarLook(realism, reducedMotion, 3.1)).toEqual(expected);
+  });
+});
+
+describe('hostStarLook color saturation', () => {
+  it('passes the saturation through as colorGamma, including 0', () => {
+    expect(hostStarLook(false, false, 0).colorGamma).toBe(0);
+    expect(hostStarLook(false, false, 4).colorGamma).toBe(4);
+  });
+
+  it('forces catalog colors (gamma 1) with realism', () => {
+    expect(hostStarLook(true, false, 4).colorGamma).toBe(1);
   });
 });
 

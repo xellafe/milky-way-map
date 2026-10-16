@@ -179,6 +179,7 @@
     "twinkleSpeed": "Funkelfrequenz",
     "twinkleAmplitude": "Funkelintensität",
     "sizeGamma": "Größenkontrast der Sterne",
+    "starColorSaturation": "Farbsättigung der Sterne",
     "reset": "Optionen zurücksetzen",
     "sectionCamera": "Kamera",
     "sectionStars": "Sterne"

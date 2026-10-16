@@ -10,7 +10,7 @@ import { HudButton } from './hud/HudButton';
 import { HudCard } from './hud/HudCard';
 import { HudSwitch } from './hud/HudInputs';
 import { Tabs, type TabItem } from './hud/Tabs';
-import { OptionsPanel } from './OptionsPanel';
+import { OptionsPanel, SliderSetting } from './OptionsPanel';
 import { SystemViewPanel } from './SystemViewPanel';
 import { TimeBar } from './TimeBar';
 import { ViewTogglesPanel } from './ViewTogglesPanel';
@@ -96,7 +96,7 @@ export function ControlDock() {
 }
 
 /**
- * System View options (#23): only realism acts on the host star. The galaxy-only
+ * System View options (#23): realism and color saturation (#9) act on the host star. The galaxy-only
  * settings are hidden, and so is the reset (it would also wipe them).
  */
 function SystemOptions() {
@@ -115,6 +115,15 @@ function SystemOptions() {
         checked={realism}
         data-testid="option-realism"
         onChange={(e) => setSettings({ realism: e.target.checked })}
+      />
+      <SliderSetting
+        id="starColorSaturation"
+        label={t('options.starColorSaturation')}
+        min={0}
+        max={4}
+        step={0.1}
+        digits={1}
+        disabled={realism}
       />
     </section>
   );

@@ -179,6 +179,7 @@
     "twinkleSpeed": "Frequenza del luccichio",
     "twinkleAmplitude": "Intensità del luccichio",
     "sizeGamma": "Contrasto dimensioni stelle",
+    "starColorSaturation": "Saturazione colori stelle",
     "reset": "Ripristina opzioni",
     "sectionCamera": "Camera",
     "sectionStars": "Stelle"

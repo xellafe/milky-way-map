@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { OrbitStyle } from '../lib/planetStyle';
+import { STAR_COLOR_GAMMA } from '../lib/starColor';
 
 /**
  * User customizations (issue #1), persisted in localStorage. Defaults equal
@@ -21,6 +22,8 @@ export interface Settings {
   twinkleSpeed: number;
   /** Twinkle brightness swing (0 = off). */
   twinkleAmplitude: number;
+  /** Per-channel hue exponent (uColorGamma): 1 = catalog colors, 0 = white. */
+  starColorSaturation: number;
   /** Star size contrast exponent (>1 widens the size range). */
   sizeGamma: number;
   /** System View orbit look (issue #2). */
@@ -34,6 +37,7 @@ export const DEFAULT_SETTINGS: Settings = {
   realism: false,
   twinkleSpeed: 2 / 3,
   twinkleAmplitude: 0.5,
+  starColorSaturation: STAR_COLOR_GAMMA,
   sizeGamma: 1.2,
   orbitStyle: 'trail',
 };

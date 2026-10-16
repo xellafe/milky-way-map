@@ -179,6 +179,7 @@
     "twinkleSpeed": "Twinkle frequency",
     "twinkleAmplitude": "Twinkle intensity",
     "sizeGamma": "Star size contrast",
+    "starColorSaturation": "Star color saturation",
     "reset": "Reset options",
     "sectionCamera": "Camera",
     "sectionStars": "Stars"

@@ -179,6 +179,7 @@
     "twinkleSpeed": "Fréquence du scintillement",
     "twinkleAmplitude": "Intensité du scintillement",
     "sizeGamma": "Contraste de taille des étoiles",
+    "starColorSaturation": "Saturation des couleurs des étoiles",
     "reset": "Réinitialiser les options",
     "sectionCamera": "Caméra",
     "sectionStars": "Étoiles"
