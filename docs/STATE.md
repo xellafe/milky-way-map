@@ -8,6 +8,16 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #9 — saturazione del colore delle stelle (2026-10-16, branch `feat/star-color-saturation`, completa, commit da fare)
+
+Spec: `docs/superpowers/specs/2026-10-16-star-color-saturation-design.md`; piano: `docs/superpowers/plans/2026-10-16-star-color-saturation.md`.
+
+- Nuovo slider "Star color saturation" in Options (`starColorSaturation`): il valore è l'esponente `uColorGamma` esistente, nessuna modifica agli shader.
+- Decisioni: default 2,5 = aspetto precedente; range 0–4 con passo 0,1 (scelta dell'agente); vale anche per la stella ospite in System View (scelta umana); nessun bump della versione di persist.
+- Realismo forza il valore a 1 e disabilita lo slider.
+- AC1 PASS (unit test + lettura del codice, nessuna misura a runtime di `uColorGamma`); AC2, AC3, AC4 PASS.
+- Gate: typecheck, lint, format:check, build verdi; unit 298/298 (35 file); e2e 302/302, nessun flaky.
+
 ## Issue #8 — velocità dell'auto-orbit (2026-10-16, branch `feat/auto-orbit-speed`, completa, commit da fare)
 
 Spec: `docs/superpowers/specs/2026-10-16-auto-orbit-speed-design.md`; piano: `docs/superpowers/plans/2026-10-16-auto-orbit-speed.md`.
