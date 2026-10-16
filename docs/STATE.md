@@ -8,6 +8,15 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #8 — velocità dell'auto-orbit (2026-10-16, branch `feat/auto-orbit-speed`, completa, commit da fare)
+
+Spec: `docs/superpowers/specs/2026-10-16-auto-orbit-speed-design.md`; piano: `docs/superpowers/plans/2026-10-16-auto-orbit-speed.md`.
+
+- Nuovo slider "Auto-orbit speed" in Options (`autoOrbitSpeedDegPerS`), letto a ogni frame da `CameraControls`.
+- Decisioni: default 2°/s (scelta umana); range 0,5–10 con passo 0,5 (scelta dell'agente); nessun bump della versione di persist.
+- AC1 PASS (verificato leggendo il codice e con unit test del default, nessuna misura a runtime della velocità angolare); AC2, AC3, AC4 PASS.
+- Gate: typecheck, lint, format:check, build verdi; unit 296/296 (35 file); e2e 300 passati, 1 flaky (`starcloud.spec` riga 6, vedi sotto).
+
 ## Issue #25 — interfaccia mobile (2026-10-12/14, branch `feat/mobile-ui`, completa)
 
 Spec: `docs/superpowers/specs/2026-10-12-mobile-ui-design.md`; piano: `docs/superpowers/plans/2026-10-12-mobile-ui.md`.
@@ -560,7 +569,8 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
   `feat/ui-overhaul`, issue #23.
 - `starcloud.spec` (riga 6) "renders the star cloud from the fixture data":
   fallito una volta nella run completa (conteggio stelle 0 dopo il timeout di
-  15 s); da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.
+  15 s); da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23, e di
+  nuovo su `feat/auto-orbit-speed`, issue #8 (run completa, 0 stelle dopo 15 s).
 - `overlay.spec` (riga ~289) "Advanced to Base: animates out, then unmounts the
   column": `data-mode` ancora "advanced" dopo 2 s nella run completa sotto
   carico; da solo passa. Visto sul branch `feat/ui-overhaul`, issue #23.

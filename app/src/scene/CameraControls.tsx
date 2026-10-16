@@ -22,11 +22,6 @@ const ORBIT_SENSITIVITY = 0.005;
 const ROLL_SPEED_RAD_PER_S = 1.0;
 // Wheel zoom in orbit: distance factor e^(deltaY·k) — ~×1.1 per 100 px notch.
 const ZOOM_PER_WHEEL_DELTA = 0.001;
-// Ambient auto-orbit: the camera keeps revolving slowly around a freshly
-// locked star until the user orbits manually (drag) or releases the lock.
-// ~63 s per full revolution; disabled under prefers-reduced-motion or by the
-// user setting.
-const AUTO_ORBIT_RAD_PER_S = 0.1;
 // Translation keys release the orbit lock (they break the fixed-radius orbit);
 // Q/E roll stays available in orbit (it keeps the target centered).
 const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyR', 'KeyF'];
@@ -217,17 +212,18 @@ export function CameraControls() {
       return;
     }
 
-    // Ambient auto-orbit: slow revolution around the locked star until the
-    // user drags or releases the lock. Perpetual motion → off under
+    // Ambient auto-orbit: slow revolution (speed from the user setting) around
+    // the locked star until the user drags or releases the lock. Perpetual motion → off under
     // prefers-reduced-motion.
     if (autoOrbit.current && lockedStar !== null && store.cameraMode === 'orbit') {
       const target = starPosition(lockedStar);
-      if (target && !prefersReducedMotion() && useSettingsStore.getState().autoOrbit) {
+      const settings = useSettingsStore.getState();
+      if (target && !prefersReducedMotion() && settings.autoOrbit) {
         orbitAroundTarget(
           camera.position,
           camera.quaternion,
           target,
-          AUTO_ORBIT_RAD_PER_S * delta,
+          THREE.MathUtils.degToRad(settings.autoOrbitSpeedDegPerS) * delta,
           0,
         );
       }
