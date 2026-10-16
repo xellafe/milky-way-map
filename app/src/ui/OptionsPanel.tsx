@@ -8,7 +8,7 @@ type NumericKey = {
   [K in keyof Settings]: Settings[K] extends number ? K : never;
 }[keyof Settings];
 
-function SliderSetting({
+export function SliderSetting({
   id,
   label,
   min,
@@ -124,6 +124,15 @@ export function OptionsPanel() {
           max={1}
           step={0.05}
           digits={2}
+          disabled={settings.realism}
+        />
+        <SliderSetting
+          id="starColorSaturation"
+          label={t('options.starColorSaturation')}
+          min={0}
+          max={4}
+          step={0.1}
+          digits={1}
           disabled={settings.realism}
         />
         <SliderSetting

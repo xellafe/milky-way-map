@@ -1,5 +1,3 @@
-import { STAR_COLOR_GAMMA } from './starColor';
-
 export interface HostStarLook {
   colorGamma: number;
   spots: number;
@@ -13,10 +11,15 @@ export interface HostStarLook {
 // Tuning values are aesthetic choices, not data: pulseAmplitude 0.1 is a
 // relative brightness swing, coronaIntensity a unitless multiplier on the
 // corona glow (1 default, 0.5 in realism), spots a unitless 0/1 weight of the
-// surface spot pattern.
-export function hostStarLook(realism: boolean, reducedMotion: boolean): HostStarLook {
+// surface spot pattern. colorGamma is the user's star color saturation
+// setting (#9), forced to 1 (catalog colors) in realism.
+export function hostStarLook(
+  realism: boolean,
+  reducedMotion: boolean,
+  colorSaturation: number,
+): HostStarLook {
   return {
-    colorGamma: realism ? 1 : STAR_COLOR_GAMMA,
+    colorGamma: realism ? 1 : colorSaturation,
     spots: realism ? 0 : 1,
     coronaIntensity: realism ? 0.5 : 1,
     pulseAmplitude: realism || reducedMotion ? 0 : 0.1,

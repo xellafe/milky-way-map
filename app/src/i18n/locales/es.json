@@ -179,6 +179,7 @@
     "twinkleSpeed": "Frecuencia del centelleo",
     "twinkleAmplitude": "Intensidad del centelleo",
     "sizeGamma": "Contraste de tamaño de las estrellas",
+    "starColorSaturation": "Saturación del color de las estrellas",
     "reset": "Restablecer opciones",
     "sectionCamera": "Cámara",
     "sectionStars": "Estrellas"

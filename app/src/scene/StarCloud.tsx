@@ -26,7 +26,7 @@ export const STAR_MAX_PX = 24.0;
 // Twinkle (aesthetic): brightness swings ±twinkleAmplitude on stars farther
 // than the range start (ly from camera), full effect past its end.
 // Disabled under prefers-reduced-motion (SPEC §6.9) and in realism mode.
-// Size gamma, twinkle amplitude/speed and realism are user settings
+// Size gamma, color saturation, twinkle amplitude/speed and realism are user settings
 // (state/settings.ts), pushed to the uniforms every frame.
 export const STAR_TWINKLE_NEAR_LY = 20;
 export const STAR_TWINKLE_FAR_LY = 200;
@@ -83,7 +83,7 @@ export function StarCloud() {
       mobile,
     });
     uniforms.uSizeGamma!.value = s.sizeGamma;
-    uniforms.uColorGamma!.value = s.realism ? 1 : STAR_COLOR_GAMMA;
+    uniforms.uColorGamma!.value = s.realism ? 1 : s.starColorSaturation;
     uniforms.uFireball!.value = s.realism ? 0 : 1;
   });
 

@@ -84,7 +84,8 @@ export function HostStar({
   const time = useRef(0);
   /* eslint-disable react-hooks/immutability -- per-frame uniform updates on materials owned by this component */
   useFrame(({ camera }, delta) => {
-    const look = hostStarLook(useSettingsStore.getState().realism, prefersReducedMotion());
+    const { realism, starColorSaturation } = useSettingsStore.getState();
+    const look = hostStarLook(realism, prefersReducedMotion(), starColorSaturation);
     if (look.animate) time.current += delta;
     star.uniforms.uTime!.value = time.current;
     star.uniforms.uColorGamma!.value = look.colorGamma;
