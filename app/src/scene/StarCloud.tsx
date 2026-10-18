@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarGeometry } from '../data/starCoreStore';
 import { effectiveTwinkle, prefersReducedMotion } from '../lib/motion';
@@ -30,6 +30,9 @@ export const STAR_MAX_PX = 24.0;
 // (state/settings.ts), pushed to the uniforms every frame.
 export const STAR_TWINKLE_NEAR_LY = 20;
 export const STAR_TWINKLE_FAR_LY = 200;
+
+// Test bridge (same gate as HostStar): exposes the uniform values to e2e.
+const exposeBridge = new URLSearchParams(globalThis.location?.search ?? '').get('pdb') === '1';
 
 /**
  * The whole star catalog as ONE THREE.Points / one draw call (SPEC §4.2).
@@ -85,7 +88,20 @@ export function StarCloud() {
     uniforms.uSizeGamma!.value = s.sizeGamma;
     uniforms.uColorGamma!.value = s.realism ? 1 : s.starColorSaturation;
     uniforms.uFireball!.value = s.realism ? 0 : 1;
+    if (exposeBridge) {
+      (globalThis as Record<string, unknown>).__starCloud = {
+        colorGamma: uniforms.uColorGamma!.value,
+      };
+    }
   });
+
+  // The bridge would otherwise outlive the scene and report a stale value.
+  useEffect(
+    () => () => {
+      delete (globalThis as Record<string, unknown>).__starCloud;
+    },
+    [],
+  );
 
   if (!geometry) return null;
   return <points ref={pointsRef} geometry={geometry} material={material} frustumCulled={false} />;

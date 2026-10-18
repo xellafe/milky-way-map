@@ -4,21 +4,22 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-10-14 (issue #25, interfaccia mobile completa su `feat/mobile-ui`; prossimo passo: push e PR, serve l'approvazione dell'umano)
+- **Data ultimo aggiornamento:** 2026-10-18 (follow-up della review di #9 su `fix/star-saturation-review`; in precedenza 2026-10-14, issue #25, interfaccia mobile completa su `feat/mobile-ui`)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
-## Issue #9 — saturazione del colore delle stelle (2026-10-16, branch `feat/star-color-saturation`, completa, commit da fare)
+## Issue #9 — saturazione del colore delle stelle (2026-10-16, branch `feat/star-color-saturation`, completa, mergiata (PR #31))
 
 Spec: `docs/superpowers/specs/2026-10-16-star-color-saturation-design.md`; piano: `docs/superpowers/plans/2026-10-16-star-color-saturation.md`.
 
 - Nuovo slider "Star color saturation" in Options (`starColorSaturation`): il valore è l'esponente `uColorGamma` esistente, nessuna modifica agli shader.
 - Decisioni: default 2,5 = aspetto precedente; range 0–4 con passo 0,1 (scelta dell'agente); vale anche per la stella ospite in System View (scelta umana); nessun bump della versione di persist.
 - Realismo forza il valore a 1 e disabilita lo slider.
-- AC1 PASS (unit test + lettura del codice, nessuna misura a runtime di `uColorGamma`); AC2, AC3, AC4 PASS.
+- AC1 PASS (unit test; verificato a runtime dall'e2e tramite il bridge `__starCloud`, vedi follow-up); AC2, AC3, AC4 PASS.
 - Gate: typecheck, lint, format:check, build verdi; unit 298/298 (35 file); e2e 302/302, nessun flaky.
+- Follow-up post-merge (2026-10-18, `fix/star-saturation-review`): slider unificato in `StarColorSaturationSlider` (range annotato come scelta estetica); bridge `__starCloud` (`?pdb=1`) ed e2e verificano AC1 a runtime; scansione `axe` aggiunta alle Options di System View.
 
-## Issue #8 — velocità dell'auto-orbit (2026-10-16, branch `feat/auto-orbit-speed`, completa, commit da fare)
+## Issue #8 — velocità dell'auto-orbit (2026-10-16, branch `feat/auto-orbit-speed`, completa, mergiata (PR #30))
 
 Spec: `docs/superpowers/specs/2026-10-16-auto-orbit-speed-design.md`; piano: `docs/superpowers/plans/2026-10-16-auto-orbit-speed.md`.
 

@@ -128,3 +128,21 @@ test('System View options: realism + saturation, no reset; galaxy options unchan
     await expect(page.getByTestId(id)).toHaveCount(0);
   }
 });
+
+// #9 follow-up: the setting reaches the galaxy cloud's uColorGamma (AC1).
+test('star color saturation reaches the cloud gamma; realism forces 1', async ({ page }) => {
+  await serveFixtureData(page);
+  await page.goto('/?pdb=1');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+  const readGamma = () =>
+    page.evaluate(
+      () =>
+        ((globalThis as Record<string, unknown>).__starCloud as { colorGamma: number } | undefined)
+          ?.colorGamma,
+    );
+  await page.getByTestId('options-toggle').click();
+  await page.getByTestId('option-starColorSaturation').fill('3.5');
+  await expect.poll(readGamma).toBe(3.5);
+  await page.getByTestId('option-realism').check();
+  await expect.poll(readGamma).toBe(1);
+});
