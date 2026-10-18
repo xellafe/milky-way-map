@@ -53,6 +53,23 @@ export function SliderSetting({
   );
 }
 
+/** Shared by the Galaxy View options and the System View options (#9). */
+export function StarColorSaturationSlider({ disabled }: { disabled: boolean }) {
+  const { t } = useTranslation();
+  // Range 0-4 (gamma exponent, unitless) and step 0.1 are an aesthetic choice, not data.
+  return (
+    <SliderSetting
+      id="starColorSaturation"
+      label={t('options.starColorSaturation')}
+      min={0}
+      max={4}
+      step={0.1}
+      digits={1}
+      disabled={disabled}
+    />
+  );
+}
+
 /**
  * User customizations (issue #1): camera, star look. Persisted locally.
  * Content only: the dock panel (ControlDock) owns the frame and the reset
@@ -126,15 +143,7 @@ export function OptionsPanel() {
           digits={2}
           disabled={settings.realism}
         />
-        <SliderSetting
-          id="starColorSaturation"
-          label={t('options.starColorSaturation')}
-          min={0}
-          max={4}
-          step={0.1}
-          digits={1}
-          disabled={settings.realism}
-        />
+        <StarColorSaturationSlider disabled={settings.realism} />
         <SliderSetting
           id="sizeGamma"
           label={t('options.sizeGamma')}

@@ -10,7 +10,7 @@ import { HudButton } from './hud/HudButton';
 import { HudCard } from './hud/HudCard';
 import { HudSwitch } from './hud/HudInputs';
 import { Tabs, type TabItem } from './hud/Tabs';
-import { OptionsPanel, SliderSetting } from './OptionsPanel';
+import { OptionsPanel, StarColorSaturationSlider } from './OptionsPanel';
 import { SystemViewPanel } from './SystemViewPanel';
 import { TimeBar } from './TimeBar';
 import { ViewTogglesPanel } from './ViewTogglesPanel';
@@ -116,15 +116,7 @@ function SystemOptions() {
         data-testid="option-realism"
         onChange={(e) => setSettings({ realism: e.target.checked })}
       />
-      <SliderSetting
-        id="starColorSaturation"
-        label={t('options.starColorSaturation')}
-        min={0}
-        max={4}
-        step={0.1}
-        digits={1}
-        disabled={realism}
-      />
+      <StarColorSaturationSlider disabled={realism} />
     </section>
   );
 }

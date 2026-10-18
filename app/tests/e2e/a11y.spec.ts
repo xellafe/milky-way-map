@@ -108,6 +108,14 @@ for (const [id, toggle] of dockPanels) {
   });
 }
 
+test('System View options dock panel has no blocking axe violations', async ({ page }) => {
+  await openApp(page);
+  await enterTrappist(page);
+  await page.getByTestId('options-toggle').click();
+  await expect(page.getByTestId('option-starColorSaturation')).toBeVisible();
+  await scan(page, '#dock-panel');
+});
+
 test('music controls have no blocking axe violations', async ({ page }) => {
   await openApp(page);
   await expect(page.getByTestId('music-control')).toBeVisible();
