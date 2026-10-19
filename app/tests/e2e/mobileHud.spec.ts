@@ -219,3 +219,61 @@ test.describe('sheet handle from closed', () => {
     await expect(sheet).toHaveAttribute('data-snap', 'base');
   });
 });
+
+// Issue #33: the <audio> element must survive layout changes; a remount stops playback and resets the volume.
+test.describe('music audio element identity', () => {
+  const markAudio = (page: Page) =>
+    page.getByTestId('music-audio').evaluate((el: HTMLAudioElement) => (el.dataset.probe = '1'));
+  const audioState = (page: Page) =>
+    page.getByTestId('music-audio').evaluate((el: HTMLAudioElement) => ({
+      probe: el.dataset.probe,
+      paused: el.paused,
+      volume: el.volume,
+    }));
+
+  test.describe('phone', () => {
+    test.use({ viewport: { width: 375, height: 812 } });
+
+    test('collapse and expand keep the same playing audio element and volume', async ({ page }) => {
+      await open(page);
+      await page.getByTestId('music-expand').click();
+      await page.getByTestId('music-toggle').click();
+      await expect
+        .poll(() => page.getByTestId('music-audio').evaluate((el: HTMLAudioElement) => el.paused))
+        .toBe(false);
+      await page.getByTestId('music-volume').fill('0.75');
+      await markAudio(page);
+
+      await page.getByTestId('music-collapse').click();
+      await expect(page.getByTestId('music-expand')).toBeVisible();
+      await page.getByTestId('music-expand').click();
+      await expect(page.getByTestId('mobile-sheet').getByTestId('music-toggle')).toBeVisible();
+
+      const state = await audioState(page);
+      expect(state.probe, 'same element').toBe('1');
+      expect(state.paused, 'still playing').toBe(false);
+      expect(state.volume).toBeCloseTo(0.75, 2);
+    });
+  });
+
+  test.describe('desktop to phone', () => {
+    test.use({ viewport: { width: 1280, height: 720 } });
+
+    test('resizing to a phone with the player expanded keeps the audio element', async ({
+      page,
+    }) => {
+      await serveFixtureData(page);
+      await page.goto('/');
+      await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+      await expect(page.getByTestId('music-toggle')).toBeVisible();
+      await markAudio(page);
+
+      await page.setViewportSize({ width: 375, height: 812 });
+      await frames(page, 3);
+
+      await expect(page.getByTestId('mobile-sheet')).toBeVisible();
+      await expect(page.getByTestId('music-audio')).toHaveCount(1);
+      expect((await audioState(page)).probe, 'same element').toBe('1');
+    });
+  });
+});
