@@ -163,7 +163,8 @@ export function MusicPlayer() {
 
   if (!track) return null;
 
-  // Stays mounted in every layout: collapsing or moving the controls never stops playback.
+  // Rendered as a sibling of `body` under one Fragment root in every layout: a root type
+  // change would remount the element, stopping playback and resetting the volume (#33).
   const audio = (
     <audio
       ref={audioRef}
@@ -237,55 +238,55 @@ export function MusicPlayer() {
   );
 
   // Phone (#25): the expanded controls are the sheet's `music` content (a dock panel wins).
-  if (phone && expanded) {
-    return (
-      <>
-        {audio}
-        {!dockPanel && (
-          <MobileSheet label={t('music.label')}>
-            <div data-music-zone className="p-3">
-              {controls}
-            </div>
-          </MobileSheet>
+  const body =
+    phone && expanded ? (
+      !dockPanel && (
+        <MobileSheet label={t('music.label')}>
+          <div data-music-zone className="p-3">
+            {controls}
+          </div>
+        </MobileSheet>
+      )
+    ) : (
+      <HudCard
+        as="section"
+        aria-label={t('music.label')}
+        data-hud="music-player"
+        data-testid="music-control"
+        data-music-zone
+        data-expanded={expanded}
+        className={
+          phone
+            ? // Same row as the dock; landscape stays left of the sheet.
+              `absolute bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-40 p-2 ${
+                layout === 'landscape' ? 'right-[calc(50vw+0.5rem)]' : 'right-2'
+              }`
+            : `absolute bottom-4 right-4 z-20 px-2 py-1 ${expanded ? 'w-64 max-lg:bottom-20 max-lg:max-w-[calc(100%-2rem)]' : ''}`
+        }
+      >
+        {expanded ? (
+          controls
+        ) : (
+          <button
+            ref={expandRef}
+            type="button"
+            data-testid="music-expand"
+            aria-label={t('music.expand')}
+            aria-expanded={false}
+            aria-controls={CONTROLS_ID}
+            onClick={() => change(true)}
+            className={buttonClass}
+          >
+            <span aria-hidden>♪</span>
+          </button>
         )}
-      </>
+      </HudCard>
     );
-  }
 
   return (
-    <HudCard
-      as="section"
-      aria-label={t('music.label')}
-      data-hud="music-player"
-      data-testid="music-control"
-      data-music-zone
-      data-expanded={expanded}
-      className={
-        phone
-          ? // Same row as the dock; landscape stays left of the sheet.
-            `absolute bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-40 p-2 ${
-              layout === 'landscape' ? 'right-[calc(50vw+0.5rem)]' : 'right-2'
-            }`
-          : `absolute bottom-4 right-4 z-20 px-2 py-1 ${expanded ? 'w-64 max-lg:bottom-20 max-lg:max-w-[calc(100%-2rem)]' : ''}`
-      }
-    >
+    <>
       {audio}
-      {expanded ? (
-        controls
-      ) : (
-        <button
-          ref={expandRef}
-          type="button"
-          data-testid="music-expand"
-          aria-label={t('music.expand')}
-          aria-expanded={false}
-          aria-controls={CONTROLS_ID}
-          onClick={() => change(true)}
-          className={buttonClass}
-        >
-          <span aria-hidden>♪</span>
-        </button>
-      )}
-    </HudCard>
+      {body}
+    </>
   );
 }

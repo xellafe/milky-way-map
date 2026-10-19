@@ -4,9 +4,18 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-10-18 (follow-up della review di #9 su `fix/star-saturation-review`; in precedenza 2026-10-14, issue #25, interfaccia mobile completa su `feat/mobile-ui`)
+- **Data ultimo aggiornamento:** 2026-10-19 (issue #33 su `fix/music-audio-remount`; in precedenza 2026-10-18, follow-up della review di #9 su `fix/star-saturation-review`)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
+
+## Issue #33 — `<audio>` del music player rimontato su phone (2026-10-19, branch `fix/music-audio-remount`, commit `4ec50d2`, completa, da pushare)
+
+Spec: `docs/superpowers/specs/2026-10-19-music-audio-remount-design.md`. Il backlog della code review è nelle issue #34–#48 (create il 2026-10-19).
+
+- Causa: in `MusicPlayer.tsx` il ramo phone-expanded restituiva un Fragment come root e gli altri una `HudCard`; espandere/comprimere su phone (o resize desktop→phone da espanso) rimontava `<audio>`, fermando la riproduzione e riportando il volume a 1.0.
+- Fix: un'unica root stabile `<>{audio}{body}</>`; due e2e di regressione in `mobileHud.spec.ts` (stesso elemento tramite dataset probe, ancora in riproduzione, volume mantenuto; resize desktop→phone).
+- AC1–AC5 della spec PASS; e2e completo 305/306 al primo giro, l'unico fallimento era l'attesa del nuovo test (corretta, ora passa).
+- Osservazione aperta: dopo un resize desktop→phone con il player espanso, il `MobileSheet` resta a snap=closed e i controlli musicali non sono visibili finché l'utente non apre lo sheet; comportamento preesistente, non toccato da #33.
 
 ## Issue #9 — saturazione del colore delle stelle (2026-10-16, branch `feat/star-color-saturation`, completa, mergiata (PR #31))
 
