@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 import { setPlacedLabels } from '../data/labelStore';
 import { getProperNamedStars } from '../data/namesIndex';
-import { getStarCore } from '../data/starCoreStore';
+import { getStarCore, getStarGeometry } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import { cameraApparentMagnitude, type LabelCandidate, placeLabels } from '../lib/labelCulling';
 import { useGalaxyMapStore } from '../state/store';
@@ -44,8 +44,13 @@ export function StarLabels() {
     const candidates = getProperNamedStars();
     if (!core || !details || candidates.length === 0) return;
 
+    // Same runtime filter mask the star and picking shaders read (SPEC §6.5);
+    // absent until the geometry is built, in which case nothing is filtered.
+    const visible = getStarGeometry()?.getAttribute('aVisible')?.array;
+
     const screen: LabelCandidate[] = [];
     for (const { index, name } of candidates) {
+      if (visible && visible[index]! < 0.5) continue;
       const i = index * 3;
       const x = core.position[i]!;
       const y = core.position[i + 1]!;
