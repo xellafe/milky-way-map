@@ -117,6 +117,14 @@ function SimpleOrbit({ planet, maxA }: { planet: RenderablePlanet; maxA: number 
     if (planet.schematic) obj.computeLineDistances();
     return obj;
   }, [planet, maxA]);
+  // R3F never disposes <primitive> objects, so release the GPU resources here.
+  useEffect(
+    () => () => {
+      line.geometry.dispose();
+      (line.material as THREE.Material).dispose();
+    },
+    [line],
+  );
   return <primitive object={line} />;
 }
 
@@ -186,6 +194,14 @@ function TrailOrbit({
     obj.computeLineDistances(); // lineDistance attribute, used for dashes
     return obj;
   }, [planet, maxA]);
+  // R3F never disposes <primitive> objects, so release the GPU resources here.
+  useEffect(
+    () => () => {
+      line.geometry.dispose();
+      (line.material as THREE.Material).dispose();
+    },
+    [line],
+  );
 
   const ref = useRef<THREE.Line<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
   useFrame(() => {
@@ -235,6 +251,7 @@ function PlanetAnimator({
   const tDays = useRef(0);
   const controls = useThree((s) => s.controls) as { target: THREE.Vector3 } | null;
   const camera = useThree((s) => s.camera);
+  const gl = useThree((s) => s.gl);
 
   useFrame((_, delta) => {
     tDays.current += delta * useGalaxyMapStore.getState().timeScaleDaysPerSecond;
@@ -260,6 +277,7 @@ function PlanetAnimator({
         cameraTarget: controls?.target.toArray() ?? null,
         cameraPosition: camera.position.toArray(),
         timeScale: useGalaxyMapStore.getState().timeScaleDaysPerSecond,
+        geometries: gl.info.memory.geometries,
         hz: hz && { ...hz, inclinationDeg: hzIncl },
         planets: planets.map((p) => ({
           name: p.record.pl_name,
