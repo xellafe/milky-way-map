@@ -4,9 +4,27 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-10-19 (issue #34 su `fix/orbit-geometry-leak`; in precedenza 2026-10-19, issue #33 su `fix/music-audio-remount`)
+- **Data ultimo aggiornamento:** 2026-10-20 (issue #35 su `fix/labels-respect-filters`; in precedenza 2026-10-19, issue #34 su `fix/orbit-geometry-leak`)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
+
+## Issue #35 — etichette delle stelle filtrate (2026-10-20, branch `fix/labels-respect-filters`, commit `35bf775`, completa, da pushare)
+
+Spec: `docs/superpowers/specs/2026-10-20-labels-respect-filters-design.md`.
+
+- Causa: `StarLabels.tsx` costruiva i candidati delle etichette senza la maschera filtro `aVisible`, quindi con un filtro attivo (SPEC §6.5) le stelle nascoste mantenevano l'etichetta del nome.
+- Fix: legge la maschera della geometria condivisa (`getStarGeometry`) una volta per update e salta le stelle nascoste, stessa soglia < 0.5 di `star.vert` / `star-pick.vert`; senza geometria il comportamento non cambia.
+- Test: e2e in `filters.spec.ts` (etichetta di Polaris nascosta con classe F nascosta, di nuovo visibile dopo il reset); rosso confermato prima del fix.
+- AC1–AC3 della spec PASS; e2e completo 306/308, i 2 fallimenti erano il flaky sotto.
+
+## Issue #34 — leak di geometrie e materiali delle orbite (2026-10-19, branch `fix/orbit-geometry-leak`, commit `13eb6f3`, completa, mergiata (PR #50))
+
+Spec: `docs/superpowers/specs/2026-10-19-orbit-geometry-leak-design.md`.
+
+- Causa: `SimpleOrbit`/`TrailOrbit` in `SystemScene.tsx` creano una `THREE.Line` in `useMemo` montata via `<primitive>`; R3F non fa mai il dispose dei primitive, quindi ogni cambio di stile orbita, toggle del filtro tipo pianeta o cambio di `maxA` perdeva geometria e materiale GPU (14 geometrie per ciclo simple↔trail su TRAPPIST-1).
+- Fix: effect di cleanup che fa il dispose di geometria e materiale in entrambi; `ThickOrbit` (drei `Line`) lo fa già da sé.
+- Test bridge: `__system.geometries` (`gl.info.memory.geometries`, solo con `?pdb=1`); e2e di regressione in `system.spec.ts` (23 → 93 prima del fix, stabile dopo).
+- AC1–AC3 della spec PASS; e2e completo 307/307.
 
 ## Issue #33 — `<audio>` del music player rimontato su phone (2026-10-19, branch `fix/music-audio-remount`, commit `4ec50d2`, completa, mergiata (PR #49))
 
@@ -16,15 +34,6 @@ Spec: `docs/superpowers/specs/2026-10-19-music-audio-remount-design.md`. Il back
 - Fix: un'unica root stabile `<>{audio}{body}</>`; due e2e di regressione in `mobileHud.spec.ts` (stesso elemento tramite dataset probe, ancora in riproduzione, volume mantenuto; resize desktop→phone).
 - AC1–AC5 della spec PASS; e2e completo 305/306 al primo giro, l'unico fallimento era l'attesa del nuovo test (corretta, ora passa).
 - Osservazione aperta: dopo un resize desktop→phone con il player espanso, il `MobileSheet` resta a snap=closed e i controlli musicali non sono visibili finché l'utente non apre lo sheet; comportamento preesistente, non toccato da #33.
-
-## Issue #34 — leak di geometrie e materiali delle orbite (2026-10-19, branch `fix/orbit-geometry-leak`, commit `fix(render): dispose orbit geometries and materials`, completa, da pushare)
-
-Spec: `docs/superpowers/specs/2026-10-19-orbit-geometry-leak-design.md`.
-
-- Causa: `SimpleOrbit`/`TrailOrbit` in `SystemScene.tsx` creano una `THREE.Line` in `useMemo` montata via `<primitive>`; R3F non fa mai il dispose dei primitive, quindi ogni cambio di stile orbita, toggle del filtro tipo pianeta o cambio di `maxA` perdeva geometria e materiale GPU (14 geometrie per ciclo simple↔trail su TRAPPIST-1).
-- Fix: effect di cleanup che fa il dispose di geometria e materiale in entrambi; `ThickOrbit` (drei `Line`) lo fa già da sé.
-- Test bridge: `__system.geometries` (`gl.info.memory.geometries`, solo con `?pdb=1`); e2e di regressione in `system.spec.ts` (23 → 93 prima del fix, stabile dopo).
-- AC1–AC3 della spec PASS; e2e completo 307/307.
 
 ## Issue #9 — saturazione del colore delle stelle (2026-10-16, branch `feat/star-color-saturation`, completa, mergiata (PR #31))
 
@@ -609,6 +618,9 @@ Spec: `docs/superpowers/specs/2026-09-30-sci-fi-ui-design.md`; piano: `docs/supe
 - `layout.spec` "1920x1080 galaxy": ≈1–1,3 min da solo con GL software, usa
   `test.slow()`; due timeout nelle run complete prima dell'accelerazione. Visto
   sul branch `feat/ui-overhaul`, issue #23.
+- `mobileSheet.spec.ts:107` "dragging the handle toward the free edge closes, back toward the scene opens"
+  (verticale e orizzontale, [mobile]): timeout di `mouse.move` (60 s) nella run e2e completa da 30 min
+  sotto carico; 15/15 verdi in isolamento (2026-10-20, run della issue #35).
 
 ## Come riprendere
 
