@@ -20,6 +20,7 @@ const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import
 interface SystemBridge {
   tDays: number;
   timeScale: number;
+  geometries: number;
   hz: { innerAU: number; outerAU: number; inclinationDeg: number | null } | null;
   cameraTarget: [number, number, number];
   viewShiftPx: number;
@@ -358,6 +359,30 @@ test('orbit style: each style renders and the choice persists', async ({ page })
   await page.getByTestId('view-toggle').click();
   await expect(page.getByTestId('orbit-style')).toHaveValue('thick');
   expect(errors.filter((e) => /shader|WebGL|THREE/i.test(e))).toEqual([]);
+});
+
+// #34: SimpleOrbit/TrailOrbit mount a THREE.Line via <primitive>, which R3F never disposes.
+test('orbit style: switching styles does not leak geometries', async ({ page }) => {
+  await openApp(page);
+  await enterSystem(page, 'trappist', 'TRAPPIST-1');
+
+  await page.getByTestId('view-toggle').click();
+  const select = page.getByTestId('orbit-style');
+  const geometries = async () => (await bridge(page)).geometries;
+  const settle = () => page.waitForTimeout(200);
+
+  await select.selectOption('simple');
+  await settle();
+  const baseline = await geometries();
+  expect(baseline).toBeGreaterThan(0);
+
+  for (let i = 0; i < 5; i++) {
+    await select.selectOption('trail');
+    await settle();
+    await select.selectOption('simple');
+    await settle();
+  }
+  await expect.poll(geometries).toBe(baseline);
 });
 
 test('time bar stays visible below the open dock panel', async ({ page }) => {
