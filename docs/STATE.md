@@ -4,9 +4,20 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-10-20 (issue #35 su `fix/labels-respect-filters`; in precedenza 2026-10-19, issue #34 su `fix/orbit-geometry-leak`)
+- **Data ultimo aggiornamento:** 2026-10-20 (issue #36 su `factory/001-loader-retry-errors`; in precedenza issue #35 su `fix/labels-respect-filters`, poi 2026-10-19, issue #34 su `fix/orbit-geometry-leak`)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
+
+## Issue #36 — retry dei loader e errori visibili (2026-10-20, branch `factory/001-loader-retry-errors`, commit `8f7e609`, completa, da pushare)
+
+Spec: `factory/features/001-loader-retry-errors/spec.md`.
+
+- Causa: `loadNamesIndex`, `loadExoplanets`, `loadConstellations` e i bucket di `idSearch` tenevano per sempre la promise rifiutata; `.catch(() => {})` in `SearchBox.tsx` e `useStarHost.ts` nascondeva l'errore e la ricerca restava su `Loading…`.
+- Fix: i loader scartano la promise rifiutata (come `catalogIds.ts`) ed espongono un getter di stato (`idle|loading|ready|error`); `SearchBox` riprova al focus e mostra `ui.searchLoadFailed`; la rejection di `details` è gestita e `FiltersPanel` mostra `filters.loadFailed` (`detailsError` nello store), slider disabilitati.
+- Decisione: i dettagli stella non si riprovano (richiederebbero di ricaricare `stars.bin`); l'overlay di errore del core è invariato.
+- AC1–AC10 della spec PASS; gate: unit 304, e2e 311; review code/security/ui/ux PASS.
+- Note aperte: un bucket Gaia/TYC fallito si riprova solo cambiando query, non al refocus, ma il testo dice "riprova"; nessun backoff, ogni focus dopo un errore rilancia il fetch di `names.index.json` (~16 MB).
+- Note aperte: possibile doppia lettura dell'errore di ricerca con screen reader (`role="status"` sr-only più option `search-error`); review UI/UX solo statiche (browser non disponibile), da verificare a vista spaziatura sotto `filters-error` e a capo in de/fr.
 
 ## Issue #35 — etichette delle stelle filtrate (2026-10-20, branch `fix/labels-respect-filters`, commit `35bf775`, completa, da pushare)
 
