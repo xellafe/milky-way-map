@@ -21,6 +21,50 @@ interface ResultItem {
   unanchored?: boolean;
 }
 
+interface IdResults {
+  query: string;
+  items: StarSearchResult[];
+  failed: boolean;
+}
+
+// ms of typing pause before results and Gaia/TYC lookups run (#37): skips the
+// work and the bucket fetches for intermediate keystrokes; UX choice (not data).
+const SEARCH_DEBOUNCE_MS = 100;
+
+/** Star, catalog-id and host results for one query; ids only if resolved for it. */
+function buildResults(query: string, idResults: IdResults | null): ResultItem[] {
+  if (query.trim().length < 2) return [];
+  const starResults: ResultItem[] = searchStars(query).map((r) => ({
+    key: `star-${r.index}`,
+    label: r.label,
+    kind: 'star',
+    starIndex: r.index,
+  }));
+  const seen = new Set(starResults.map((r) => r.starIndex));
+  const hostResults: ResultItem[] = searchHosts(query)
+    .filter((h) => !(h.matched && h.starIndex !== null && seen.has(h.starIndex)))
+    .map((h) => ({
+      key: `host-${h.hostname}`,
+      label: h.hostname,
+      kind: 'host',
+      starIndex: h.starIndex,
+      hostname: h.hostname,
+      unanchored: !h.matched,
+    }));
+  const catalogIdResults: ResultItem[] =
+    idResults?.query === query
+      ? idResults.items
+          .filter((r) => !seen.has(r.index))
+          .map((r) => ({
+            key: `id-${r.index}`,
+            label: r.label,
+            kind: 'star' as const,
+            starIndex: r.index,
+          }))
+      : [];
+  return [...starResults, ...catalogIdResults, ...hostResults];
+}
+
 /**
  * Minimal search (M3, expanded in M4): proper names + HD/HIP/Gl ids from the
  * classic index, plus exoplanet host names — the accessible route to systems
@@ -30,6 +74,8 @@ interface ResultItem {
 export function SearchBox() {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  // Results and id lookups follow the query once typing pauses; the input stays live.
+  const [searchQuery, setSearchQuery] = useState('');
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
   // Phone (#25): the box is an icon until tapped, then fills the top bar up to help / language.
@@ -41,27 +87,29 @@ export function SearchBox() {
   const [dataVersion, setDataVersion] = useState(0);
   // Exact Gaia/TYC id lookups resolve asynchronously (on-demand bucket fetch);
   // results are keyed by query so stale answers are ignored.
-  const [idResults, setIdResults] = useState<{
-    query: string;
-    items: StarSearchResult[];
-    failed: boolean;
-  } | null>(null);
+  const [idResults, setIdResults] = useState<IdResults | null>(null);
 
   useEffect(() => {
-    if (!looksLikeCatalogId(query)) return;
+    if (query === searchQuery) return;
+    const timer = setTimeout(() => setSearchQuery(query), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query, searchQuery]);
+
+  useEffect(() => {
+    if (!looksLikeCatalogId(searchQuery)) return;
     let cancelled = false;
-    searchByCatalogId(query)
+    searchByCatalogId(searchQuery)
       .then((items) => {
-        if (!cancelled) setIdResults({ query, items, failed: false });
+        if (!cancelled) setIdResults({ query: searchQuery, items, failed: false });
       })
       .catch((error: unknown) => {
         console.warn('catalog id bucket load failed', error);
-        if (!cancelled) setIdResults({ query, items: [], failed: true });
+        if (!cancelled) setIdResults({ query: searchQuery, items: [], failed: true });
       });
     return () => {
       cancelled = true;
     };
-  }, [query]);
+  }, [searchQuery]);
   const inputRef = useRef<HTMLInputElement>(null);
   const openButtonRef = useRef<HTMLButtonElement>(null);
   // Set by Esc: the focused input unmounts, so focus goes back to the icon (keyboard a11y).
@@ -79,44 +127,15 @@ export function SearchBox() {
 
   const results = useMemo<ResultItem[]>(() => {
     void dataVersion; // re-derive when async catalogs land
-    if (query.trim().length < 2) return [];
-    const starResults: ResultItem[] = searchStars(query).map((r) => ({
-      key: `star-${r.index}`,
-      label: r.label,
-      kind: 'star',
-      starIndex: r.index,
-    }));
-    const seen = new Set(starResults.map((r) => r.starIndex));
-    const hostResults: ResultItem[] = searchHosts(query)
-      .filter((h) => !(h.matched && h.starIndex !== null && seen.has(h.starIndex)))
-      .map((h) => ({
-        key: `host-${h.hostname}`,
-        label: h.hostname,
-        kind: 'host',
-        starIndex: h.starIndex,
-        hostname: h.hostname,
-        unanchored: !h.matched,
-      }));
-    const catalogIdResults: ResultItem[] =
-      idResults?.query === query
-        ? idResults.items
-            .filter((r) => !seen.has(r.index))
-            .map((r) => ({
-              key: `id-${r.index}`,
-              label: r.label,
-              kind: 'star' as const,
-              starIndex: r.index,
-            }))
-        : [];
-    return [...starResults, ...catalogIdResults, ...hostResults];
-  }, [query, dataVersion, idResults]);
+    return buildResults(searchQuery, idResults);
+  }, [searchQuery, dataVersion, idResults]);
   const activeIndex = Math.min(active, Math.max(results.length - 1, 0));
   // Statuses are module-level; dataVersion bumps re-render when a load settles.
-  const idCurrent = idResults?.query === query ? idResults : null;
+  const idCurrent = idResults?.query === searchQuery ? idResults : null;
   const catalogStatuses = [getNamesIndexStatus(), getExoplanetsStatus()];
   const loadFailed = catalogStatuses.includes('error') || idCurrent?.failed === true;
   const loadPending =
-    catalogStatuses.some((st) => st !== 'ready') || (looksLikeCatalogId(query) && !idCurrent);
+    catalogStatuses.some((st) => st !== 'ready') || (looksLikeCatalogId(searchQuery) && !idCurrent);
 
   const choose = (item: ResultItem) => {
     if (item.kind === 'host' && item.unanchored && item.hostname) {
@@ -132,6 +151,7 @@ export function SearchBox() {
     }
     setOpen(false);
     setQuery('');
+    setSearchQuery('');
     setFieldShown(false);
     inputRef.current?.blur();
   };
@@ -143,9 +163,13 @@ export function SearchBox() {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActive((a) => Math.max(a - 1, 0));
-    } else if (e.key === 'Enter' && results[activeIndex]) {
+    } else if (e.key === 'Enter') {
+      // Before the debounce settles, pick from results for what is typed now.
+      const current = query === searchQuery ? results : buildResults(query, idResults);
+      const item = current[Math.min(activeIndex, current.length - 1)];
+      if (!item) return;
       e.preventDefault();
-      choose(results[activeIndex]);
+      choose(item);
     } else if (e.key === 'Escape') {
       // Mark handled so the dock's document-level Esc listener ignores it.
       e.preventDefault();
@@ -156,7 +180,8 @@ export function SearchBox() {
     }
   };
 
-  const showList = open && query.trim().length >= 2;
+  // Hides at once when the query is cleared; appears once the first results are computed.
+  const showList = open && query.trim().length >= 2 && searchQuery.trim().length >= 2;
 
   if (collapsed) {
     return (
