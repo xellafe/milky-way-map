@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { normalizeExoplanets } from '../../src/data/exoplanets';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  _setExoplanetsForTests,
+  getExoplanetsStatus,
+  loadExoplanets,
+  normalizeExoplanets,
+} from '../../src/data/exoplanets';
+import { expectRetryAfterFailure } from './loaderRetry';
 
 const starRef = { matchedIndex: 584, matchedBy: 'gaia', matched: true };
 const basePlanet = { pl_name: 'X b', pl_orbper: 5.1 };
@@ -71,5 +77,19 @@ describe('normalizeExoplanets', () => {
     expect(host.planets[0]!.pl_denslim).toBe(1);
     expect(host.planets[0]!.pl_bmassprov).toBe('Mass');
     expect(host.planets[0]!.pl_insol).toBeNull();
+  });
+});
+
+describe('loadExoplanets retry (#36)', () => {
+  afterEach(() => {
+    _setExoplanetsForTests(null);
+    vi.unstubAllGlobals();
+  });
+
+  it('retries after a failed fetch, then caches the success', async () => {
+    await expectRetryAfterFailure(() => loadExoplanets('/data/'), getExoplanetsStatus, {
+      version: 1,
+      hosts: {},
+    });
   });
 });

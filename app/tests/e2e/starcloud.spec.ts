@@ -39,9 +39,13 @@ test('renders the star cloud from the fixture data', async ({ page }) => {
 });
 
 test('shows the error message when the data is unreachable', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.route('**/data/**', (route) => route.fulfill({ status: 500, body: 'boom' }));
   await page.goto('/');
   await expect(page.getByTestId('loading-overlay')).toContainText(/catalog|catalogo/i, {
     timeout: 10_000,
   });
+  // No unhandled rejection from the star details promise (#36).
+  expect(pageErrors).toEqual([]);
 });

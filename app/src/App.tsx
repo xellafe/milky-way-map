@@ -41,6 +41,20 @@ export default function App() {
       const handle = loadStars(DATA_BASE_URL, manifest, (fraction) => {
         if (!cancelled) setDataProgress(fraction);
       });
+      // Attached before awaiting core: details awaits core, so a core failure
+      // rejects details too and would otherwise go unhandled (#36).
+      handle.details.then(
+        (details) => {
+          if (cancelled) return;
+          setStarDetails(details);
+          // Filter slider bounds come from the real data min/max (SPEC §13).
+          useGalaxyMapStore.getState().setDataBounds(computeDataBounds(details));
+        },
+        (error: unknown) => {
+          console.warn('star details load failed', error);
+          if (!cancelled) useGalaxyMapStore.getState().setDetailsError(true);
+        },
+      );
       const core = await handle.core;
       if (cancelled) return;
       // The SoA arrays live OUTSIDE React (see starCoreStore docs): React only
@@ -48,12 +62,6 @@ export default function App() {
       // build (React 19 perf-track prop diffing walks every array element).
       setStarCore(core);
       setDataStatus('ready');
-      handle.details.then((details) => {
-        if (cancelled) return;
-        setStarDetails(details);
-        // Filter slider bounds come from the real data min/max (SPEC §13).
-        useGalaxyMapStore.getState().setDataBounds(computeDataBounds(details));
-      });
       // Classic names index (~16 MB): background load for hover labels/search.
       loadNamesIndex(DATA_BASE_URL).catch((error: unknown) =>
         console.warn('names index load failed', error),

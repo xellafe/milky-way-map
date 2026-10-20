@@ -23,7 +23,7 @@ export function useStarHost(index: number): { hostname: string | null; host: Exo
         const name = getHostnameByStarIndex(index);
         setResult({ index, hostname: name, host: name ? getHost(name) : null });
       })
-      .catch(() => {});
+      .catch((error: unknown) => console.warn('exoplanets load failed', error));
     return () => {
       cancelled = true;
     };

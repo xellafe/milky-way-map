@@ -11,7 +11,8 @@
     "searchPlaceholder": "Stern oder System suchen (z. B. Polaris, HD 209458, TRAPPIST-1)",
     "searchOpen": "Suche öffnen",
     "searchNoResults": "Keine Ergebnisse",
-    "searchUnanchored": "nur System"
+    "searchUnanchored": "nur System",
+    "searchLoadFailed": "Die Suchdaten konnten nicht geladen werden. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
   },
   "overlay": {
     "close": "Sternkarte schließen"
@@ -82,7 +83,8 @@
     "onlyExoplanets": "Nur Sterne mit Exoplaneten",
     "onlyMultiple": "Nur Mehrfachsysteme",
     "onlyVariable": "Nur veränderliche Sterne",
-    "reset": "Filter zurücksetzen"
+    "reset": "Filter zurücksetzen",
+    "loadFailed": "Die Daten für die Bereichsfilter konnten nicht geladen werden. Bitte überprüfen Sie Ihre Verbindung und laden Sie die Seite neu."
   },
   "units": {
     "ly": "Lj",

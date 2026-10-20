@@ -6,6 +6,7 @@
  * Loaded on first toggle-on only (lines are hidden by default, SPEC §6.2).
  */
 
+import type { LoadStatus } from './loadStatus';
 import { DATA_BASE_URL } from './starData';
 export interface Constellation {
   id: string;
@@ -23,15 +24,30 @@ export interface ConstellationsData {
 
 let constellations: ConstellationsData | null = null;
 let loadPromise: Promise<ConstellationsData> | null = null;
+let status: LoadStatus = 'idle';
 
 export function loadConstellations(baseUrl = DATA_BASE_URL): Promise<ConstellationsData> {
-  loadPromise ??= (async () => {
+  if (loadPromise) return loadPromise;
+  status = 'loading';
+  const pending = (async () => {
     const resp = await fetch(`${baseUrl}constellations.json`);
     if (!resp.ok) throw new Error(`constellations fetch failed: ${resp.status}`);
     constellations = (await resp.json()) as ConstellationsData;
+    status = 'ready';
     return constellations;
   })();
-  return loadPromise;
+  loadPromise = pending;
+  // Dropped on failure so the next call retries a transient error (#36).
+  pending.catch(() => {
+    if (loadPromise !== pending) return;
+    loadPromise = null;
+    status = 'error';
+  });
+  return pending;
+}
+
+export function getConstellationsStatus(): LoadStatus {
+  return status;
 }
 
 export function getConstellations(): ConstellationsData | null {
@@ -42,4 +58,5 @@ export function getConstellations(): ConstellationsData | null {
 export function _setConstellationsForTests(data: ConstellationsData | null): void {
   constellations = data;
   loadPromise = data ? Promise.resolve(data) : null;
+  status = data ? 'ready' : 'idle';
 }

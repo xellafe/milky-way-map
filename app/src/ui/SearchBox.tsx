@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { loadExoplanets, searchHosts } from '../data/exoplanets';
+import { getExoplanetsStatus, loadExoplanets, searchHosts } from '../data/exoplanets';
 import { looksLikeCatalogId, searchByCatalogId } from '../data/idSearch';
-import { isNamesIndexReady, searchStars, type StarSearchResult } from '../data/namesIndex';
+import {
+  getNamesIndexStatus,
+  loadNamesIndex,
+  searchStars,
+  type StarSearchResult,
+} from '../data/namesIndex';
 import { getStarCore } from '../data/starCoreStore';
 import { useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
@@ -36,18 +41,23 @@ export function SearchBox() {
   const [dataVersion, setDataVersion] = useState(0);
   // Exact Gaia/TYC id lookups resolve asynchronously (on-demand bucket fetch);
   // results are keyed by query so stale answers are ignored.
-  const [idResults, setIdResults] = useState<{ query: string; items: StarSearchResult[] } | null>(
-    null,
-  );
+  const [idResults, setIdResults] = useState<{
+    query: string;
+    items: StarSearchResult[];
+    failed: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!looksLikeCatalogId(query)) return;
     let cancelled = false;
     searchByCatalogId(query)
       .then((items) => {
-        if (!cancelled) setIdResults({ query, items });
+        if (!cancelled) setIdResults({ query, items, failed: false });
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        console.warn('catalog id bucket load failed', error);
+        if (!cancelled) setIdResults({ query, items: [], failed: true });
+      });
     return () => {
       cancelled = true;
     };
@@ -101,6 +111,12 @@ export function SearchBox() {
     return [...starResults, ...catalogIdResults, ...hostResults];
   }, [query, dataVersion, idResults]);
   const activeIndex = Math.min(active, Math.max(results.length - 1, 0));
+  // Statuses are module-level; dataVersion bumps re-render when a load settles.
+  const idCurrent = idResults?.query === query ? idResults : null;
+  const catalogStatuses = [getNamesIndexStatus(), getExoplanetsStatus()];
+  const loadFailed = catalogStatuses.includes('error') || idCurrent?.failed === true;
+  const loadPending =
+    catalogStatuses.some((st) => st !== 'ready') || (looksLikeCatalogId(query) && !idCurrent);
 
   const choose = (item: ResultItem) => {
     if (item.kind === 'host' && item.unanchored && item.hostname) {
@@ -189,16 +205,31 @@ export function SearchBox() {
         }}
         onFocus={() => {
           setOpen(true);
-          // Host search needs exoplanets.json; fetch lazily on first focus.
-          loadExoplanets()
-            .then(() => setDataVersion((v) => v + 1))
-            .catch(() => {});
+          // Host search needs exoplanets.json; fetch lazily on first focus. Both
+          // loaders are no-ops once loaded and retry after a failure (#36).
+          const bump = () => setDataVersion((v) => v + 1);
+          for (const [name, load] of [
+            ['names index', loadNamesIndex],
+            ['exoplanets', loadExoplanets],
+          ] as const) {
+            load().then(bump, (error: unknown) => {
+              console.warn(`${name} load failed`, error);
+              bump();
+            });
+          }
+          // A retry flips the status from error to loading synchronously.
+          bump();
         }}
         onBlur={() => {
           if (phone && query === '') setFieldShown(false);
         }}
         onKeyDown={onKeyDown}
       />
+      {/* Outside the listbox, which only admits options; kept mounted so the
+          change is announced (SPEC §6.9). */}
+      <p role="status" className="sr-only">
+        {showList && results.length === 0 && loadFailed ? t('ui.searchLoadFailed') : ''}
+      </p>
       {showList && (
         <ul
           id="search-results"
@@ -212,11 +243,28 @@ export function SearchBox() {
               : 'mt-1 overflow-hidden'
           }`}
         >
-          {results.length === 0 && (
-            <li className="px-3 py-2 text-hud-muted">
-              {isNamesIndexReady() ? t('ui.searchNoResults') : t('ui.loading')}
-            </li>
-          )}
+          {/* A listbox only admits options: the empty state is a disabled one. */}
+          {results.length === 0 &&
+            (loadFailed ? (
+              <li
+                role="option"
+                aria-selected={false}
+                aria-disabled
+                data-testid="search-error"
+                className="px-3 py-2 text-hud-warn"
+              >
+                {t('ui.searchLoadFailed')}
+              </li>
+            ) : (
+              <li
+                role="option"
+                aria-selected={false}
+                aria-disabled
+                className="px-3 py-2 text-hud-muted"
+              >
+                {loadPending ? t('ui.loading') : t('ui.searchNoResults')}
+              </li>
+            ))}
           {results.map((item, i) => (
             <li key={item.key} role="option" aria-selected={i === activeIndex}>
               <button

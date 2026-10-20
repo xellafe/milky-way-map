@@ -1,10 +1,16 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { ConstellationsData } from '../../src/data/constellations';
+import {
+  _setConstellationsForTests,
+  getConstellationsStatus,
+  loadConstellations,
+  type ConstellationsData,
+} from '../../src/data/constellations';
 import { buildConstellationGeometry } from '../../src/scene/constellationGeometry';
+import { expectRetryAfterFailure } from './loaderRetry';
 
 const FIXTURES = fileURLToPath(new URL('../../../data-pipeline/fixtures', import.meta.url));
 
@@ -75,5 +81,21 @@ describe('constellations.json fixture artifact', () => {
     const polaris = Number(Object.entries(names).find(([, e]) => e.proper === 'Polaris')![0]);
     const umi = data.constellations.find((c) => c.id === 'UMi')!;
     expect(umi.lines.flat()).toContain(polaris);
+  });
+});
+
+describe('loadConstellations retry (#36)', () => {
+  afterEach(() => {
+    _setConstellationsForTests(null);
+    vi.unstubAllGlobals();
+  });
+
+  it('retries after a failed fetch, then caches the success', async () => {
+    await expectRetryAfterFailure(() => loadConstellations('/data/'), getConstellationsStatus, {
+      source: 'test',
+      license: 'test',
+      droppedSegments: 0,
+      constellations: [],
+    });
   });
 });

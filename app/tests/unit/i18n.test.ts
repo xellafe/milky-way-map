@@ -41,4 +41,11 @@ describe('i18n locales', () => {
       expect(empty).toEqual([]);
     });
   }
+
+  it.each(['ui.searchLoadFailed', 'filters.loadFailed'])(
+    'en defines the loader error key %s (#36)',
+    (key) => {
+      expect(enKeys).toContain(key);
+    },
+  );
 });
