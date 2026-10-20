@@ -70,6 +70,25 @@ describe('searchByCatalogId', () => {
     await searchByCatalogId('9007-1-1');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('drops a failed bucket so the next query retries (#36)', async () => {
+    const bucket = (9007 % 256).toString(16).padStart(2, '0');
+    let calls = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      expect(String(input)).toContain(`tyc-${bucket}.json`);
+      calls++;
+      if (calls === 1) return new Response('boom', { status: 500 });
+      return new Response(JSON.stringify({ '9007-5849-2': 7 }), { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(searchByCatalogId('9007-5849-2')).rejects.toThrow(/500/);
+    expect(await searchByCatalogId('9007-5849-2')).toEqual([
+      { index: 7, label: 'TYC 9007-5849-2' },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await searchByCatalogId('9007-5849-2');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('searchStars substring ranking (SPEC §6.4 prefix/fuzzy)', () => {

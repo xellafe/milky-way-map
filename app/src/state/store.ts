@@ -58,6 +58,8 @@ export interface GalaxyMapState {
   filters: Filters;
   /** Real data min/max for the filter sliders (SPEC §13); null until details load. */
   dataBounds: DataBounds | null;
+  /** The detail sections of stars.bin failed to load (#36); not retried. */
+  detailsError: boolean;
   /** Stars passing the current filters; null until the first mask is applied. */
   visibleCount: number | null;
   /**
@@ -92,6 +94,7 @@ export interface GalaxyMapState {
   setFilters: (update: Partial<Filters>) => void;
   resetFilters: () => void;
   setDataBounds: (bounds: DataBounds) => void;
+  setDetailsError: (failed: boolean) => void;
   setVisibleCount: (count: number) => void;
   bumpLabelsVersion: () => void;
   setCameraMode: (mode: CameraMode) => void;
@@ -135,6 +138,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   dataProgress: 0,
   filters: DEFAULT_FILTERS,
   dataBounds: null,
+  detailsError: false,
   visibleCount: null,
   labelsVersion: 0,
   dockPanel: null,
@@ -185,6 +189,7 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   setFilters: (update) => set((s) => ({ filters: { ...s.filters, ...update } })),
   resetFilters: () => set({ filters: DEFAULT_FILTERS }),
   setDataBounds: (bounds) => set({ dataBounds: bounds }),
+  setDetailsError: (failed) => set({ detailsError: failed }),
   setVisibleCount: (count) => set({ visibleCount: count }),
   bumpLabelsVersion: () => set((s) => ({ labelsVersion: s.labelsVersion + 1 })),
   setCameraMode: (mode) => set({ cameraMode: mode }),

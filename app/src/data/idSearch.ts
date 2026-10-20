@@ -22,6 +22,11 @@ function fetchBucket(name: string, baseUrl: string): Promise<Record<string, numb
       return (await resp.json()) as Record<string, number>;
     })();
     bucketCache.set(name, cached);
+    // Dropped on failure so the next query retries a transient error (#36).
+    const pending = cached;
+    pending.catch(() => {
+      if (bucketCache.get(name) === pending) bucketCache.delete(name);
+    });
   }
   return cached;
 }

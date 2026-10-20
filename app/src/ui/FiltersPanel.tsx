@@ -24,6 +24,7 @@ export function FiltersPanel() {
   const filters = useGalaxyMapStore((s) => s.filters);
   const setFilters = useGalaxyMapStore((s) => s.setFilters);
   const bounds = useGalaxyMapStore((s) => s.dataBounds);
+  const detailsError = useGalaxyMapStore((s) => s.detailsError);
 
   const toggleClass = (code: number) => {
     // Read the LATEST filters from the store, not the render closure: rapid
@@ -65,6 +66,11 @@ export function FiltersPanel() {
         </div>
       </fieldset>
 
+      {detailsError && (
+        <p role="alert" data-testid="filters-error" className="mt-2 font-hud text-xs text-hud-warn">
+          {t('filters.loadFailed')}
+        </p>
+      )}
       <RangeSlider
         id="distance"
         label={`${t('filters.distance')} (${t('units.ly')})`}

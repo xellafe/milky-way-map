@@ -11,7 +11,8 @@
     "searchPlaceholder": "Recherchez une étoile ou un système (ex. Polaris, HD 209458, TRAPPIST-1)",
     "searchOpen": "Ouvrir la recherche",
     "searchNoResults": "Aucun résultat",
-    "searchUnanchored": "système seul"
+    "searchUnanchored": "système seul",
+    "searchLoadFailed": "Impossible de charger les données de recherche. Vérifiez votre connexion et réessayez."
   },
   "overlay": {
     "close": "Fermer la carte de l'étoile"
@@ -82,7 +83,8 @@
     "onlyExoplanets": "Seulement les étoiles avec exoplanètes",
     "onlyMultiple": "Seulement les systèmes multiples",
     "onlyVariable": "Seulement les étoiles variables",
-    "reset": "Réinitialiser les filtres"
+    "reset": "Réinitialiser les filtres",
+    "loadFailed": "Impossible de charger les données des filtres par plage. Vérifiez votre connexion et rechargez la page."
   },
   "units": {
     "ly": "a.l.",

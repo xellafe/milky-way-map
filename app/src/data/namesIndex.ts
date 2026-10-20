@@ -6,6 +6,7 @@
  * from catalog-ids.bin instead (see catalogIds.ts).
  */
 
+import type { LoadStatus } from './loadStatus';
 import { DATA_BASE_URL } from './starData';
 export interface NamesEntry {
   proper?: string;
@@ -28,6 +29,7 @@ export interface SearchEntry {
 let namesIndex: NamesIndex | null = null;
 let searchEntries: SearchEntry[] | null = null;
 let loadPromise: Promise<NamesIndex> | null = null;
+let status: LoadStatus = 'idle';
 let properNamedStars: { index: number; name: string }[] | null = null;
 
 export function normalizeQuery(value: string): string {
@@ -66,22 +68,32 @@ function buildSearchEntries(index: NamesIndex): SearchEntry[] {
 }
 
 export function loadNamesIndex(baseUrl = DATA_BASE_URL): Promise<NamesIndex> {
-  loadPromise ??= (async () => {
+  if (loadPromise) return loadPromise;
+  status = 'loading';
+  const pending = (async () => {
     const resp = await fetch(`${baseUrl}names.index.json`);
     if (!resp.ok) throw new Error(`names index fetch failed: ${resp.status}`);
     namesIndex = (await resp.json()) as NamesIndex;
     searchEntries = buildSearchEntries(namesIndex);
+    status = 'ready';
     return namesIndex;
   })();
-  return loadPromise;
+  loadPromise = pending;
+  // Dropped on failure so the next call retries a transient error (#36).
+  pending.catch(() => {
+    if (loadPromise !== pending) return;
+    loadPromise = null;
+    status = 'error';
+  });
+  return pending;
+}
+
+export function getNamesIndexStatus(): LoadStatus {
+  return status;
 }
 
 export function getNamesEntry(index: number): NamesEntry | null {
   return namesIndex?.[String(index)] ?? null;
-}
-
-export function isNamesIndexReady(): boolean {
-  return namesIndex !== null;
 }
 
 /**
@@ -134,5 +146,6 @@ export function _setNamesIndexForTests(index: NamesIndex | null): void {
   namesIndex = index;
   searchEntries = index ? buildSearchEntries(index) : null;
   loadPromise = index ? Promise.resolve(index) : null;
+  status = index ? 'ready' : 'idle';
   properNamedStars = null;
 }

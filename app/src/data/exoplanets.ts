@@ -4,6 +4,7 @@
  * Builds a reverse map matchedIndex → hostname for panel lookups.
  */
 
+import type { LoadStatus } from './loadStatus';
 import { DATA_BASE_URL } from './starData';
 import type { Lim } from '../lib/limitedValue';
 export interface ExoplanetRecord {
@@ -112,9 +113,12 @@ export function normalizeExoplanets(raw: unknown): ExoplanetsData {
 let data: ExoplanetsData | null = null;
 let hostByIndex: Map<number, string> | null = null;
 let loadPromise: Promise<ExoplanetsData> | null = null;
+let status: LoadStatus = 'idle';
 
 export function loadExoplanets(baseUrl = DATA_BASE_URL): Promise<ExoplanetsData> {
-  loadPromise ??= (async () => {
+  if (loadPromise) return loadPromise;
+  status = 'loading';
+  const pending = (async () => {
     const resp = await fetch(`${baseUrl}exoplanets.json`);
     if (!resp.ok) throw new Error(`exoplanets fetch failed: ${resp.status}`);
     data = normalizeExoplanets(await resp.json());
@@ -124,9 +128,21 @@ export function loadExoplanets(baseUrl = DATA_BASE_URL): Promise<ExoplanetsData>
         hostByIndex.set(host.starRef.matchedIndex, name);
       }
     }
+    status = 'ready';
     return data;
   })();
-  return loadPromise;
+  loadPromise = pending;
+  // Dropped on failure so the next call retries a transient error (#36).
+  pending.catch(() => {
+    if (loadPromise !== pending) return;
+    loadPromise = null;
+    status = 'error';
+  });
+  return pending;
+}
+
+export function getExoplanetsStatus(): LoadStatus {
+  return status;
 }
 
 export function isExoplanetsReady(): boolean {
@@ -178,6 +194,7 @@ export function _setExoplanetsForTests(value: ExoplanetsData | null): void {
   data = value;
   hostByIndex = null;
   loadPromise = value ? Promise.resolve(value) : null;
+  status = value ? 'ready' : 'idle';
   if (value) {
     hostByIndex = new Map();
     for (const [name, host] of Object.entries(value.hosts)) {
