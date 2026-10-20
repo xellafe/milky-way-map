@@ -31,7 +31,10 @@ function fetchBucket(name: string, baseUrl: string): Promise<Record<string, numb
   return cached;
 }
 
-const GAIA_QUERY = /^(?:gaia(?:\s*dr\d)?[\s-]*)?(\d{15,20})$/i;
+// 10–20 digits (#37), human choice: the pipeline writes ids as plain uint64
+// strings and the shortest Gaia DR3 ids in the buckets have 13 digits, while
+// HD/HIP numbers have at most 6, so any lower bound in 7–13 separates them.
+const GAIA_QUERY = /^(?:gaia(?:\s*dr\d)?[\s-]*)?(\d{10,20})$/i;
 const TYC_QUERY = /^(?:tyc[\s-]*)?(\d{1,5})-(\d{1,6})-(\d{1,2})$/i;
 
 export function looksLikeCatalogId(query: string): boolean {

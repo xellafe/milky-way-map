@@ -32,9 +32,11 @@ describe('looksLikeCatalogId', () => {
     'Gaia DR3 5853498713190525696',
     'TYC 9007-5849-2',
     '9007-5849-2',
+    '9281425163264',
+    'Gaia DR3 9281425163264',
   ])('recognizes %s', (q) => expect(looksLikeCatalogId(q)).toBe(true));
 
-  it.each(['polaris', 'HD 8890', '12345'])('rejects %s', (q) =>
+  it.each(['polaris', 'HD 8890', '12345', '123456789'])('rejects %s', (q) =>
     expect(looksLikeCatalogId(q)).toBe(false),
   );
 });
@@ -45,6 +47,14 @@ describe('searchByCatalogId', () => {
     const results = await searchByCatalogId(`Gaia DR3 ${GAIA_ID}`);
     expect(results).toEqual([{ index: 42, label: `Gaia DR3 ${GAIA_ID}` }]);
     expect(String(fetchMock.mock.calls[0]![0])).toContain(`gaia-${GAIA_BUCKET}.json`);
+  });
+
+  it('looks up 13-digit gaia ids present in the data (#37)', async () => {
+    const id = '9281425163264';
+    const bucket = ((BigInt(id) >> 35n) % 256n).toString(16).padStart(2, '0');
+    const fetchMock = stubBuckets({ [`gaia-${bucket}`]: { [id]: 5 } });
+    expect(await searchByCatalogId(id)).toEqual([{ index: 5, label: `Gaia DR3 ${id}` }]);
+    expect(String(fetchMock.mock.calls[0]![0])).toContain(`gaia-${bucket}.json`);
   });
 
   it('routes tyc ids via TYC1 % 256 and tolerates the TYC prefix', async () => {

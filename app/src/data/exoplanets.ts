@@ -5,6 +5,7 @@
  */
 
 import type { LoadStatus } from './loadStatus';
+import { normalizeSearchKey } from './namesIndex';
 import { DATA_BASE_URL } from './starData';
 import type { Lim } from '../lib/limitedValue';
 export interface ExoplanetRecord {
@@ -163,31 +164,38 @@ export interface HostSearchResult {
   starIndex: number | null;
 }
 
-/** Prefix search over host names (e.g. "TRAPPIST-1", "Kepler-22"). */
+/**
+ * Prefix search over host names (e.g. "TRAPPIST-1", "Kepler-22") with the
+ * star normalizer (#37): ranked by normalized length, then key, so the exact
+ * name comes first.
+ */
 export function searchHosts(query: string, limit = 5): HostSearchResult[] {
   if (!data) return [];
-  const q = query
-    .trim()
-    .toLowerCase()
-    .replace(/[\s\-_]+/g, '');
+  const q = normalizeSearchKey(query);
   if (q.length < 2) return [];
-  const results: HostSearchResult[] = [];
+  const matches: { key: string; result: HostSearchResult }[] = [];
   for (const [name, host] of Object.entries(data.hosts)) {
-    if (
-      !name
-        .toLowerCase()
-        .replace(/[\s\-_]+/g, '')
-        .startsWith(q)
-    )
-      continue;
-    results.push({
-      hostname: name,
-      matched: host.starRef.matched,
-      starIndex: host.starRef.matchedIndex,
+    const key = normalizeSearchKey(name);
+    if (!key.startsWith(q)) continue;
+    matches.push({
+      key,
+      result: {
+        hostname: name,
+        matched: host.starRef.matched,
+        starIndex: host.starRef.matchedIndex,
+      },
     });
-    if (results.length >= limit) break;
   }
-  return results;
+  matches.sort((a, b) =>
+    a.key.length !== b.key.length
+      ? a.key.length - b.key.length
+      : a.key < b.key
+        ? -1
+        : a.key > b.key
+          ? 1
+          : 0,
+  );
+  return matches.slice(0, limit).map((m) => m.result);
 }
 
 export function _setExoplanetsForTests(value: ExoplanetsData | null): void {
