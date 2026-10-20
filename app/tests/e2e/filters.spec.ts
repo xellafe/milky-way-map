@@ -220,3 +220,32 @@ test('filtered-out stars are not pickable', async ({ page }) => {
   await page.waitForTimeout(500);
   await expect(page.getByTestId('hover-label')).toHaveCount(0);
 });
+
+test('labels of filtered-out stars are hidden and return when the filter is cleared', async ({
+  page,
+}) => {
+  await serveFixtureData(page);
+  await page.goto('/');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0, { timeout: 15_000 });
+
+  await page.getByTestId('search-input').fill('polaris');
+  await page.getByRole('option').filter({ hasText: 'Polaris' }).first().click();
+  await page.getByTestId('overlay-close').click();
+  await waitForFlyToArrival(page);
+
+  await page.getByTestId('view-toggle').click();
+  await page.getByTestId('toggle-names').click();
+  const polarisLabel = page.getByTestId('star-label').filter({ hasText: 'Polaris' });
+  await expect(polarisLabel.first()).toBeVisible({ timeout: 10_000 });
+
+  // Polaris is class F: hiding F must drop its label (labels re-layout every 150 ms).
+  await page.getByTestId('filters-toggle').click();
+  await expect(page.getByTestId('filters-panel')).toBeVisible();
+  await page.getByTestId('filter-class-F').click();
+  await pollCount(page).toBe(countWhere((i) => fx.spectralClass[i] !== 3));
+  await expect(polarisLabel).toHaveCount(0, { timeout: 5_000 });
+
+  await page.getByTestId('filters-reset').click();
+  await pollCount(page).toBe(fx.count);
+  await expect(polarisLabel.first()).toBeVisible({ timeout: 5_000 });
+});
