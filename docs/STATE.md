@@ -4,9 +4,20 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-10-21 (issue #37 su `factory/002-search-catalog-ids`; in precedenza issue #36 su `factory/001-loader-retry-errors`, issue #35 su `fix/labels-respect-filters`, poi 2026-10-19, issue #34 su `fix/orbit-geometry-leak`)
+- **Data ultimo aggiornamento:** 2026-10-21 (issue #38 su `fix/003-star-fetch-hardening`; in precedenza issue #37 su `factory/002-search-catalog-ids`, issue #36 su `factory/001-loader-retry-errors`, issue #35 su `fix/labels-respect-filters`, poi 2026-10-19, issue #34 su `fix/orbit-geometry-leak`)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
+
+## Issue #38 — fetch di `stars.bin` robusto: fallback senza Range, abort, validazione del manifest (2026-10-21, branch `fix/003-star-fetch-hardening`, in corso)
+
+Spec: `factory/features/003-star-fetch-hardening/spec.md`.
+
+- Causa: con un server che ignora `Range` (200) ogni sezione di `stars.bin` riscaricava il file intero (fino a 10 volte) e ogni lookup di `catalog-ids.bin` (~40 MB) pure; una 206 che continuava oltre la sezione non veniva chiusa; in StrictMode dev il dataset si scaricava due volte; un manifest incoerente portava a leggere `undefined`.
+- Fix `stars.bin`: la prima 200 avvia un unico download condiviso da cui ogni sezione è ricavata con `subarray`, le altre risposte sono annullate senza leggerne il body; reader della 206 annullato appena la sezione è completa; `AbortSignal` in `fetchManifest`/`loadStars`, abortito dal cleanup di `App.tsx` (un abort non è mai un errore).
+- Fix `catalog-ids.bin`: senza Range il file intero è tenuto in una promise a livello di modulo condivisa dai lookup, scartata se fallisce (retry alla chiamata successiva); percorso Range invariato.
+- Manifest: `fetchManifest` valida conteggi interi, i 10 attributi, `dtype`, `components`, `byteLength = count × components × sizeof` e i limiti delle sezioni; se fallisce lancia `StarManifestError` → `dataStatus` `corrupt` → overlay `errors.dataCorrupt` (testo it scelto dall'umano). Un body troppo corto resta un errore di caricamento (`errors.dataLoadFailed`).
+- Assunzione: le sezioni float32 ricavate dal file condiviso sono viste in place se allineate a 4 byte, altrimenti copiate (la fixture è allineata).
+- Test: unit `starData.test.ts` (17 nuovi, rossi prima del fix) e `catalogIds.test.ts`; e2e `loaderErrors.spec.ts` (manifest corrotto + axe, manifest 500). AC6 (StrictMode dev) solo verifica manuale.
 
 ## Issue #37 — ID di catalogo compatti e ranking della ricerca (2026-10-21, branch `factory/002-search-catalog-ids`, commit `07e83f8`, `8e80915`, completa, da pushare)
 
