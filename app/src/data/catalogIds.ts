@@ -3,7 +3,7 @@
  * little-endian, fixed 16-byte stride, index-aligned —
  *   gaia uint64 (0 = absent) | tyc1 u16 | tyc2 u16 | tyc3 u8 | 3 pad bytes.
  * The fixed stride lets a single HTTP Range request fetch one star's record,
- * so the 40 MB file is never downloaded in full.
+ * so the 40 MB file is not downloaded in full, unless the server ignores Range.
  */
 
 import { DATA_BASE_URL } from './starData';
@@ -28,18 +28,54 @@ export function parseCatalogIdsRecord(bytes: Uint8Array): CatalogIds {
   };
 }
 
-async function fetchRecord(index: number, baseUrl: string): Promise<CatalogIds> {
+// Servers that ignore Range answer 200 with the whole file: it is downloaded once and
+// every record is read from this shared promise (#38). Dropped on failure to allow a retry.
+let fullFile: Promise<Uint8Array> | null = null;
+let rangeSupported = false;
+// First request in flight while the server behaviour is unknown: concurrent lookups wait
+// for it, otherwise each would start its own full download on a Range-less server.
+let probe: Promise<unknown> | null = null;
+
+function readFullFile(resp: Response): Promise<Uint8Array> {
+  const pending = resp.arrayBuffer().then((b) => new Uint8Array(b));
+  fullFile = pending;
+  pending.catch(() => {
+    if (fullFile === pending) fullFile = null;
+  });
+  return pending;
+}
+
+async function requestRecord(index: number, baseUrl: string): Promise<CatalogIds> {
   const start = index * STRIDE;
   const resp = await fetch(`${baseUrl}catalog-ids.bin`, {
     headers: { Range: `bytes=${start}-${start + STRIDE - 1}` },
   });
-  if (!resp.ok && resp.status !== 206) {
-    throw new Error(`catalog-ids fetch failed: ${resp.status}`);
+  if (resp.status === 206) {
+    rangeSupported = true;
+    return parseCatalogIdsRecord(new Uint8Array(await resp.arrayBuffer()));
   }
-  const buf = new Uint8Array(await resp.arrayBuffer());
-  // Servers without Range support return the whole file (status 200).
-  const record = resp.status === 206 ? buf : buf.subarray(start, start + STRIDE);
-  return parseCatalogIdsRecord(record);
+  if (!resp.ok) throw new Error(`catalog-ids fetch failed: ${resp.status}`);
+  const buf = await readFullFile(resp);
+  return parseCatalogIdsRecord(buf.subarray(start, start + STRIDE));
+}
+
+async function fetchRecord(index: number, baseUrl: string): Promise<CatalogIds> {
+  while (!fullFile && !rangeSupported && probe) await probe;
+  if (fullFile) {
+    const buf = await fullFile;
+    return parseCatalogIdsRecord(buf.subarray(index * STRIDE, (index + 1) * STRIDE));
+  }
+  const request = requestRecord(index, baseUrl);
+  if (rangeSupported) return request;
+  const mine = request.then(
+    () => undefined,
+    () => undefined,
+  );
+  probe = mine;
+  void mine.then(() => {
+    if (probe === mine) probe = null;
+  });
+  return request;
 }
 
 export function fetchCatalogIds(index: number, baseUrl = DATA_BASE_URL): Promise<CatalogIds> {
@@ -54,4 +90,7 @@ export function fetchCatalogIds(index: number, baseUrl = DATA_BASE_URL): Promise
 
 export function _clearCatalogIdsCacheForTests(): void {
   cache.clear();
+  fullFile = null;
+  rangeSupported = false;
+  probe = null;
 }
