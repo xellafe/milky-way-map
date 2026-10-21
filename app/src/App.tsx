@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadNamesIndex } from './data/namesIndex';
 import { setStarCore } from './data/starCoreStore';
-import { DATA_BASE_URL, fetchManifest, loadStars } from './data/starData';
+import { DATA_BASE_URL, fetchManifest, loadStars, StarManifestError } from './data/starData';
 import { setStarDetails } from './data/starDetailsStore';
 import { computeDataBounds } from './lib/filterMask';
 import { isCoarsePointer, useLayoutMode } from './lib/viewport';
@@ -34,29 +34,38 @@ export default function App() {
 
   useEffect(() => {
     if (!webgl2Available) return;
-    let cancelled = false;
+    // Aborted on unmount so the StrictMode dev remount does not download the
+    // catalog twice (#38); an abort is never reported as a load failure.
+    const controller = new AbortController();
+    const { signal } = controller;
     setDataStatus('loading');
     (async () => {
-      const manifest = await fetchManifest(DATA_BASE_URL);
-      const handle = loadStars(DATA_BASE_URL, manifest, (fraction) => {
-        if (!cancelled) setDataProgress(fraction);
-      });
+      const manifest = await fetchManifest(DATA_BASE_URL, signal);
+      const handle = loadStars(
+        DATA_BASE_URL,
+        manifest,
+        (fraction) => {
+          if (!signal.aborted) setDataProgress(fraction);
+        },
+        signal,
+      );
       // Attached before awaiting core: details awaits core, so a core failure
       // rejects details too and would otherwise go unhandled (#36).
       handle.details.then(
         (details) => {
-          if (cancelled) return;
+          if (signal.aborted) return;
           setStarDetails(details);
           // Filter slider bounds come from the real data min/max (SPEC §13).
           useGalaxyMapStore.getState().setDataBounds(computeDataBounds(details));
         },
         (error: unknown) => {
+          if (signal.aborted) return;
           console.warn('star details load failed', error);
-          if (!cancelled) useGalaxyMapStore.getState().setDetailsError(true);
+          useGalaxyMapStore.getState().setDetailsError(true);
         },
       );
       const core = await handle.core;
-      if (cancelled) return;
+      if (signal.aborted) return;
       // The SoA arrays live OUTSIDE React (see starCoreStore docs): React only
       // sees the status flip. Passing them through state/props melts the dev
       // build (React 19 perf-track prop diffing walks every array element).
@@ -67,12 +76,11 @@ export default function App() {
         console.warn('names index load failed', error),
       );
     })().catch((error: unknown) => {
+      if (signal.aborted) return;
       console.error('star data load failed', error);
-      if (!cancelled) setDataStatus('error');
+      setDataStatus(error instanceof StarManifestError ? 'corrupt' : 'error');
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, [setDataStatus, setDataProgress]);
 
   // Keep <html lang> in sync with the active language (a11y / SPEC §6.9):

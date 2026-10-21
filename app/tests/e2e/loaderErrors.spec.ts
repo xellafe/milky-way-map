@@ -1,6 +1,7 @@
 /**
  * #36 / SPEC §10: a failed secondary data file surfaces an error instead of
  * loading forever, and a later request retries it without a page reload.
+ * #38: a corrupt star manifest has its own message, distinct from network errors.
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -90,6 +91,47 @@ test('filters panel reports failed detail sections; sliders stay disabled', asyn
     await expect(page.getByTestId(`filter-${id}-max-slider`)).toBeDisabled();
   }
   expect(pageErrors).toEqual([]);
+});
+
+test('a corrupt manifest shows the damaged-catalog message without fetching stars.bin', async ({
+  page,
+}) => {
+  await serveFixtureData(page);
+  const manifest = JSON.parse(
+    readFileSync(path.join(FIXTURES, 'stars.manifest.json'), 'utf-8'),
+  ) as { attributes: { name: string; byteLength: number }[] };
+  manifest.attributes.find((a) => a.name === 'position')!.byteLength -= 4;
+  await page.route('**/data/stars.manifest.json', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(manifest),
+    }),
+  );
+  const binRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().endsWith('/stars.bin')) binRequests.push(request.url());
+  });
+
+  await page.goto('/');
+  const overlay = page.getByTestId('loading-overlay');
+  await expect(overlay).toHaveText('The star catalog is damaged and cannot be displayed.');
+  expect(binRequests).toEqual([]);
+
+  const results = await new AxeBuilder({ page }).exclude('canvas').analyze();
+  const blocking = results.violations.filter(
+    (v) => v.impact === 'serious' || v.impact === 'critical',
+  );
+  expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
+});
+
+test('a network failure keeps the load-failed message, not the damaged one', async ({ page }) => {
+  await serveFixtureData(page);
+  await page.route('**/data/stars.manifest.json', fail);
+  await page.goto('/');
+  const overlay = page.getByTestId('loading-overlay');
+  await expect(overlay).toContainText(/could not load the star catalog/i);
+  await expect(overlay).not.toContainText(/damaged/i);
 });
 
 test('loader error messages have no blocking axe violations', async ({ page }) => {
