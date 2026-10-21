@@ -9,7 +9,8 @@ import { isWelcomeDismissed } from '../lib/welcome';
 
 export type CameraMode = 'free-fly' | 'orbit';
 export type ViewMode = 'galaxy' | 'system';
-export type DataStatus = 'idle' | 'loading' | 'ready' | 'error';
+/** `corrupt`: the manifest failed validation, reloading cannot help (#38). */
+export type DataStatus = 'idle' | 'loading' | 'ready' | 'error' | 'corrupt';
 export type DockPanelId = 'filters' | 'view' | 'options' | 'time';
 
 /**

@@ -105,7 +105,8 @@
   },
   "errors": {
     "webgl2Required": "Galaxy Map richiede WebGL2, che non è disponibile in questo browser. Usa un browser desktop recente con l'accelerazione hardware attiva.",
-    "dataLoadFailed": "Impossibile caricare il catalogo stellare. Controlla la connessione e ricarica la pagina."
+    "dataLoadFailed": "Impossibile caricare il catalogo stellare. Controlla la connessione e ricarica la pagina.",
+    "dataCorrupt": "Il catalogo stellare è danneggiato e non può essere mostrato."
   },
   "system": {
     "back": "Torna alla galassia",

@@ -105,7 +105,8 @@
   },
   "errors": {
     "webgl2Required": "Galaxy Map requiere WebGL2, que no está disponible en este navegador. Usa un navegador de escritorio reciente con la aceleración por hardware activada.",
-    "dataLoadFailed": "No se pudo cargar el catálogo estelar. Comprueba tu conexión y recarga la página."
+    "dataLoadFailed": "No se pudo cargar el catálogo estelar. Comprueba tu conexión y recarga la página.",
+    "dataCorrupt": "El catálogo estelar está dañado y no se puede mostrar."
   },
   "system": {
     "back": "Volver a la galaxia",

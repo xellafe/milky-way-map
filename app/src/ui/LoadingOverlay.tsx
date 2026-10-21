@@ -10,6 +10,13 @@ export function LoadingOverlay() {
   if (status === 'ready') return null;
 
   const percent = new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(progress);
+  const failed = status === 'error' || status === 'corrupt';
+  const message =
+    status === 'corrupt'
+      ? t('errors.dataCorrupt')
+      : status === 'error'
+        ? t('errors.dataLoadFailed')
+        : t('ui.loadingStars', { percent });
 
   return (
     <div
@@ -18,8 +25,8 @@ export function LoadingOverlay() {
       aria-live="polite"
       data-testid="loading-overlay"
     >
-      <p className={`font-hud text-lg ${status === 'error' ? 'text-hud-warn' : 'text-hud-bright'}`}>
-        {status === 'error' ? t('errors.dataLoadFailed') : t('ui.loadingStars', { percent })}
+      <p className={`font-hud text-lg ${failed ? 'text-hud-warn' : 'text-hud-bright'}`}>
+        {message}
       </p>
     </div>
   );
