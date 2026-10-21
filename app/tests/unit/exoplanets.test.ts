@@ -4,6 +4,7 @@ import {
   getExoplanetsStatus,
   loadExoplanets,
   normalizeExoplanets,
+  searchHosts,
 } from '../../src/data/exoplanets';
 import { expectRetryAfterFailure } from './loaderRetry';
 
@@ -91,5 +92,25 @@ describe('loadExoplanets retry (#36)', () => {
       version: 1,
       hosts: {},
     });
+  });
+});
+
+describe('searchHosts ranking (#37)', () => {
+  afterEach(() => _setExoplanetsForTests(null));
+
+  const host = { starRef, st_teff: 2900, st_lum: -2.8, st_rad: 0.14, planets: [basePlanet] };
+
+  it.each(['trappist1', 'TRAPPIST 1'])('%s ranks TRAPPIST-1 before longer names', (q) => {
+    _setExoplanetsForTests(
+      normalizeExoplanets({
+        version: 1,
+        hosts: { 'TRAPPIST-1x': host, 'TRAPPIST-10': host, 'TRAPPIST-1': host },
+      }),
+    );
+    expect(searchHosts(q).map((h) => h.hostname)).toEqual([
+      'TRAPPIST-1',
+      'TRAPPIST-10',
+      'TRAPPIST-1x',
+    ]);
   });
 });

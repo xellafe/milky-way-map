@@ -4,9 +4,20 @@
 
 ## Stato corrente
 
-- **Data ultimo aggiornamento:** 2026-10-20 (issue #36 su `factory/001-loader-retry-errors`; in precedenza issue #35 su `fix/labels-respect-filters`, poi 2026-10-19, issue #34 su `fix/orbit-geometry-leak`)
+- **Data ultimo aggiornamento:** 2026-10-21 (issue #37 su `factory/002-search-catalog-ids`; in precedenza issue #36 su `factory/001-loader-retry-errors`, issue #35 su `fix/labels-respect-filters`, poi 2026-10-19, issue #34 su `fix/orbit-geometry-leak`)
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
+
+## Issue #37 — ID di catalogo compatti e ranking della ricerca (2026-10-21, branch `factory/002-search-catalog-ids`, commit `07e83f8`, `8e80915`, completa, da pushare)
+
+Spec: `factory/features/002-search-catalog-ids/spec.md`.
+
+- Causa: `HD209458` o `HIP71683` senza separatori non trovavano nulla; i match esatti finivano oltre `limit` dietro prefissi più corti o in ordine arbitrario (es. `TRAPPIST-1` negli host).
+- Fix: `normalizeSearchKey` condiviso con chiavi `hd<id>` e alias Gl/GJ; `searchStars` e `searchHosts` ordinano esatto, poi prefissi per (lunghezza, chiave), poi sottostringhe. `SearchBox` fa debounce delle ricerche (`SEARCH_DEBOUNCE_MS`); `Enter` subito dopo la digitazione usa la query corrente.
+- Decisione (umana): minimo 10 cifre per gli ID Gaia (`GAIA_QUERY` in `idSearch.ts`); i dati mostrano ID di 13-14 cifre nei bucket, 13 sarebbe l'alternativa.
+- AC1–AC9 della spec PASS; gate: unit 328, e2e 314, build, typecheck, lint, format verdi; review code/security/ui/ux PASS.
+- Note aperte: review UI/UX solo statiche (browser non disponibile); il test e2e "una sola richiesta" assume che `pressSequentially` non faccia pause da 100 ms o più (possibile flaky su CI lenta).
+- Note aperte: il test Gaia e2e passa perché il bucket di fixture manca e il 404 vale "non trovato" (manca un commento); Esc non azzera `searchQuery`, alla riapertura restano i vecchi risultati fino al debounce.
 
 ## Issue #36 — retry dei loader e errori visibili (2026-10-20, branch `factory/001-loader-retry-errors`, commit `8f7e609`, completa, da pushare)
 
