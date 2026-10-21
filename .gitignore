@@ -24,6 +24,7 @@ venv/
 
 factory/*
 !factory/config.md
+!factory/playbook.md
 # Local agent tooling (not part of the project)
 .agents/
 .claude/launch.json
