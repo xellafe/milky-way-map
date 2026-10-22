@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { OrbitStyle } from '../lib/planetStyle';
+import { ORBIT_STYLES, type OrbitStyle } from '../lib/planetStyle';
 import { STAR_COLOR_GAMMA } from '../lib/starColor';
 
 /**
@@ -42,6 +42,55 @@ export const DEFAULT_SETTINGS: Settings = {
   orbitStyle: 'trail',
 };
 
+type NumericSettingKey = {
+  [K in keyof Settings]: Settings[K] extends number ? K : never;
+}[keyof Settings];
+
+/**
+ * Bounds of every numeric setting: read by the Options sliders and by the
+ * rehydration validator, so UI and validation cannot drift. Ranges and steps
+ * are an aesthetic choice (not data); units are those of `Settings`.
+ */
+export const SETTING_RANGES: Record<NumericSettingKey, { min: number; max: number; step: number }> =
+  {
+    moveSpeedLyPerS: { min: 5, max: 200, step: 5 },
+    autoOrbitSpeedDegPerS: { min: 0.5, max: 10, step: 0.5 },
+    twinkleSpeed: { min: 0.1, max: 2, step: 0.05 },
+    twinkleAmplitude: { min: 0, max: 1, step: 0.05 },
+    starColorSaturation: { min: 0, max: 4, step: 0.1 },
+    sizeGamma: { min: 0.8, max: 1.6, step: 0.05 },
+  };
+
+const BOOLEAN_KEYS = ['autoOrbit', 'realism'] as const;
+
+/**
+ * Persisted state is untrusted input (#39): bad values would reach shader
+ * uniforms. Finite out-of-range numbers are clamped (not step-snapped: the
+ * default twinkleSpeed is off-grid); anything of the wrong type falls back to
+ * the key's default; unknown keys are dropped. Silent by design.
+ */
+export function sanitizeSettings(raw: unknown): Settings {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return { ...DEFAULT_SETTINGS };
+  }
+  const src = raw as Record<string, unknown>;
+  const out: Settings = { ...DEFAULT_SETTINGS };
+  for (const key of Object.keys(SETTING_RANGES) as NumericSettingKey[]) {
+    const v = src[key];
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      const { min, max } = SETTING_RANGES[key];
+      out[key] = Math.min(max, Math.max(min, v));
+    }
+  }
+  for (const key of BOOLEAN_KEYS) {
+    const v = src[key];
+    if (typeof v === 'boolean') out[key] = v;
+  }
+  const style = src.orbitStyle;
+  if (ORBIT_STYLES.includes(style as OrbitStyle)) out.orbitStyle = style as OrbitStyle;
+  return out;
+}
+
 interface SettingsState extends Settings {
   setSettings: (update: Partial<Settings>) => void;
   resetSettings: () => void;
@@ -54,7 +103,13 @@ export const useSettingsStore = create<SettingsState>()(
       setSettings: (update) => set(update),
       resetSettings: () => set(DEFAULT_SETTINGS),
     }),
-    { name: 'galaxy-map-settings', version: 1 },
+    {
+      name: 'galaxy-map-settings',
+      version: 1,
+      merge: (persisted, current) => ({ ...current, ...sanitizeSettings(persisted) }),
+      // Older/unknown versions keep every still-valid key instead of being discarded.
+      migrate: (persisted) => sanitizeSettings(persisted),
+    },
   ),
 );
 

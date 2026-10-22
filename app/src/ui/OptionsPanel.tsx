@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../lib/format';
-import { type Settings, useSettingsStore } from '../state/settings';
+import { SETTING_RANGES, type Settings, useSettingsStore } from '../state/settings';
 import { HudSwitch, HudSlider } from './hud/HudInputs';
 import { DataSection } from './hud/DataSection';
 
@@ -56,14 +56,11 @@ export function SliderSetting({
 /** Shared by the Galaxy View options and the System View options (#9). */
 export function StarColorSaturationSlider({ disabled }: { disabled: boolean }) {
   const { t } = useTranslation();
-  // Range 0-4 (gamma exponent, unitless) and step 0.1 are an aesthetic choice, not data.
   return (
     <SliderSetting
       id="starColorSaturation"
       label={t('options.starColorSaturation')}
-      min={0}
-      max={4}
-      step={0.1}
+      {...SETTING_RANGES.starColorSaturation}
       digits={1}
       disabled={disabled}
     />
@@ -90,9 +87,7 @@ export function OptionsPanel() {
         <SliderSetting
           id="moveSpeedLyPerS"
           label={t('options.moveSpeed')}
-          min={5}
-          max={200}
-          step={5}
+          {...SETTING_RANGES.moveSpeedLyPerS}
           digits={0}
           suffix={` ${t('units.ly')}/s`}
         />
@@ -107,9 +102,7 @@ export function OptionsPanel() {
         <SliderSetting
           id="autoOrbitSpeedDegPerS"
           label={t('options.autoOrbitSpeed')}
-          min={0.5}
-          max={10}
-          step={0.5}
+          {...SETTING_RANGES.autoOrbitSpeedDegPerS}
           digits={1}
           suffix="°/s"
           disabled={!settings.autoOrbit}
@@ -127,9 +120,7 @@ export function OptionsPanel() {
         <SliderSetting
           id="twinkleSpeed"
           label={t('options.twinkleSpeed')}
-          min={0.1}
-          max={2}
-          step={0.05}
+          {...SETTING_RANGES.twinkleSpeed}
           digits={2}
           suffix="×"
           disabled={settings.realism}
@@ -137,9 +128,7 @@ export function OptionsPanel() {
         <SliderSetting
           id="twinkleAmplitude"
           label={t('options.twinkleAmplitude')}
-          min={0}
-          max={1}
-          step={0.05}
+          {...SETTING_RANGES.twinkleAmplitude}
           digits={2}
           disabled={settings.realism}
         />
@@ -147,9 +136,7 @@ export function OptionsPanel() {
         <SliderSetting
           id="sizeGamma"
           label={t('options.sizeGamma')}
-          min={0.8}
-          max={1.6}
-          step={0.05}
+          {...SETTING_RANGES.sizeGamma}
           digits={2}
         />
       </DataSection>
