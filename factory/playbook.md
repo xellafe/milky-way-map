@@ -12,6 +12,8 @@
 - E2E data comes from the golden fixtures via `serveFixtureData` in `app/tests/e2e/fixtures.ts` (Range-aware); never invent test data (SPEC §5.4).
 - Lazily fetched data exposes a `LoadStatus` (`app/src/data/loadStatus.ts`) and surfaces errors per SPEC §10 (see `app/tests/e2e/loaderErrors.spec.ts`).
 - Persisted settings: zustand `persist` in `app/src/state/settings.ts` (`version` field); a shape change bumps the version.
+- Persisted state is untrusted input: every `persist` store has a `merge` that validates each key (type + range, default fallback) and a `migrate` that reuses it (#39).
+- Bounds of a numeric setting live in one exported constant (`SETTING_RANGES` in `app/src/state/settings.ts`), read by both the UI and the validator.
 - Layout changes are checked with bounding boxes in e2e tests, not only DOM presence; `data-testid`s are a contract.
 - Loaders take an optional `AbortSignal`; an `AbortError` is never surfaced as a load error or logged as a failure (see `app/src/data/starData.ts`, `app/src/App.tsx`).
 - Data-integrity failures (e.g. a bad manifest) use a typed error and a message distinct from network errors, with no reload hint (see `StarManifestError`, `errors.dataCorrupt`).

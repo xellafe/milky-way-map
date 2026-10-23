@@ -8,6 +8,16 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #39 — validazione dei settings persistiti alla riidratazione (2026-10-22, branch `hotfix/004-settings-rehydration`, in corso)
+
+Spec: `factory/features/004-settings-rehydration/spec.md`.
+
+- Causa: `persist` in `settings.ts` non aveva `merge` né `migrate`; NaN, stringhe o `orbitStyle` ignoto in localStorage arrivavano a uniform e shader.
+- Fix: `sanitizeSettings` pura (numeri finiti fuori range clampati, tipo errato/NaN/±Infinity -> default della chiave, booleani solo `true`/`false`, `orbitStyle` solo da `ORBIT_STYLES`, chiavi ignote scartate); usata da `merge` e `migrate`; `version` resta 1.
+- I limiti numerici stanno in `SETTING_RANGES` (`settings.ts`), letta da `OptionsPanel` e dal validatore; nessuna modifica visibile.
+- Assunzione: i valori non vengono agganciati allo step dello slider (il default `twinkleSpeed` 2/3 è fuori griglia); correzione silenziosa, nessun log né messaggio.
+- Test: unit `settings.test.ts`; e2e `settingsRehydration.spec.ts` (storage corrotto, slider a 200 e default).
+
 ## Issue #38 — fetch di `stars.bin` robusto: fallback senza Range, abort, validazione del manifest (2026-10-21, branch `fix/003-star-fetch-hardening`, in corso)
 
 Spec: `factory/features/003-star-fetch-hardening/spec.md`.
