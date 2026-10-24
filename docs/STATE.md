@@ -8,6 +8,15 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #41 — SearchBox: chiusura al blur e accessibilità del combobox (2026-10-24, branch `hotfix/006-searchbox-blur-a11y`, in corso)
+
+Spec: `factory/features/006-searchbox-blur-a11y/spec.md`.
+
+- Causa: `onBlur` agiva solo su telefono (la lista restava aperta su desktop); le opzioni erano `li[role=option]` con un `button` annidato e senza `aria-activedescendant`; ArrowDown prima dei risultati portava `active` a -1.
+- Fix: il blur chiude sempre la lista (query invariata, il focus la riapre; il collasso su telefono con query vuota resta, #25); l'`li` è l'opzione cliccabile (`onMouseDown` + `preventDefault`, nessun `button`), con `id="search-option-<key>"` e `aria-activedescendant` solo a lista visibile con risultati.
+- L'hover imposta l'opzione attiva (via il `hover:` CSS): una sola riga evidenziata. ArrowDown è limitato a >= 0, quindi Enter sceglie il primo risultato appena arriva.
+- Test: e2e `search.spec.ts` (blur, axe a lista aperta desktop/telefono, ArrowDown anticipato, `aria-activedescendant`, hover, blur su telefono).
+
 ## Issue #39 — validazione dei settings persistiti alla riidratazione (2026-10-22, branch `hotfix/004-settings-rehydration`, in corso)
 
 Spec: `factory/features/004-settings-rehydration/spec.md`.
