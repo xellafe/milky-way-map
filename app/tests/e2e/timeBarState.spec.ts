@@ -1,7 +1,8 @@
 /**
  * Issue #42: the time bar keeps its resume speed and log-scale switch when it
- * unmounts (phone sheet tab change, compact expanded player), and the
- * play/pause button's accessible name is only its label.
+ * unmounts (phone sheet tab change), and the play/pause button's accessible
+ * name is only its label. The compact expanded-player case is a guard only:
+ * TimeBar stays mounted there (it renders null), so it passes without the fix.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { serveFixtureData } from './fixtures';
@@ -25,8 +26,13 @@ async function enterTrappist(page: Page) {
   await expect.poll(() => bridgeTimeScale(page)).toBeGreaterThanOrEqual(0);
 }
 
+interface Before {
+  shown: string;
+  speed: number;
+}
+
 /** Non-default speed, log mode on, then pause; returns the speed shown before pausing. */
-async function setSpeedLogAndPause(page: Page): Promise<string> {
+async function setSpeedLogAndPause(page: Page): Promise<Before> {
   await page.getByTestId('time-slider').fill('700');
   await page.getByTestId('time-log-mode').check();
   const shown = (await page.getByTestId('time-scale-value').textContent())!;
@@ -34,14 +40,13 @@ async function setSpeedLogAndPause(page: Page): Promise<string> {
   expect(speed).not.toBe(2);
   await page.getByTestId('time-pause').click();
   await expect.poll(() => bridgeTimeScale(page)).toBe(0);
-  return `${shown}|${speed}`;
+  return { shown, speed };
 }
 
-async function expectRestored(page: Page, before: string) {
-  const [shown, speed] = before.split('|');
+async function expectRestored(page: Page, { shown, speed }: Before) {
   await page.getByTestId('time-pause').click();
-  await expect(page.getByTestId('time-scale-value')).toHaveText(shown!);
-  expect(await bridgeTimeScale(page)).toBeCloseTo(Number(speed), 5);
+  await expect(page.getByTestId('time-scale-value')).toHaveText(shown);
+  expect(await bridgeTimeScale(page)).toBeCloseTo(speed, 5);
   await expect(page.getByTestId('time-log-mode')).toBeChecked();
 }
 
@@ -65,7 +70,9 @@ test.describe('phone sheet', () => {
 test.describe('compact desktop', () => {
   test.use({ viewport: { width: 800, height: 900 } });
 
-  test('resume speed and log switch survive the expanded player', async ({ page }) => {
+  test('guard: resume speed and log switch are kept around the expanded player', async ({
+    page,
+  }) => {
     await enterTrappist(page);
     await page.getByTestId('music-collapse').click();
     const before = await setSpeedLogAndPause(page);
