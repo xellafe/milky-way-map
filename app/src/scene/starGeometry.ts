@@ -25,9 +25,7 @@ export function applyFilterMask(
   filters: Filters,
 ): number {
   const attr = geometry.getAttribute('aVisible') as THREE.BufferAttribute;
-  const mask = computeFilterMask(stars, details, filters, attr.array as Uint8Array);
+  const { visible } = computeFilterMask(stars, details, filters, attr.array as Uint8Array);
   attr.needsUpdate = true;
-  let count = 0;
-  for (let i = 0; i < mask.length; i++) count += mask[i]!;
-  return count;
+  return visible;
 }
