@@ -7,6 +7,10 @@ import {
   useGalaxyMapStore,
 } from '../../src/state/store';
 
+// prefersReducedMotion reads a module-level MediaQueryList, so the flag is mocked.
+const motion = vi.hoisted(() => ({ reduced: false }));
+vi.mock('../../src/lib/motion', () => ({ prefersReducedMotion: () => motion.reduced }));
+
 const initialState = useGalaxyMapStore.getState();
 
 describe('galaxy map store', () => {
@@ -412,6 +416,75 @@ describe('galaxy map store', () => {
       s().selectPlanet({ name: 'b', type: 'rocky' } as never);
       expect(s().dockPanel).toBe('filters');
       expect(s().musicExpanded).toBe(true);
+    });
+  });
+
+  describe('time pause/resume (#42)', () => {
+    const s = () => useGalaxyMapStore.getState();
+
+    afterEach(() => {
+      motion.reduced = false;
+    });
+
+    it('pauseTime saves the running speed; a second pause keeps it; resumeTime restores it', () => {
+      s().setTimeScale(50);
+      s().pauseTime();
+      expect(s().timeScaleDaysPerSecond).toBe(0);
+      expect(s().timePausedFrom).toBe(50);
+      s().pauseTime();
+      expect(s().timePausedFrom).toBe(50);
+      s().resumeTime();
+      expect(s().timeScaleDaysPerSecond).toBe(50);
+      expect(s().timePausedFrom).toBeNull();
+    });
+
+    it('resumeTime with nothing saved uses the default speed', () => {
+      s().setTimeScale(0);
+      s().resumeTime();
+      expect(s().timeScaleDaysPerSecond).toBe(DEFAULT_TIME_SCALE_DAYS_PER_SECOND);
+    });
+
+    it('setTimeScale(v>0) clears the saved speed, 0 does not', () => {
+      s().setTimeScale(50);
+      s().pauseTime();
+      s().setTimeScale(0);
+      expect(s().timePausedFrom).toBe(50);
+      s().setTimeScale(7);
+      expect(s().timePausedFrom).toBeNull();
+    });
+
+    it('keeps the log switch in the store', () => {
+      expect(s().timeLogScale).toBe(false);
+      s().setTimeLogScale(true);
+      expect(s().timeLogScale).toBe(true);
+    });
+
+    it('reduced motion: entering a system saves the running speed; resume restores it', () => {
+      motion.reduced = true;
+      s().setTimeScale(50);
+      s().enterSystemView('X');
+      expect(s().timeScaleDaysPerSecond).toBe(0);
+      expect(s().timePausedFrom).toBe(50);
+      s().resumeTime();
+      expect(s().timeScaleDaysPerSecond).toBe(50);
+    });
+
+    it('reduced motion: entering while paused keeps the earlier saved speed', () => {
+      motion.reduced = true;
+      s().setTimeScale(50);
+      s().pauseTime();
+      s().enterSystemView('X');
+      expect(s().timePausedFrom).toBe(50);
+    });
+
+    it('enter and exit keep the saved speed and the log switch', () => {
+      s().setTimeScale(50);
+      s().pauseTime();
+      s().setTimeLogScale(true);
+      s().enterSystemView('X');
+      s().exitSystemView();
+      expect(s().timePausedFrom).toBe(50);
+      expect(s().timeLogScale).toBe(true);
     });
   });
 });
