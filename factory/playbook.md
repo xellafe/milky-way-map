@@ -19,6 +19,7 @@
 - Loaders take an optional `AbortSignal`; an `AbortError` is never surfaced as a load error or logged as a failure (see `app/src/data/starData.ts`, `app/src/App.tsx`).
 - Data-integrity failures (e.g. a bad manifest) use a typed error and a message distinct from network errors, with no reload hint (see `StarManifestError`, `errors.dataCorrupt`).
 - Module-level caches tied to a URL base either include the base in the key or state the single-base assumption in a comment.
+- When a spec claims a bug fix is covered by an e2e regression test, the implementer runs the new spec against a build of `main` and records the result (it must fail there) (#42).
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.

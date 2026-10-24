@@ -50,6 +50,10 @@ export interface GalaxyMapState {
   showHabitableZone: boolean;
   /** Simulated days per real second; 0 = paused. */
   timeScaleDaysPerSecond: number;
+  /** Speed saved while paused, restored by resume (#42); null when not paused. Session only. */
+  timePausedFrom: number | null;
+  /** Log-scale switch of the time bar (#42); lives here so it survives TimeBar unmounts. Session only. */
+  timeLogScale: boolean;
   /** System View planet type filter (session only, not persisted). */
   visiblePlanetTypes: Record<PlanetType, boolean>;
   /** Star catalog loading lifecycle (big typed arrays live OUTSIDE the store). */
@@ -107,6 +111,9 @@ export interface GalaxyMapState {
   toggleConstellations: () => void;
   toggleHabitableZone: () => void;
   setTimeScale: (daysPerSecond: number) => void;
+  pauseTime: () => void;
+  resumeTime: () => void;
+  setTimeLogScale: (on: boolean) => void;
   togglePlanetType: (type: PlanetType) => void;
   toggleDockPanel: (id: DockPanelId) => void;
   closeDockPanel: () => void;
@@ -119,6 +126,12 @@ export interface GalaxyMapState {
  */
 function phoneCardOverrides(): { dockPanel?: null; musicExpanded?: false } {
   return currentLayoutMode() === 'desktop' ? {} : { dockPanel: null, musicExpanded: false };
+}
+
+/** Pausing keeps the earlier saved speed when already paused (#42). */
+function pausePatch(s: GalaxyMapState): Partial<GalaxyMapState> {
+  if (s.timeScaleDaysPerSecond <= 0) return {};
+  return { timePausedFrom: s.timeScaleDaysPerSecond, timeScaleDaysPerSecond: 0 };
 }
 
 export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
@@ -134,6 +147,8 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   showConstellations: false,
   showHabitableZone: false,
   timeScaleDaysPerSecond: DEFAULT_TIME_SCALE_DAYS_PER_SECOND,
+  timePausedFrom: null,
+  timeLogScale: false,
   visiblePlanetTypes: { rocky: true, subNeptune: true, giant: true, unknown: true },
   dataStatus: 'idle',
   dataProgress: 0,
@@ -199,15 +214,15 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   // decision): the motion is informative content, but continuous motion can
   // disturb users who asked for less of it — they press play to animate.
   enterSystemView: (hostname) =>
-    set({
+    set((s) => ({
       view: 'system',
       systemHostname: hostname,
       selectedPlanet: null,
       selectedPlanetType: null,
       dockPanel: null,
       sheetSnap: 'base',
-      ...(prefersReducedMotion() ? { timeScaleDaysPerSecond: 0 } : {}),
-    }),
+      ...(prefersReducedMotion() ? pausePatch(s) : {}),
+    })),
   // The galaxy selection survives: leaving the system brings back the same
   // star card (and the galaxy camera pose is restored from its holder).
   exitSystemView: () =>
@@ -228,7 +243,18 @@ export const useGalaxyMapStore = create<GalaxyMapState>((set) => ({
   toggleNames: () => set((s) => ({ showNames: !s.showNames })),
   toggleConstellations: () => set((s) => ({ showConstellations: !s.showConstellations })),
   toggleHabitableZone: () => set((s) => ({ showHabitableZone: !s.showHabitableZone })),
-  setTimeScale: (daysPerSecond) => set({ timeScaleDaysPerSecond: daysPerSecond }),
+  setTimeScale: (daysPerSecond) =>
+    set({
+      timeScaleDaysPerSecond: daysPerSecond,
+      ...(daysPerSecond > 0 ? { timePausedFrom: null } : {}),
+    }),
+  pauseTime: () => set((s) => pausePatch(s)),
+  resumeTime: () =>
+    set((s) => ({
+      timeScaleDaysPerSecond: s.timePausedFrom ?? DEFAULT_TIME_SCALE_DAYS_PER_SECOND,
+      timePausedFrom: null,
+    })),
+  setTimeLogScale: (on) => set({ timeLogScale: on }),
   togglePlanetType: (type) =>
     set((s) => ({
       visiblePlanetTypes: { ...s.visiblePlanetTypes, [type]: !s.visiblePlanetTypes[type] },

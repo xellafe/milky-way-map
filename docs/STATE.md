@@ -8,6 +8,15 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #42 — la barra del tempo perde velocità di ripresa e scala log allo smontaggio (2026-10-24, branch `hotfix/007-timebar-resume-state`, in corso)
+
+Spec: `factory/features/007-timebar-resume-state/spec.md`.
+
+- Causa: `pausedFrom` e `logMode` erano `useState` di `TimeBar`, persi quando il componente si smonta (cambio tab nello sheet phone; su compact con il player espanso `TimeBar` resta montato e rende `null`, quindi lì lo stato non si perdeva); la ripresa ricadeva sul letterale `2`; il glifo ▶/⏸ entrava nel nome accessibile del pulsante.
+- Fix: `timePausedFrom` e `timeLogScale` nello store (solo sessione, non persistiti) con `pauseTime`/`resumeTime`/`setTimeLogScale`; `setTimeScale(v>0)` azzera `timePausedFrom`; ripresa senza valore salvato = `DEFAULT_TIME_SCALE_DAYS_PER_SECOND`; glifo in `<span aria-hidden>`.
+- Decisione (utente): con reduced motion `enterSystemView` applica la semantica di `pauseTime` (salva la velocità in corso, ▶ la ripristina; già in pausa mantiene il valore salvato). `enterSystemView`/`exitSystemView` non toccano i due campi.
+- Test: unit `store.test.ts`; e2e `timeBarState.spec.ts` (sheet phone, player compact, nome accessibile).
+
 ## Issue #39 — validazione dei settings persistiti alla riidratazione (2026-10-22, branch `hotfix/004-settings-rehydration`, in corso)
 
 Spec: `factory/features/004-settings-rehydration/spec.md`.
