@@ -5,6 +5,7 @@
 - English for code, identifiers, comments, commits; Italian for specs, `docs/STATE.md`, `NOTICE.md`.
 - Branches `feat|fix|docs|chore/<slug>` from `main`; commits `type(scope): subject`, scopes listed in `AGENTS.md`, trailer `Co-Authored-By: Claude <noreply@anthropic.com>`.
 - Comments explain the why and cite `SPEC §x` or `#<issue>`; tuning constants state unit and nature (data / aesthetic choice / human choice); `TODO(#n)` only.
+- PR title is `type(scope): subject` and drives the release bump (`release: auto`): `feat` only for user-visible features; `!` / `BREAKING CHANGE` only with human approval.
 - User-visible strings only in `app/src/i18n/locales/{en,it,es,fr,de}.json` (key parity enforced by `app/tests/unit/i18n.test.ts`).
 
 ## Patterns
@@ -21,7 +22,7 @@
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.
-- Large star arrays: module holders `starCoreStore`, `labelStore`, `starDetailsStore` in `app/src/data/`.
+- Large star arrays: module holders `app/src/data/starCoreStore.ts`, `labelStore.ts`, `starDetailsStore.ts` (`get*`/`set*` functions).
 - Number formatting with missing values: `formatNumber` in `app/src/lib/format.ts` (returns `null` → show `n/d`).
 - HUD primitives in `app/src/ui/hud/` (`HudButton`, `HudCard`, `DataRow`, `Tabs`, …): reuse before writing new controls.
 - Loader retry helpers for tests: `app/tests/unit/loaderRetry.ts`.
