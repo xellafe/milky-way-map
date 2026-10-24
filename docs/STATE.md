@@ -8,6 +8,16 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #40 — filtri di range: reset neutro, input numerico, bounds e costo (2026-10-24, branch `hotfix/005-range-filters`, in corso)
+
+Spec: `factory/features/005-range-filters/spec.md`.
+
+- Causa: un range riportato ai bounds restava attivo (stelle NaN nascoste, reset abilitato); i campi numerici applicavano a ogni tasto e scambiavano min/max; colonne senza valori finiti davano bounds `[Infinity, -Infinity]`; ogni evento dello slider ricalcolava la maschera due volte.
+- Fix: `normalizeRange` (`filterMask.ts`) limita il lato modificato ai bounds grezzi e all'altro estremo, mai scambio; a bounds pieni il filtro torna `null`. Slider e campi la usano entrambi; i campi applicano solo su blur/Enter (vuoto = bound, input non valido ed Escape ripristinano, testo invariato = nessun effetto).
+- `computeDataBounds` salta NaN e ±Infinity (colonna senza valori finiti → `null`, slider disabilitato); `computeFilterMask` restituisce `{ mask, visible }` in un solo passaggio; `GalaxyScene` ricalcola al massimo una volta per frame (`createFrameCoalescer`, `lib/frameCoalescer.ts`).
+- Decisione: a filtro neutro i thumb stanno agli estremi arrotondati dello slider, i campi mostrano il bound grezzo arrotondato a `decimals`; Escape in un campo in modifica ripristina senza chiudere il pannello.
+- Test: unit `filterMask.test.ts`, `frameCoalescer.test.ts`; e2e `filters.spec.ts` (reset via End, digitazione senza effetto fino a Enter, campo vuoto, Escape e input non valido, focus/blur, axe con pannello aperto); campi esistenti ora confermati con Enter.
+
 ## Issue #39 — validazione dei settings persistiti alla riidratazione (2026-10-22, branch `hotfix/004-settings-rehydration`, in corso)
 
 Spec: `factory/features/004-settings-rehydration/spec.md`.
