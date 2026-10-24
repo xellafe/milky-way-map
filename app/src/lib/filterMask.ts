@@ -51,17 +51,24 @@ function inRange(value: number, range: Range): boolean {
   return value >= range[0] && value <= range[1];
 }
 
+export interface FilterMaskResult {
+  /** Per-star visibility, 1 = visible. */
+  mask: Uint8Array;
+  /** Number of visible stars (sum of `mask`), counted in the same pass. */
+  visible: number;
+}
+
 /**
- * Compute the visibility mask (1 = visible). `details` may still be loading:
- * range filters are simply skipped until the detail sections are available
- * (the UI keeps them disabled until then).
+ * Compute the visibility mask (1 = visible) and the visible count in a single
+ * pass. `details` may still be loading: range filters are simply skipped until
+ * the detail sections are available (the UI keeps them disabled until then).
  */
 export function computeFilterMask(
   core: StarCoreData,
   details: StarDetailData | null,
   filters: Filters,
   out?: Uint8Array,
-): Uint8Array {
+): FilterMaskResult {
   const n = core.count;
   const mask = out ?? new Uint8Array(n);
   const { spectralClasses, distanceLy, appMag, absMag } = filters;
@@ -70,6 +77,7 @@ export function computeFilterMask(
     (filters.onlyMultiple ? FLAG_MULTIPLE : 0) |
     (filters.onlyVariable ? FLAG_VARIABLE : 0);
 
+  let count = 0;
   for (let i = 0; i < n; i++) {
     let visible = spectralClasses[core.spectralClass[i]!] === true;
     if (visible && flagsRequired !== 0) {
@@ -81,28 +89,51 @@ export function computeFilterMask(
       if (visible && absMag) visible = inRange(details.absMag[i]!, absMag);
     }
     mask[i] = visible ? 1 : 0;
+    if (visible) count++;
   }
-  return mask;
+  return { mask, visible: count };
+}
+
+/**
+ * Normalize a range edit (#40). The edited side is clamped to the raw data
+ * bounds and to the other end (min <= max, the sides never swap). A result
+ * covering the full bounds returns `null` (filter inactive), so NaN stars
+ * reappear; the raw bounds are compared, not the outward-rounded slider ends.
+ */
+export function normalizeRange(
+  side: 'min' | 'max',
+  value: number,
+  other: number,
+  bounds: Range,
+): Range | null {
+  const clamp = (v: number, lo: number, hi: number): number => Math.min(Math.max(v, lo), hi);
+  const o = clamp(other, bounds[0], bounds[1]);
+  const lo = side === 'min' ? clamp(value, bounds[0], o) : o;
+  const hi = side === 'max' ? clamp(value, o, bounds[1]) : o;
+  return lo <= bounds[0] && hi >= bounds[1] ? null : [lo, hi];
 }
 
 export interface DataBounds {
-  distanceLy: Range;
-  appMag: Range;
-  absMag: Range;
+  distanceLy: Range | null;
+  appMag: Range | null;
+  absMag: Range | null;
 }
 
-/** Real data min/max for the slider bounds (SPEC §13), NaN-safe. */
+/**
+ * Real data min/max for the slider bounds (SPEC §13). NaN and infinities are
+ * skipped; a column with no finite value yields `null` (slider disabled).
+ */
 export function computeDataBounds(details: StarDetailData): DataBounds {
-  const minMax = (arr: Float32Array): Range => {
+  const minMax = (arr: Float32Array): Range | null => {
     let lo = Number.POSITIVE_INFINITY;
     let hi = Number.NEGATIVE_INFINITY;
     for (let i = 0; i < arr.length; i++) {
       const v = arr[i]!;
-      if (Number.isNaN(v)) continue;
+      if (!Number.isFinite(v)) continue;
       if (v < lo) lo = v;
       if (v > hi) hi = v;
     }
-    return [lo, hi];
+    return lo <= hi ? [lo, hi] : null;
   };
   return {
     distanceLy: minMax(details.distanceLy),
