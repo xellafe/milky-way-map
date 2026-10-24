@@ -19,6 +19,10 @@
 - Loaders take an optional `AbortSignal`; an `AbortError` is never surfaced as a load error or logged as a failure (see `app/src/data/starData.ts`, `app/src/App.tsx`).
 - Data-integrity failures (e.g. a bad manifest) use a typed error and a message distinct from network errors, with no reload hint (see `StarManifestError`, `errors.dataCorrupt`).
 - Module-level caches tied to a URL base either include the base in the key or state the single-base assumption in a comment.
+- Combobox popups (search, menus) close on blur; pointer choices use `onMouseDown` + `preventDefault` on the option so focus never leaves the input (#41).
+- axe scans of a widget with a popup run with the popup open, not only closed (#41).
+- e2e tests for phone-layout behaviour in a `chromium`-project spec use `hasTouch: true, isMobile: true` in `test.use` (`useLayoutMode` reads a coarse pointer); do not spread `devices[...]` inside a describe (#41).
+- e2e specs run against `npm run preview` (the built bundle): rebuild after changing `src/` before running Playwright locally (#41).
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.
