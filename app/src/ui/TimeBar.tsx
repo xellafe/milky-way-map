@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../lib/format';
 import { useCompactViewport } from '../lib/viewport';
 import {
+  DEFAULT_TIME_SCALE_DAYS_PER_SECOND,
   TIME_SCALE_MAX_DAYS_PER_SECOND,
   TIME_SCALE_MIN_DAYS_PER_SECOND,
   useGalaxyMapStore,
@@ -48,8 +48,11 @@ export function TimeBar({ sheet = false }: { sheet?: boolean }) {
   const setTimeScale = useGalaxyMapStore((s) => s.setTimeScale);
   const musicExpanded = useGalaxyMapStore((s) => s.musicExpanded);
   const compact = useCompactViewport();
-  const [logMode, setLogMode] = useState(false);
-  const [pausedFrom, setPausedFrom] = useState<number | null>(null);
+  const logMode = useGalaxyMapStore((s) => s.timeLogScale);
+  const setLogMode = useGalaxyMapStore((s) => s.setTimeLogScale);
+  const pausedFrom = useGalaxyMapStore((s) => s.timePausedFrom);
+  const pauseTime = useGalaxyMapStore((s) => s.pauseTime);
+  const resumeTime = useGalaxyMapStore((s) => s.resumeTime);
   const paused = timeScale === 0;
 
   if (musicExpanded && compact && !sheet) return null;
@@ -59,24 +62,19 @@ export function TimeBar({ sheet = false }: { sheet?: boolean }) {
         variant="secondary"
         touch={sheet}
         data-testid="time-pause"
-        onClick={() => {
-          if (paused) {
-            setTimeScale(pausedFrom ?? 2);
-            setPausedFrom(null);
-          } else {
-            setPausedFrom(timeScale);
-            setTimeScale(0);
-          }
-        }}
+        onClick={paused ? resumeTime : pauseTime}
       >
-        {paused ? '▶' : '⏸'}
+        <span aria-hidden>{paused ? '▶' : '⏸'}</span>
         <span className="sr-only">{t(paused ? 'system.resume' : 'system.pause')}</span>
       </HudButton>
       <HudSlider
         min={0}
         max={SLIDER_STEPS}
         step={1}
-        value={toSlider(paused ? (pausedFrom ?? 2) : timeScale, logMode)}
+        value={toSlider(
+          paused ? (pausedFrom ?? DEFAULT_TIME_SCALE_DAYS_PER_SECOND) : timeScale,
+          logMode,
+        )}
         disabled={paused}
         data-testid="time-slider"
         aria-label={t('system.timeScale')}

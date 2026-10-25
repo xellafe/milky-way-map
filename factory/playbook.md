@@ -26,6 +26,7 @@
 - Per-event O(N) work driven by a continuous control (slider drag) is coalesced to one run per animation frame via a helper in `app/src/lib/` with an injectable scheduler (#40).
 - Playwright runs against `npm run preview` (the `dist` build), so run `npm run build` before `npx playwright test <file>`, otherwise stale code is tested.
 - A local Escape action inside the dock calls `e.preventDefault()`, otherwise the document listener in `Dock.tsx` closes the panel (#40).
+- When a spec claims a bug fix is covered by an e2e regression test, the implementer runs the new spec against a build of `main` and records the result (it must fail there) (#42).
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.
