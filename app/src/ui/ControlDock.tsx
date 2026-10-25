@@ -133,11 +133,11 @@ function ResetButton({ id, touch }: { id: DockPanelId; touch: boolean }) {
   return (
     <HudButton
       variant="secondary"
+      size="sm"
       touch={touch}
       onClick={isFilters ? resetFilters : settings.resetSettings}
       disabled={isFilters ? isDefaultFilters(filters) : isDefaultSettings(settings)}
       data-testid={isFilters ? 'filters-reset' : 'options-reset'}
-      className="px-2 py-1 text-xs"
     >
       {t(isFilters ? 'filters.reset' : 'options.reset')}
     </HudButton>
