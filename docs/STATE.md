@@ -17,6 +17,25 @@ Spec: `factory/features/007-timebar-resume-state/spec.md`.
 - Decisione (utente): con reduced motion `enterSystemView` applica la semantica di `pauseTime` (salva la velocità in corso, ▶ la ripristina; già in pausa mantiene il valore salvato). `enterSystemView`/`exitSystemView` non toccano i due campi.
 - Test: unit `store.test.ts`; e2e `timeBarState.spec.ts` (sheet phone, player compact, nome accessibile).
 
+## Issue #41 — SearchBox: chiusura al blur e accessibilità del combobox (2026-10-24, branch `hotfix/006-searchbox-blur-a11y`, in corso)
+
+Spec: `factory/features/006-searchbox-blur-a11y/spec.md`.
+
+- Causa: `onBlur` agiva solo su telefono (la lista restava aperta su desktop); le opzioni erano `li[role=option]` con un `button` annidato e senza `aria-activedescendant`; ArrowDown prima dei risultati portava `active` a -1.
+- Fix: il blur chiude sempre la lista (query invariata, il focus la riapre; il collasso su telefono con query vuota resta, #25); l'`li` è l'opzione cliccabile (`onMouseDown` + `preventDefault`, nessun `button`), con `id="search-option-<key>"` e `aria-activedescendant` solo a lista visibile con risultati.
+- L'hover imposta l'opzione attiva (via il `hover:` CSS): una sola riga evidenziata. ArrowDown è limitato a >= 0, quindi Enter sceglie il primo risultato appena arriva.
+- Test: e2e `search.spec.ts` (blur, axe a lista aperta desktop/telefono, ArrowDown anticipato, `aria-activedescendant`, hover, blur su telefono).
+
+## Issue #40 — filtri di range: reset neutro, input numerico, bounds e costo (2026-10-24, branch `hotfix/005-range-filters`, in corso)
+
+Spec: `factory/features/005-range-filters/spec.md`.
+
+- Causa: un range riportato ai bounds restava attivo (stelle NaN nascoste, reset abilitato); i campi numerici applicavano a ogni tasto e scambiavano min/max; colonne senza valori finiti davano bounds `[Infinity, -Infinity]`; ogni evento dello slider ricalcolava la maschera due volte.
+- Fix: `normalizeRange` (`filterMask.ts`) limita il lato modificato ai bounds grezzi e all'altro estremo, mai scambio; a bounds pieni il filtro torna `null`. Slider e campi la usano entrambi; i campi applicano solo su blur/Enter (vuoto = bound, input non valido ed Escape ripristinano, testo invariato = nessun effetto).
+- `computeDataBounds` salta NaN e ±Infinity (colonna senza valori finiti → `null`, slider disabilitato); `computeFilterMask` restituisce `{ mask, visible }` in un solo passaggio; `GalaxyScene` ricalcola al massimo una volta per frame (`createFrameCoalescer`, `lib/frameCoalescer.ts`).
+- Decisione: a filtro neutro i thumb stanno agli estremi arrotondati dello slider, i campi mostrano il bound grezzo arrotondato a `decimals`; Escape in un campo in modifica ripristina senza chiudere il pannello.
+- Test: unit `filterMask.test.ts`, `frameCoalescer.test.ts`; e2e `filters.spec.ts` (reset via End, digitazione senza effetto fino a Enter, campo vuoto, Escape e input non valido, focus/blur, axe con pannello aperto); campi esistenti ora confermati con Enter.
+
 ## Issue #39 — validazione dei settings persistiti alla riidratazione (2026-10-22, branch `hotfix/004-settings-rehydration`, in corso)
 
 Spec: `factory/features/004-settings-rehydration/spec.md`.

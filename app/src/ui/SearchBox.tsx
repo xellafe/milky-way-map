@@ -31,6 +31,11 @@ interface IdResults {
 // work and the bucket fetches for intermediate keystrokes; UX choice (not data).
 const SEARCH_DEBOUNCE_MS = 100;
 
+/** DOM id of a result option; host names may contain characters invalid in ids. */
+function optionId(key: string): string {
+  return `search-option-${key.replace(/[^A-Za-z0-9_-]/g, '_')}`;
+}
+
 /** Star, catalog-id and host results for one query; ids only if resolved for it. */
 function buildResults(query: string, idResults: IdResults | null): ResultItem[] {
   if (query.trim().length < 2) return [];
@@ -159,7 +164,8 @@ export function SearchBox() {
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActive((a) => Math.min(a + 1, results.length - 1));
+      // Clamped at 0: before results load, length - 1 would be -1 and select nothing (#41).
+      setActive((a) => Math.max(0, Math.min(a + 1, results.length - 1)));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActive((a) => Math.max(a - 1, 0));
@@ -219,6 +225,9 @@ export function SearchBox() {
         aria-expanded={showList}
         aria-controls="search-results"
         aria-autocomplete="list"
+        aria-activedescendant={
+          showList && results.length > 0 ? optionId(results[activeIndex]!.key) : undefined
+        }
         placeholder={t('ui.searchPlaceholder')}
         data-testid="search-input"
         data-hud="search"
@@ -246,6 +255,8 @@ export function SearchBox() {
           bump();
         }}
         onBlur={() => {
+          // A combobox popup closes on blur; the query stays and onFocus reopens it (#41).
+          setOpen(false);
           if (phone && query === '') setFieldShown(false);
         }}
         onKeyDown={onKeyDown}
@@ -291,22 +302,26 @@ export function SearchBox() {
               </li>
             ))}
           {results.map((item, i) => (
-            <li key={item.key} role="option" aria-selected={i === activeIndex}>
-              <button
-                type="button"
-                className={`flex w-full items-center justify-between px-3 py-2 ${phone ? 'min-h-11' : ''} text-left text-hud-text hover:bg-white/10 ${
-                  i === activeIndex ? 'bg-white/10' : ''
-                }`}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  choose(item);
-                }}
-              >
-                <span>{item.label}</span>
-                {item.unanchored && (
-                  <span className="ml-2 text-xs text-hud-warn">{t('ui.searchUnanchored')}</span>
-                )}
-              </button>
+            // The option itself is the pointer target (no nested button); preventDefault keeps
+            // focus in the input so blur does not close the list before the choice.
+            <li
+              key={item.key}
+              id={optionId(item.key)}
+              role="option"
+              aria-selected={i === activeIndex}
+              className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 ${phone ? 'min-h-11' : ''} text-left text-hud-text ${
+                i === activeIndex ? 'bg-white/10' : ''
+              }`}
+              onMouseEnter={() => setActive(i)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                choose(item);
+              }}
+            >
+              <span>{item.label}</span>
+              {item.unanchored && (
+                <span className="ml-2 text-xs text-hud-warn">{t('ui.searchUnanchored')}</span>
+              )}
             </li>
           ))}
         </ul>

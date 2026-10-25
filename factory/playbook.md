@@ -19,6 +19,13 @@
 - Loaders take an optional `AbortSignal`; an `AbortError` is never surfaced as a load error or logged as a failure (see `app/src/data/starData.ts`, `app/src/App.tsx`).
 - Data-integrity failures (e.g. a bad manifest) use a typed error and a message distinct from network errors, with no reload hint (see `StarManifestError`, `errors.dataCorrupt`).
 - Module-level caches tied to a URL base either include the base in the key or state the single-base assumption in a comment.
+- Combobox popups (search, menus) close on blur; pointer choices use `onMouseDown` + `preventDefault` on the option so focus never leaves the input (#41).
+- axe scans of a widget with a popup run with the popup open, not only closed (#41).
+- e2e tests for phone-layout behaviour in a `chromium`-project spec use `hasTouch: true, isMobile: true` in `test.use` (`useLayoutMode` reads a coarse pointer); do not spread `devices[...]` inside a describe (#41).
+- A numeric text field applies on blur/Enter (Escape reverts, bad input reverts, unchanged text is a no-op), never per keystroke — avoids transient values reaching the store (#40).
+- Per-event O(N) work driven by a continuous control (slider drag) is coalesced to one run per animation frame via a helper in `app/src/lib/` with an injectable scheduler (#40).
+- Playwright runs against `npm run preview` (the `dist` build), so run `npm run build` before `npx playwright test <file>`, otherwise stale code is tested.
+- A local Escape action inside the dock calls `e.preventDefault()`, otherwise the document listener in `Dock.tsx` closes the panel (#40).
 - When a spec claims a bug fix is covered by an e2e regression test, the implementer runs the new spec against a build of `main` and records the result (it must fail there) (#42).
 
 ## Reusable code

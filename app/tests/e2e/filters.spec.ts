@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { serveFixtureData, waitForFlyToArrival } from './fixtures';
 
@@ -62,6 +63,16 @@ function pollCount(page: Page) {
   );
 }
 
+/** Number fields apply only on blur/Enter (#40). */
+async function commitField(page: Page, testId: string, text: string) {
+  const field = page.getByTestId(testId);
+  await field.fill(text);
+  await field.press('Enter');
+}
+
+const inDistance = (lo: number, hi: number) =>
+  countWhere((i) => fx.distanceLy[i]! >= lo && fx.distanceLy[i]! <= hi);
+
 test('spectral class filter shows exactly the selected classes', async ({ page }) => {
   // 8 sequential clicks, each recomputing the full GPU mask: under parallel
   // WebGL page contention this regularly needs more than the 60 s default.
@@ -99,7 +110,7 @@ test('only-exoplanets toggle leaves exactly the flagged stars', async ({ page })
 test('distance range filter matches the exact in-range count', async ({ page }) => {
   await openApp(page);
 
-  await page.getByTestId('filter-distance-max').fill('50');
+  await commitField(page, 'filter-distance-max', '50');
   await pollCount(page).toBe(countWhere((i) => fx.distanceLy[i]! >= 0 && fx.distanceLy[i]! <= 50));
 });
 
@@ -134,14 +145,14 @@ test('magnitude range filters match the exact in-range counts', async ({ page })
   await openApp(page);
   const appMin = Math.floor(Math.min(...fx.appMag) * 10) / 10;
 
-  await page.getByTestId('filter-appmag-max').fill('1');
+  await commitField(page, 'filter-appmag-max', '1');
   await pollCount(page).toBe(countWhere((i) => fx.appMag[i]! >= appMin && fx.appMag[i]! <= 1));
 
   await page.getByTestId('filters-reset').click();
   await pollCount(page).toBe(fx.count);
 
   const absMin = Math.floor(Math.min(...fx.absMag) * 10) / 10;
-  await page.getByTestId('filter-absmag-max').fill('0');
+  await commitField(page, 'filter-absmag-max', '0');
   await pollCount(page).toBe(countWhere((i) => fx.absMag[i]! >= absMin && fx.absMag[i]! <= 0));
 });
 
@@ -248,4 +259,103 @@ test('labels of filtered-out stars are hidden and return when the filter is clea
   await page.getByTestId('filters-reset').click();
   await pollCount(page).toBe(fx.count);
   await expect(polarisLabel.first()).toBeVisible({ timeout: 5_000 });
+});
+
+test.describe('range filter reset and numeric input (#40)', () => {
+  test('max slider dragged back to its far right makes the filter neutral', async ({ page }) => {
+    await openApp(page);
+    await pollCount(page).toBe(fx.count);
+    const slider = page.getByTestId('filter-distance-max-slider');
+    await slider.fill('50');
+    await pollCount(page).toBe(inDistance(0, 50));
+    await expect(page.getByTestId('filters-reset')).toBeEnabled();
+
+    await slider.focus();
+    await page.keyboard.press('End');
+    await expect(page.getByTestId('filters-reset')).toBeDisabled();
+    await pollCount(page).toBe(fx.count);
+  });
+
+  test('typing in a number field applies nothing until Enter', async ({ page }) => {
+    await openApp(page);
+    await commitField(page, 'filter-distance-min', '10');
+    const afterMin = inDistance(10, Number.POSITIVE_INFINITY);
+    await pollCount(page).toBe(afterMin);
+
+    const max = page.getByTestId('filter-distance-max');
+    await max.fill('');
+    await max.pressSequentially('5');
+    // Under apply-per-keystroke "5" would swap the ends and change the count.
+    await page.waitForTimeout(300);
+    await expect(page.getByTestId('filter-distance-min')).toHaveValue('10');
+    await pollCount(page).toBe(afterMin);
+    await max.pressSequentially('0');
+    await page.waitForTimeout(300);
+    await expect(page.getByTestId('filter-distance-min')).toHaveValue('10');
+    await pollCount(page).toBe(afterMin);
+
+    await max.press('Enter');
+    await pollCount(page).toBe(inDistance(10, 50));
+  });
+
+  test('clearing a set max field returns that side to its bound', async ({ page }) => {
+    await openApp(page);
+    await commitField(page, 'filter-distance-max', '50');
+    await pollCount(page).toBe(inDistance(0, 50));
+    await expect(page.getByTestId('filters-reset')).toBeEnabled();
+
+    await commitField(page, 'filter-distance-max', '');
+    await expect(page.getByTestId('filters-reset')).toBeDisabled();
+    await pollCount(page).toBe(fx.count);
+  });
+
+  test('Escape and bad input revert the field without applying', async ({ page }) => {
+    await openApp(page);
+    const max = page.getByTestId('filter-distance-max');
+    await commitField(page, 'filter-distance-max', '50');
+    const expected = inDistance(0, 50);
+    await pollCount(page).toBe(expected);
+
+    await max.fill('20');
+    await max.press('Escape');
+    await expect(max).toHaveValue('50');
+    await page.waitForTimeout(300);
+    await pollCount(page).toBe(expected);
+
+    // fill() rejects non-numeric text on number inputs: type it instead.
+    await max.click();
+    await max.press('ControlOrMeta+a');
+    await page.keyboard.type('-');
+    await max.press('Enter');
+    await expect(max).toHaveValue('50');
+    await page.waitForTimeout(300);
+    await pollCount(page).toBe(expected);
+  });
+
+  test('focusing and blurring a number field leaves the filter inactive', async ({ page }) => {
+    await openApp(page);
+    for (const id of ['filter-appmag-min', 'filter-appmag-max', 'filter-distance-min']) {
+      const field = page.getByTestId(id);
+      await field.focus();
+      await field.blur();
+      // Re-entering the displayed (rounded) bound is a no-op too.
+      await commitField(page, id, await field.inputValue());
+      await field.blur();
+    }
+    await expect(page.getByTestId('filters-reset')).toBeDisabled();
+    await pollCount(page).toBe(fx.count);
+  });
+
+  test('open filters panel with an active range has no blocking axe violations', async ({
+    page,
+  }) => {
+    await openApp(page);
+    await commitField(page, 'filter-distance-max', '50');
+    await pollCount(page).toBe(inDistance(0, 50));
+    const results = await new AxeBuilder({ page }).exclude('canvas').analyze();
+    const violations = results.violations.filter(
+      (v) => v.impact === 'serious' || v.impact === 'critical',
+    );
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
 });
