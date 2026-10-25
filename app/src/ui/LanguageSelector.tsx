@@ -117,6 +117,7 @@ export function LanguageSelector() {
         data-testid="language-button"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
         aria-label={`${t('language.menuLabel')}: ${LANGUAGE_NAMES[current]}`}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onButtonKeyDown}

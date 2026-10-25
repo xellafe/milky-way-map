@@ -1,4 +1,11 @@
-import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import {
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLayoutMode } from '../lib/viewport';
 import type { SheetSnap } from '../lib/sheet';
@@ -32,6 +39,7 @@ export function MobileSheet({ label, children }: { label: string; children: Reac
   const press = useRef<{ start: number; startSize: number; moved: boolean } | null>(null);
   const dragged = useRef(false);
   const root = useRef<HTMLElement>(null);
+  const contentId = useId();
 
   const along = (e: PointerEvent) => (portrait ? e.clientY : e.clientX);
   const sizeOf = () => {
@@ -74,6 +82,23 @@ export function MobileSheet({ label, children }: { label: string; children: Reac
     else setSnap(snap === 'base' ? 'expanded' : 'base'); // closed reopens at base
   };
 
+  const onKeyDown = (e: KeyboardEvent) => {
+    // Escape is consumed even when already closed so the document listeners (dock panel,
+    // deselect) do not fire from the handle (#43).
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setSnap('closed');
+      return;
+    }
+    const growKey = portrait ? 'ArrowUp' : 'ArrowLeft';
+    const shrinkKey = portrait ? 'ArrowDown' : 'ArrowRight';
+    if (e.key !== growKey && e.key !== shrinkKey) return; // other axis: left to the browser
+    e.preventDefault();
+    const grow = e.key === growKey;
+    if (grow) setSnap(snap === 'closed' ? 'base' : 'expanded');
+    else if (snap !== 'closed') setSnap(snap === 'expanded' ? 'base' : 'closed');
+  };
+
   const open = snap !== 'closed' || dragPx !== null;
   const shown: SheetSnap = snap === 'closed' ? 'base' : snap;
   const size = !open ? undefined : (dragPx ?? `${FRACTION[orientation][shown] * 100}%`);
@@ -103,6 +128,9 @@ export function MobileSheet({ label, children }: { label: string; children: Reac
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onClick={onClick}
+        onKeyDown={onKeyDown}
+        aria-expanded={open}
+        aria-controls={open ? contentId : undefined}
         className={`flex flex-none items-center justify-center touch-none ${
           portrait ? 'h-11 w-full' : 'h-full w-11'
         }`}
@@ -112,7 +140,11 @@ export function MobileSheet({ label, children }: { label: string; children: Reac
           className={`rounded-full bg-hud-muted ${portrait ? 'h-1 w-10' : 'h-10 w-1'}`}
         />
       </button>
-      {open && <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>}
+      {open && (
+        <div id={contentId} className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {children}
+        </div>
+      )}
     </aside>
   );
 }

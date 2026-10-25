@@ -75,6 +75,94 @@ for (const [name, size] of [
       await expect(page.getByTestId('card-advanced')).toHaveCount(0);
     });
 
+    test('Escape on the handle closes the sheet without deselecting', async ({ page }) => {
+      await open(page);
+      await select(page, 'polaris', 'Polaris');
+      const sheet = page.getByTestId('mobile-sheet');
+      const handle = page.getByTestId('sheet-handle');
+      await expect(handle).toHaveAttribute('aria-expanded', 'true');
+      const contentId = await handle.getAttribute('aria-controls');
+      expect(contentId).toBeTruthy();
+      await expect(sheet.locator(`[id="${contentId}"]`)).toHaveCount(1);
+
+      await handle.focus();
+      await page.keyboard.press('Escape');
+      await expect(sheet).toHaveAttribute('data-snap', 'closed');
+      await expect(handle).toBeFocused();
+      await expect(handle).toHaveAttribute('aria-expanded', 'false');
+      await expect(handle).not.toHaveAttribute('aria-controls');
+
+      await page.keyboard.press('Escape');
+      await expect(sheet).toHaveAttribute('data-snap', 'closed');
+      await expect(sheet).toHaveCount(1);
+      await expect(handle).toBeFocused();
+    });
+
+    test('Escape on the handle keeps the dock panel open', async ({ page }) => {
+      await open(page);
+      await page.getByTestId('filters-toggle').click();
+      const sheet = page.getByTestId('mobile-sheet');
+      await expect(sheet.getByTestId('dock-panel')).toBeVisible();
+      const handle = page.getByTestId('sheet-handle');
+      await handle.focus();
+      await page.keyboard.press('Escape');
+      await expect(sheet).toHaveAttribute('data-snap', 'closed');
+      await page.keyboard.press('Enter');
+      await expect(sheet).toHaveAttribute('data-snap', 'base');
+      await expect(sheet.getByTestId('dock-panel')).toBeVisible();
+    });
+
+    test('arrow keys on the handle step the snaps', async ({ page }) => {
+      await open(page);
+      await select(page, 'polaris', 'Polaris');
+      const sheet = page.getByTestId('mobile-sheet');
+      const handle = page.getByTestId('sheet-handle');
+      const grow = name === 'portrait' ? 'ArrowUp' : 'ArrowLeft';
+      const shrink = name === 'portrait' ? 'ArrowDown' : 'ArrowRight';
+      const other = name === 'portrait' ? 'ArrowLeft' : 'ArrowUp';
+      await handle.focus();
+
+      await page.keyboard.press(other);
+      await expect(sheet).toHaveAttribute('data-snap', 'base');
+      await page.keyboard.press(grow);
+      await expect(sheet).toHaveAttribute('data-snap', 'expanded');
+      await page.keyboard.press(grow);
+      await expect(sheet).toHaveAttribute('data-snap', 'expanded');
+      await expect(handle).toHaveAttribute('aria-expanded', 'true');
+      await page.keyboard.press(shrink);
+      await expect(sheet).toHaveAttribute('data-snap', 'base');
+      await page.keyboard.press(shrink);
+      await expect(sheet).toHaveAttribute('data-snap', 'closed');
+      await page.keyboard.press(shrink);
+      await expect(sheet).toHaveAttribute('data-snap', 'closed');
+      await page.keyboard.press(grow);
+      await expect(sheet).toHaveAttribute('data-snap', 'base');
+      await expect(handle).toBeFocused();
+    });
+
+    test('Enter and Space on the handle toggle base and expanded', async ({ page }) => {
+      await open(page);
+      await select(page, 'polaris', 'Polaris');
+      const sheet = page.getByTestId('mobile-sheet');
+      await page.getByTestId('sheet-handle').focus();
+      await page.keyboard.press('Enter');
+      await expect(sheet).toHaveAttribute('data-snap', 'expanded');
+      await page.keyboard.press('Space');
+      await expect(sheet).toHaveAttribute('data-snap', 'base');
+      await page.keyboard.press('Escape');
+      await expect(sheet).toHaveAttribute('data-snap', 'closed');
+      await page.keyboard.press('Enter');
+      await expect(sheet).toHaveAttribute('data-snap', 'base');
+    });
+
+    test('Escape outside the handle still deselects', async ({ page }) => {
+      await open(page);
+      await select(page, 'polaris', 'Polaris');
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('mobile-sheet')).toHaveCount(0);
+    });
+
     test('closing the card removes the sheet', async ({ page }) => {
       await open(page);
       await select(page, 'polaris', 'Polaris');
