@@ -19,6 +19,10 @@
 - Loaders take an optional `AbortSignal`; an `AbortError` is never surfaced as a load error or logged as a failure (see `app/src/data/starData.ts`, `app/src/App.tsx`).
 - Data-integrity failures (e.g. a bad manifest) use a typed error and a message distinct from network errors, with no reload hint (see `StarManifestError`, `errors.dataCorrupt`).
 - Module-level caches tied to a URL base either include the base in the key or state the single-base assumption in a comment.
+- A numeric text field applies on blur/Enter (Escape reverts, bad input reverts, unchanged text is a no-op), never per keystroke — avoids transient values reaching the store (#40).
+- Per-event O(N) work driven by a continuous control (slider drag) is coalesced to one run per animation frame via a helper in `app/src/lib/` with an injectable scheduler (#40).
+- Playwright runs against `npm run preview` (the `dist` build), so run `npm run build` before `npx playwright test <file>`, otherwise stale code is tested.
+- A local Escape action inside the dock calls `e.preventDefault()`, otherwise the document listener in `Dock.tsx` closes the panel (#40).
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.
