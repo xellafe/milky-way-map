@@ -8,6 +8,14 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #44 — prop `size` su `HudButton` per il reset del dock (2026-10-25, branch `hotfix/009-hudbutton-size-prop`, in corso)
+
+Spec: `factory/features/009-hudbutton-size-prop/spec.md`.
+
+- Causa: `ResetButton` passava `px-2 py-1 text-xs` via `className`, con la stessa specificità delle classi di `HudButton`: il vincitore dipendeva dall'ordine del CSS generato (trappola 3).
+- Fix: `size?: 'md' | 'sm'` (default `md` = `px-3 py-1.5 text-sm`, invariato; `sm` = `px-2 py-1 text-xs`), indipendente da `touch`; `ResetButton` usa `size="sm"` senza `className`.
+- Test: e2e `hudButtonSize.spec.ts` (stile calcolato e altezza su desktop); phone coperto da `mobileHud.spec.ts` AC9.
+
 ## Issue #43 — sheet phone chiudibile da tastiera e stato esposto alle tecnologie assistive (2026-10-25, branch `hotfix/008-mobile-sheet-keyboard-close`, in corso)
 
 Spec: `factory/features/008-mobile-sheet-keyboard-close/spec.md`.
