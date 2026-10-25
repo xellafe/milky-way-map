@@ -58,6 +58,15 @@ for (const size of [
       await scan(page);
     });
 
+    test('closed sheet has no blocking axe violations', async ({ page }) => {
+      await open(page);
+      await selectPolaris(page);
+      await page.getByTestId('sheet-handle').focus();
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('mobile-sheet')).toHaveAttribute('data-snap', 'closed');
+      await scan(page);
+    });
+
     test('open dock panel has no blocking axe violations', async ({ page }) => {
       await open(page);
       await page.getByTestId('filters-toggle').click();

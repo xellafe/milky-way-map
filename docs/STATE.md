@@ -8,6 +8,15 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #43 — sheet phone chiudibile da tastiera e stato esposto alle tecnologie assistive (2026-10-25, branch `hotfix/008-mobile-sheet-keyboard-close`, in corso)
+
+Spec: `factory/features/008-mobile-sheet-keyboard-close/spec.md`.
+
+- Causa: l'handle del sheet reagiva solo a click/drag, senza `aria-expanded`/`aria-controls`; il pulsante lingua non puntava al suo menu.
+- Fix: `onKeyDown` sull'handle (solo con il focus lì): Escape chiude il sheet con `preventDefault` (anche se già chiuso, così non deseleziona né chiude il pannello dock); frecce lungo l'asse del sheet passano closed ↔ base ↔ expanded (↑/↓ portrait, ←/→ landscape), no-op agli estremi. Enter/Space invariati.
+- ARIA: `aria-expanded={open}` e `aria-controls={open ? contentId : undefined}` (id `useId` sul contenuto montato solo da aperto); stesso schema su `language-button` → `language-menu`. Base ed expanded non sono distinti.
+- Test: e2e `mobileSheet.spec.ts`, `mobileA11y.spec.ts` (sheet chiuso), `a11y.spec.ts` (aria-controls lingua, scan a menu aperto).
+
 ## Issue #42 — la barra del tempo perde velocità di ripresa e scala log allo smontaggio (2026-10-24, branch `hotfix/007-timebar-resume-state`, in corso)
 
 Spec: `factory/features/007-timebar-resume-state/spec.md`.

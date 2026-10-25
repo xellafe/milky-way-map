@@ -75,12 +75,34 @@ test('language menu is fully keyboard operable (arrows, Enter, Escape)', async (
   await expect(page.locator('html')).toHaveAttribute('lang', 'it');
 });
 
+test('language button controls its menu', async ({ page }) => {
+  await openApp(page);
+  const button = page.getByTestId('language-button');
+  await expect(button).not.toHaveAttribute('aria-controls');
+  await button.click();
+  const menu = page.getByTestId('language-menu');
+  await expect(menu).toBeVisible();
+  const id = await menu.getAttribute('id');
+  expect(id).toBeTruthy();
+  await expect(button).toHaveAttribute('aria-controls', id!);
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await expect(button).not.toHaveAttribute('aria-controls');
+});
+
 async function scan(page: Page, include?: string) {
   const builder = new AxeBuilder({ page }).exclude('canvas');
   const results = await (include ? builder.include(include) : builder).analyze();
   const violations = results.violations.filter((v) => blocking(v.impact));
   expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
 }
+
+test('open language menu has no blocking axe violations', async ({ page }) => {
+  await openApp(page);
+  await page.getByTestId('language-button').click();
+  await expect(page.getByTestId('language-menu')).toBeVisible();
+  await scan(page);
+});
 
 test('galaxy overlay has no blocking axe violations', async ({ page }) => {
   await openApp(page);
