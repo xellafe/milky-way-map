@@ -5,6 +5,8 @@ import { useEffect, useMemo } from 'react';
 import type * as THREE from 'three';
 import { ensureStarGeometry, getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
+import type { Filters } from '../lib/filterMask';
+import { createFrameCoalescer } from '../lib/frameCoalescer';
 import { MOBILE_MAX_DPR } from '../lib/motion';
 import { centerShift } from '../lib/sheet';
 import { useLayoutMode } from '../lib/viewport';
@@ -87,13 +89,26 @@ export function GalaxyScene() {
     return core ? ensureStarGeometry(core, buildStarGeometry) : null;
   }, [dataReady]);
 
+  // A slider drag fires many store updates per frame; the O(N) mask pass runs
+  // at most once per frame with the latest filters (#40).
+  const maskCoalescer = useMemo(
+    () =>
+      geometry
+        ? createFrameCoalescer<Filters>((latest) => {
+            const core = getStarCore();
+            if (!core) return;
+            const visible = applyFilterMask(geometry, core, getStarDetails(), latest);
+            useGalaxyMapStore.getState().setVisibleCount(visible);
+          })
+        : null,
+    [geometry],
+  );
+  useEffect(() => () => maskCoalescer?.cancel(), [maskCoalescer]);
+
   useEffect(() => {
-    const core = getStarCore();
-    if (!geometry || !core) return;
     void dataBounds;
-    const visible = applyFilterMask(geometry, core, getStarDetails(), filters);
-    useGalaxyMapStore.getState().setVisibleCount(visible);
-  }, [geometry, filters, dataBounds]);
+    maskCoalescer?.schedule(filters);
+  }, [maskCoalescer, filters, dataBounds]);
 
   useEffect(() => {
     return () => {

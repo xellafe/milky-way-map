@@ -22,7 +22,10 @@
 - Combobox popups (search, menus) close on blur; pointer choices use `onMouseDown` + `preventDefault` on the option so focus never leaves the input (#41).
 - axe scans of a widget with a popup run with the popup open, not only closed (#41).
 - e2e tests for phone-layout behaviour in a `chromium`-project spec use `hasTouch: true, isMobile: true` in `test.use` (`useLayoutMode` reads a coarse pointer); do not spread `devices[...]` inside a describe (#41).
-- e2e specs run against `npm run preview` (the built bundle): rebuild after changing `src/` before running Playwright locally (#41).
+- A numeric text field applies on blur/Enter (Escape reverts, bad input reverts, unchanged text is a no-op), never per keystroke — avoids transient values reaching the store (#40).
+- Per-event O(N) work driven by a continuous control (slider drag) is coalesced to one run per animation frame via a helper in `app/src/lib/` with an injectable scheduler (#40).
+- Playwright runs against `npm run preview` (the `dist` build), so run `npm run build` before `npx playwright test <file>`, otherwise stale code is tested.
+- A local Escape action inside the dock calls `e.preventDefault()`, otherwise the document listener in `Dock.tsx` closes the panel (#40).
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.
