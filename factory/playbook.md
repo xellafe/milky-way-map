@@ -28,6 +28,7 @@
 - An element with `aria-expanded` that mounts its popup/content conditionally sets `aria-controls={open ? id : undefined}` with an id from `useId` — never reference an id that is not in the DOM (#43).
 - A local Escape action inside the dock calls `e.preventDefault()`, otherwise the document listener in `Dock.tsx` closes the panel (#40).
 - When a spec claims a bug fix is covered by an e2e regression test, the implementer runs the new spec against a build of `main` and records the result (it must fail there) (#42).
+- To assert in e2e that a text is "gone or different", poll `textContent` with a catch fallback to `null`: `expect(locator).not.toHaveText()` fails when the element is absent (`app/tests/e2e/hoverRepick.spec.ts`, #45).
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.
@@ -43,6 +44,7 @@
 - Do not change the core stack, pinned versions, `docs/SPEC.md` or `AGENTS.md` without human approval.
 - No committed `.only`/`.skip`, no retries added to hide flaky tests (log them in `docs/STATE.md`).
 - Tailwind: custom CSS in `index.css` stays in `@layer components`; separate a class from `${…}` with a space (lint rule in `app/eslint.config.js`); size that must vary is a prop, not a `className` override.
+- Never issue a synchronous `readRenderTargetPixels` while a three `readRenderTargetPixelsAsync` is pending (or unbind `PIXEL_PACK_BUFFER` right after the async call): three 0.184 leaves the PBO bound during the fence wait and the sync read silently returns zeros, i.e. star 0 (`app/src/scene/StarPicking.tsx`, #45).
 - In the Bash tool, no heredocs whose body has non-ASCII characters (e.g. `×`, `≠`): the tool fails with "unexpected EOF"; use Write/Edit instead.
 
 ## Definition of Done
