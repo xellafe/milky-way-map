@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getStarCore, getStarGeometry } from '../data/starCoreStore';
 import { canvasCursor } from '../lib/canvasCursor';
+import { createLatestOnly, pickMinPx, shouldPickHover } from '../lib/starPick';
 import { isCoarsePointer } from '../lib/viewport';
 import starPickFrag from '../shaders/star-pick.frag?raw';
 import starPickVert from '../shaders/star-pick.vert?raw';
@@ -14,9 +15,6 @@ import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
 import { STAR_DIST_EXP, STAR_MAX_PX, STAR_PIXEL_SCALE } from './StarCloud';
 
-const PICK_MIN_PX = 7.0; // hover comfort: tiny stars get a larger hit target
-// Touch hit target: a fingertip is far less precise than a mouse (spec: mobile UI §3).
-const PICK_MIN_PX_TOUCH = 22; // CSS px, diameter; design choice (not data)
 const CLICK_MAX_DRAG_PX = 5; // pointerdown→up movement below this = click, not a look-drag
 const NO_STAR = 0xffffff; // clear color: ids >= count mean "nothing"
 
@@ -24,7 +22,9 @@ const NO_STAR = 0xffffff; // clear color: ids >= count mean "nothing"
  * GPU picking (skill three-points-shader): a second Points sharing the SAME
  * BufferGeometry renders star indices as 24-bit colors into a 1×1 render
  * target via camera.setViewOffset, reading back the pixel under the cursor.
- * Runs at most once per frame, only when the pointer moved or clicked.
+ * Runs at most once per frame, when the pointer moved, clicked, or (mouse only,
+ * ~10 Hz) the camera pose changed under a resting pointer (#45). Hover reads
+ * back asynchronously to avoid a GPU stall; click reads synchronously.
  * Depth testing is enabled so the nearest star wins in dense regions.
  * Geometry comes from starCoreStore, not props (see store docs).
  */
@@ -38,6 +38,10 @@ export function StarPicking() {
     x: 0,
     y: 0,
     moved: false,
+    inside: false, // pointer is over the canvas
+    touch: false, // last pointer event was a touch
+    inFlight: false, // an async hover read is pending
+    lastPickMs: 0,
     downX: 0,
     downY: 0,
     down: false,
@@ -60,8 +64,7 @@ export function StarPicking() {
 
   const pickScene = useMemo(() => {
     if (!geometry) return null;
-    // gl_PointSize is a framebuffer-pixel diameter, so scale CSS px by the pixel ratio.
-    const pickMinPx = isCoarsePointer() ? PICK_MIN_PX_TOUCH * gl.getPixelRatio() : PICK_MIN_PX;
+    const minPx = pickMinPx(isCoarsePointer(), gl.getPixelRatio());
     const material = new THREE.ShaderMaterial({
       glslVersion: THREE.GLSL3,
       vertexShader: starPickVert,
@@ -71,10 +74,10 @@ export function StarPicking() {
           value: STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, gl.getPixelRatio()),
         },
         // GLSL clamp(min > max) is undefined: never let the max fall below the min.
-        uMaxPx: { value: Math.max(STAR_MAX_PX, pickMinPx) },
+        uMaxPx: { value: Math.max(STAR_MAX_PX, minPx) },
         uSizeGamma: { value: useSettingsStore.getState().sizeGamma },
         uDistExp: { value: STAR_DIST_EXP },
-        uPickMinPx: { value: pickMinPx },
+        uPickMinPx: { value: minPx },
       },
       depthTest: true,
       depthWrite: true,
@@ -86,12 +89,22 @@ export function StarPicking() {
     return { scene, material };
   }, [geometry, gl]);
 
+  const latest = useMemo(() => createLatestOnly(), []);
+  // Camera pose at the last hover request; a difference triggers a camera-driven re-pick.
+  const lastPose = useMemo(
+    () => ({ world: new THREE.Matrix4(), proj: new THREE.Matrix4(), set: false }),
+    [],
+  );
+  const asyncUnsupported = useRef(false);
+
   useEffect(() => {
     const el = gl.domElement;
     const updateCursor = () => {
       el.style.cursor = canvasCursor(pointer.current.dragging, pointer.current.over);
     };
     const onMove = (e: PointerEvent) => {
+      pointer.current.inside = true;
+      pointer.current.touch = e.pointerType === 'touch';
       // While look-dragging (primary button held) hover picking is pointless
       // and would re-render the pick scene every frame — skip it.
       if ((e.buttons & 1) !== 0) return;
@@ -101,6 +114,7 @@ export function StarPicking() {
       pointer.current.moved = true;
     };
     const onDown = (e: PointerEvent) => {
+      pointer.current.touch = e.pointerType === 'touch';
       // A primary down starts a new gesture; any other pointer joining it makes it multi-touch.
       pointer.current.multiTouch = !e.isPrimary;
       pointer.current.downX = e.clientX;
@@ -137,7 +151,9 @@ export function StarPicking() {
     // the last hover would stick; drop it and any pending pick.
     const onLeave = () => {
       pointer.current.moved = false;
+      pointer.current.inside = false;
       pointer.current.down = false;
+      latest.invalidate();
       setHoveredStar(null);
       pointer.current.dragging = false;
       pointer.current.over = false;
@@ -152,21 +168,31 @@ export function StarPicking() {
     return () => {
       el.removeEventListener('pointerleave', onLeave);
       // Drop a stale hover that would otherwise reappear on remount.
+      latest.invalidate();
       setHoveredStar(null);
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
       el.removeEventListener('pointercancel', onCancel);
     };
-  }, [gl, setHoveredStar]);
+  }, [gl, setHoveredStar, latest]);
 
   useEffect(() => () => pickTarget.dispose(), [pickTarget]);
   useEffect(() => () => pickScene?.material.dispose(), [pickScene]);
 
-  const pixel = useMemo(() => new Uint8Array(4), []);
+  // Separate buffers: a click must never overwrite an in-flight async hover read.
+  const clickPixel = useMemo(() => new Uint8Array(4), []);
+  const hoverPixel = useMemo(() => new Uint8Array(4), []);
   const prevClearColor = useMemo(() => new THREE.Color(), []);
 
-  const readStarAt = (x: number, y: number): number | null => {
+  const idToStar = (pixel: Uint8Array): number | null => {
+    const id = pixel[0]! | (pixel[1]! << 8) | (pixel[2]! << 16);
+    const count = geometry ? geometry.getAttribute('aSize').count : 0;
+    return id < count ? id : null;
+  };
+
+  /** Renders the pick scene at (x, y), calls `read` while the target is bound, then restores renderer state. */
+  const renderPickAt = <T,>(x: number, y: number, read: () => T): T | null => {
     if (!geometry || !pickScene) return null;
     // Same size law as the visible cloud (user-tunable gamma).
     pickScene.material.uniforms.uSizeGamma!.value = useSettingsStore.getState().sizeGamma;
@@ -196,7 +222,7 @@ export function StarPicking() {
     gl.setClearColor(NO_STAR, 1);
     gl.autoClear = true;
     gl.render(pickScene.scene, cam);
-    gl.readRenderTargetPixels(pickTarget, 0, 0, 1, 1, pixel);
+    const result = read();
 
     gl.setRenderTarget(prevTarget);
     gl.setClearColor(prevClearColor, prevClearAlpha);
@@ -211,17 +237,78 @@ export function StarPicking() {
         prevView.height,
       );
     } else cam.clearViewOffset();
+    return result;
+  };
 
-    const id = pixel[0]! | (pixel[1]! << 8) | (pixel[2]! << 16);
-    const count = geometry.getAttribute('aSize').count;
-    return id < count ? id : null;
+  const readStarAt = (x: number, y: number, pixel: Uint8Array): number | null => {
+    const ok = renderPickAt(x, y, () => {
+      gl.readRenderTargetPixels(pickTarget, 0, 0, 1, 1, pixel);
+      return true;
+    });
+    return ok ? idToStar(pixel) : null;
+  };
+
+  const applyHover = (hovered: number | null) => {
+    const p = pointer.current;
+    setHoveredStar(hovered);
+    p.over = hovered !== null;
+    gl.domElement.style.cursor = canvasCursor(p.dragging, p.over);
+  };
+
+  const poseChanged = (): boolean =>
+    lastPose.set &&
+    !(camera.matrixWorld.equals(lastPose.world) && camera.projectionMatrix.equals(lastPose.proj));
+
+  const requestHover = (p: typeof pointer.current, now: number) => {
+    // Pose is stored before the pick's temporary view offset alters the projection.
+    lastPose.world.copy(camera.matrixWorld);
+    lastPose.proj.copy(camera.projectionMatrix);
+    lastPose.set = true;
+    p.lastPickMs = now;
+    p.moved = false;
+    if (asyncUnsupported.current) {
+      applyHover(readStarAt(p.x, p.y, hoverPixel));
+      return;
+    }
+    let pending: Promise<unknown> | null = null;
+    let threw = false;
+    try {
+      pending = renderPickAt(p.x, p.y, () =>
+        gl.readRenderTargetPixelsAsync(pickTarget, 0, 0, 1, 1, hoverPixel),
+      );
+    } catch {
+      threw = true;
+    }
+    if (!pending) {
+      // No pick scene yet (null) is not a lack of support: only a throw switches to the sync read.
+      if (threw) {
+        asyncUnsupported.current = true;
+        p.moved = true;
+      }
+      return;
+    }
+    p.inFlight = true;
+    const ticket = latest.next();
+    pending.then(
+      () => {
+        p.inFlight = false;
+        if (latest.isCurrent(ticket)) applyHover(idToStar(hoverPixel));
+      },
+      () => {
+        // Not an error: some contexts lack async readback; hover falls back to the sync read.
+        p.inFlight = false;
+        asyncUnsupported.current = true;
+        p.moved = true;
+      },
+    );
   };
 
   useFrame(() => {
     const p = pointer.current;
-    if (!p.moved && !p.click) return;
-    if (p.click) {
-      const picked = readStarAt(p.click.x, p.click.y);
+    // While an async hover read is pending three leaves a PIXEL_PACK_BUFFER bound, which would
+    // swallow a synchronous readPixels (zeros = star 0): the click waits for the few ms of flight.
+    if (p.click && !p.inFlight) {
+      const picked = readStarAt(p.click.x, p.click.y, clickPixel);
       // A click on empty sky keeps the current selection: only the ✕ closes it.
       if (picked !== null) selectStar(picked);
       // Click-lock also flies to the fixed arrival distance (same as search
@@ -236,12 +323,20 @@ export function StarPicking() {
       }
       p.click = null;
     }
-    if (p.moved) {
-      const hovered = readStarAt(p.x, p.y);
-      setHoveredStar(hovered);
-      p.over = hovered !== null;
-      gl.domElement.style.cursor = canvasCursor(p.dragging, p.over);
-      p.moved = false;
+    const now = performance.now();
+    if (
+      shouldPickHover({
+        moved: p.moved,
+        inside: p.inside,
+        touch: p.touch,
+        dragging: p.dragging,
+        poseChanged: poseChanged(),
+        inFlight: p.inFlight,
+        nowMs: now,
+        lastPickMs: p.lastPickMs,
+      })
+    ) {
+      requestHover(p, now);
     }
   }, -1);
 

@@ -8,6 +8,14 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #45 — picking: hover aggiornato al movimento della camera, readback asincrono, DPR (2026-10-30, branch `hotfix/010-star-picking-hover-dpr`, in corso)
+
+Spec: `factory/features/010-star-picking-hover-dpr/spec.md`.
+
+- Fix: con mouse fermo il hover si rinnova (max ~10 Hz) quando cambia la posa della camera; la lettura hover usa `readRenderTargetPixelsAsync` con fallback sincrono se rifiuta; `PICK_MIN_PX` scalato per DPR (`pickMinPx` in `lib/starPick.ts`).
+- Trappola: durante un readback asincrono three lascia legato un `PIXEL_PACK_BUFFER` e una `readPixels` sincrona restituisce zeri (stella 0 = Sol): il click aspetta la fine del volo (pochi ms).
+- FPS (`measure-fps.mjs`, RTX 3080, vsync): `main` 59.8 / 60.1, branch 60.0 / 59.7 (run 1 = warmup); tabella README invariata. Test: unit `starPick.test.ts`, e2e `hoverRepick.spec.ts` (fallisce su `main`).
+
 ## Issue #44 — prop `size` su `HudButton` per il reset del dock (2026-10-25, branch `hotfix/009-hudbutton-size-prop`, in corso)
 
 Spec: `factory/features/009-hudbutton-size-prop/spec.md`.
