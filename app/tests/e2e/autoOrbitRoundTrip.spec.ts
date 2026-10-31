@@ -4,13 +4,20 @@
  * different star re-arms it. Uses the ?pdb=1 __camera bridge.
  */
 import { expect, test, type Page } from '@playwright/test';
+import * as THREE from 'three';
 import { serveFixtureData } from './fixtures';
+
+// Keep in sync with src/scene/cameraTween.ts.
+const ARRIVE_DISTANCE_LY = 4;
 
 type Vec = [number, number, number];
 
 const cam = (page: Page) =>
   page.evaluate(
-    () => (globalThis as Record<string, unknown>).__camera as { position: Vec } | undefined,
+    () =>
+      (globalThis as Record<string, unknown>).__camera as
+        | { position: Vec; quaternion: [number, number, number, number] }
+        | undefined,
   );
 
 const dist = (a: Vec, b: Vec) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
@@ -92,7 +99,22 @@ test('auto-orbit running when entering the System View keeps running after Back'
   page,
 }) => {
   await openAndSelectProxima(page);
+  // The fly-to ends ARRIVE_DISTANCE_LY in front of the star looking at it, so the orbit
+  // centre is the camera position plus the forward vector times that distance.
+  const entry = (await cam(page))!;
+  const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(
+    new THREE.Quaternion(...entry.quaternion),
+  );
+  const centre = new THREE.Vector3(...entry.position).addScaledVector(forward, ARRIVE_DISTANCE_LY);
+  const radius = (p: Vec) => centre.distanceTo(new THREE.Vector3(...p));
+  expect(Math.abs(radius(entry.position) - ARRIVE_DISTANCE_LY)).toBeLessThan(0.05);
+
   await roundTrip(page);
 
-  expect(await drift(page, 600)).toBeGreaterThan(0.05);
+  const p1 = await pos(page);
+  await page.waitForTimeout(600);
+  const p2 = await pos(page);
+  expect(dist(p1, p2)).toBeGreaterThan(0.05);
+  expect(Math.abs(radius(p1) - ARRIVE_DISTANCE_LY)).toBeLessThan(0.05);
+  expect(Math.abs(radius(p2) - ARRIVE_DISTANCE_LY)).toBeLessThan(0.05);
 });
