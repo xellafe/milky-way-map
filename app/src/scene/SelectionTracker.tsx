@@ -5,6 +5,7 @@ import { getStarCore } from '../data/starCoreStore';
 import { useGalaxyMapStore } from '../state/store';
 import { getSelectionAnchor } from './selectionAnchor';
 import { placeAnchor } from './placeAnchor';
+import { useCachedUsableArea } from './usableArea';
 
 /**
  * In-Canvas projector of the selected star onto the overlay's anchor element
@@ -14,6 +15,7 @@ import { placeAnchor } from './placeAnchor';
 export function SelectionTracker() {
   const { camera, size } = useThree();
   const v = useRef(new THREE.Vector3());
+  const readArea = useCachedUsableArea();
 
   useFrame(() => {
     const el = getSelectionAnchor();
@@ -37,7 +39,7 @@ export function SelectionTracker() {
     const x = ((p.x + 1) / 2) * size.width;
     const y = ((1 - p.y) / 2) * size.height;
 
-    placeAnchor(el, x, y, onScreen, size);
+    placeAnchor(el, x, y, onScreen, readArea(size.width, size.height));
   });
 
   return null;

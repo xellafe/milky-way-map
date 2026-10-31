@@ -8,6 +8,15 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #46 — loop camera: allocazioni per frame, cache dell'area utile, stato dell'auto-orbit (2026-10-31, branch `hotfix/011-camera-loop-allocations`, in corso)
+
+Spec: `factory/features/011-camera-loop-allocations/spec.md`.
+
+- Fix: helper della camera, `PlanetFollow` e `follow.ts` senza allocazioni per frame (scratch a livello di modulo / buffer `out`); la posa si salva allo smontaggio del Canvas insieme a `lockedStar`/`autoOrbit`; `placeAnchor` riceve l'area da `useCachedUsableArea` su ogni layout.
+- Comportamento: l'auto-orbit fermato col drag resta fermo dopo il giro in System View; se girava, continua; un'altra stella lo riarma.
+- AC8: `autoOrbitRoundTrip.spec.ts` fallisce su `main` (25eb856) nel giro con drag fermato (deriva di posa 0.0746 ly, limite < 0.01 ly) e passa sul branch.
+- FPS (`measure-fps.mjs`, RTX 3080, vsync, build `preview`): `main` 17.3 / 60.1 / 60.0, branch 4.0 / 60.1 / 60.0 (run 1 = warmup); mediana 60.0 su entrambi; tabella README invariata.
+
 ## Issue #45 — picking: hover aggiornato al movimento della camera, readback asincrono, DPR (2026-10-30, branch `hotfix/010-star-picking-hover-dpr`, in corso)
 
 Spec: `factory/features/010-star-picking-hover-dpr/spec.md`.

@@ -26,12 +26,16 @@ const ZOOM_PER_WHEEL_DELTA = 0.001;
 // Q/E roll stays available in orbit (it keeps the target centered).
 const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyR', 'KeyF'];
 
-/** World position of a star in the cloud (from the module SoA holder). */
+// Reused: starPosition runs per frame and per pointer event. Callers use the result
+// immediately and never store it.
+const scratchStar = new THREE.Vector3();
+
+/** World position of a star in the cloud (from the module SoA holder), in a shared scratch. */
 function starPosition(index: number): THREE.Vector3 | null {
   const core = getStarCore();
   if (!core) return null;
   const i = index * 3;
-  return new THREE.Vector3(core.position[i]!, core.position[i + 1]!, core.position[i + 2]!);
+  return scratchStar.set(core.position[i]!, core.position[i + 1]!, core.position[i + 2]!);
 }
 
 /** Selected star position, or null when the selection is a host / nothing. */
@@ -67,17 +71,26 @@ export function CameraControls() {
   // Active pointers (mouse button held or fingers down) with their last position.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const tween = useRef<CameraTween | null>(null);
-  const lastLockedStar = useRef<number | null>(null);
+  // Seeded from the saved state so a remount (System View round trip) does not see a
+  // fresh lock when the selection did not change (#46).
+  const lastLockedStar = useRef<number | null>(getSavedCameraPose()?.lockedStar ?? null);
   // True from lock acquisition until the user orbits manually.
-  const autoOrbit = useRef(false);
+  const autoOrbit = useRef(getSavedCameraPose()?.autoOrbit ?? false);
 
-  // Restore the pose saved before the System View unmounted this Canvas.
+  // Restore the pose saved before the System View unmounted this Canvas; save it again
+  // on unmount (the Canvas is gone while the System View is open).
   useEffect(() => {
     const saved = getSavedCameraPose();
     if (saved) {
       camera.position.fromArray(saved.position);
       camera.quaternion.fromArray(saved.quaternion);
     }
+    return () => {
+      saveCameraPose(camera.position, camera.quaternion, {
+        lockedStar: lastLockedStar.current,
+        autoOrbit: autoOrbit.current,
+      });
+    };
   }, [camera]);
 
   useEffect(() => {
@@ -181,10 +194,6 @@ export function CameraControls() {
 
   useFrame((_, delta) => {
     const store = useGalaxyMapStore.getState();
-    saveCameraPose({
-      position: camera.position.toArray() as [number, number, number],
-      quaternion: camera.quaternion.toArray() as [number, number, number, number],
-    });
 
     // New fly-to request (one-shot from the store) → start a tween.
     if (store.pendingFlyTo) {

@@ -29,6 +29,10 @@
 - A local Escape action inside the dock calls `e.preventDefault()`, otherwise the document listener in `Dock.tsx` closes the panel (#40).
 - When a spec claims a bug fix is covered by an e2e regression test, the implementer runs the new spec against a build of `main` and records the result (it must fail there) (#42).
 - To assert in e2e that a text is "gone or different", poll `textContent` with a catch fallback to `null`: `expect(locator).not.toHaveText()` fails when the element is absent (`app/tests/e2e/hoverRepick.spec.ts`, #45).
+- Per-frame three.js math uses module-level scratch objects or caller-provided `out` buffers, never `new`/`clone()`/`toArray()` without a target — avoids GC pauses during camera motion (`app/src/scene/cameraTween.ts`, `PlanetFollow`, #46).
+- Per-frame consumers of the usable area read it through `useCachedUsableArea`, never `readUsableArea` directly — avoids a forced layout every frame (`app/src/scene/placeAnchor.ts`, #46).
+- A module holder written on unmount (e.g. `cameraPoseStore`) also seeds the component's refs at first render from the saved state — refs reset on Canvas remount made a stale "fresh lock" re-arm the auto-orbit (`app/src/scene/CameraControls.tsx`, #46).
+- A test assertion must be able to fail: never check a value against a quantity derived from that same value — such checks look like coverage but are not (#46).
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.

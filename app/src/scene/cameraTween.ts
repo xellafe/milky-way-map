@@ -104,6 +104,14 @@ export function tweenPose(
   return done;
 }
 
+// Scratch objects reused because orbitAroundTarget runs per frame (auto-orbit) and
+// dollyTowardTarget per pointer/wheel event; never returned or stored.
+const scratchUp = new THREE.Vector3();
+const scratchRight = new THREE.Vector3();
+const scratchOffset = new THREE.Vector3();
+const scratchYaw = new THREE.Quaternion();
+const scratchPitch = new THREE.Quaternion();
+
 /**
  * Rigid rotation of the camera around `target` by yaw/pitch about the
  * camera's own up/right axes: the target keeps its screen position, distance
@@ -117,11 +125,11 @@ export function orbitAroundTarget(
   yawRad: number,
   pitchRad: number,
 ): void {
-  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(quaternion);
-  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion);
-  const q = new THREE.Quaternion()
+  const up = scratchUp.set(0, 1, 0).applyQuaternion(quaternion);
+  const right = scratchRight.set(1, 0, 0).applyQuaternion(quaternion);
+  const q = scratchYaw
     .setFromAxisAngle(up, -yawRad)
-    .multiply(new THREE.Quaternion().setFromAxisAngle(right, -pitchRad));
+    .multiply(scratchPitch.setFromAxisAngle(right, -pitchRad));
   position.sub(target).applyQuaternion(q).add(target);
   quaternion.premultiply(q);
 }
@@ -135,7 +143,7 @@ export function dollyTowardTarget(
   target: THREE.Vector3,
   factor: number,
 ): void {
-  const offset = position.clone().sub(target);
+  const offset = scratchOffset.copy(position).sub(target);
   const length = Math.min(
     Math.max(offset.length() * factor, ORBIT_MIN_DISTANCE_LY),
     ORBIT_MAX_DISTANCE_LY,
