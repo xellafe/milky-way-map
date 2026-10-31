@@ -1,6 +1,5 @@
-import { placeCard } from '../lib/overlayPlacement';
+import { placeCard, type Area } from '../lib/overlayPlacement';
 import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
-import { readUsableArea } from './usableArea';
 
 // Card width before it is measured (first frame): the Base width of ObjectCard
 // (224 px). Human choice (#23).
@@ -9,17 +8,17 @@ const FALLBACK_CARD_WIDTH_PX = 224;
 /**
  * Writes the anchor's screen position and the card placement straight on the
  * DOM (no React state per frame). Shared by the star and planet trackers.
- * Measured every frame: the card changes size (Base/Advanced) and the HUD reflows.
+ * The card is measured every frame (it changes size, Base/Advanced); the usable `area` comes from
+ * the caller's cached reader, so no layout is forced here.
  */
 export function placeAnchor(
   el: HTMLElement,
   x: number,
   y: number,
   visible: boolean,
-  size: { width: number; height: number },
+  area: Area,
 ): void {
   const slot = el.querySelector<HTMLElement>('[data-hud=selection-slot]');
-  const area = readUsableArea(size.width, size.height);
   const { side, shiftY } = placeCard(
     x,
     y,

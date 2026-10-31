@@ -33,10 +33,10 @@ export function readUsableArea(width: number, height: number): Area {
 }
 
 /**
- * Phone only (#25, spec §5): `readUsableArea` forces a layout on every call, too much
+ * Serves every layout (#25, #46): `readUsableArea` forces a layout on every call, too much
  * per frame. This reader returns the last measurement and measures again only after a
  * HUD element changed size or the HUD tree changed (sheet snap and content, panels
- * appearing), or the canvas size changed. `enabled: false` installs no observers (desktop).
+ * appearing), or the canvas size changed. `enabled: false` installs no observers.
  */
 export function useCachedUsableArea(enabled = true): (width: number, height: number) => Area {
   const dirty = useRef(true);

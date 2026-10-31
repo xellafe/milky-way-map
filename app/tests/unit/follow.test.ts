@@ -1,21 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { approachTarget, followStep, followViewShift } from '../../src/lib/follow';
+import { approachTarget, followStep, followViewShift, type MutVec3 } from '../../src/lib/follow';
 import { CARD_GAP_PX, RING_HALF_PX } from '../../src/lib/selectionGeometry';
 
 describe('followStep', () => {
   it('moves the target onto the planet and translates the camera by the same delta', () => {
-    expect(followStep([10, 0, 0], [0, 0, 0], [1, 2, 3])).toEqual({
-      camera: [11, 2, 3],
-      target: [1, 2, 3],
-    });
+    const out: MutVec3 = [0, 0, 0];
+    expect(followStep([10, 0, 0], [0, 0, 0], [1, 2, 3], out)).toEqual([11, 2, 3]);
   });
 
   it('keeps the camera still when the planet does not move', () => {
-    expect(followStep([5, 5, 5], [1, 1, 1], [1, 1, 1])).toEqual({
-      camera: [5, 5, 5],
-      target: [1, 1, 1],
-    });
+    expect(followStep([5, 5, 5], [1, 1, 1], [1, 1, 1], [0, 0, 0])).toEqual([5, 5, 5]);
+  });
+
+  it('writes into and returns the out tuple, also when it aliases the camera', () => {
+    const cam: MutVec3 = [10, 0, 0];
+    const res = followStep(cam, [0, 0, 0], [1, 2, 3], cam);
+    expect(res).toBe(cam);
+    expect(cam).toEqual([11, 2, 3]);
   });
 });
 
@@ -24,15 +26,21 @@ describe('approachTarget', () => {
   const b = [4, -2, 6] as const;
 
   it('starts at the start point and ends on the planet', () => {
-    expect(approachTarget(a, b, 0)).toEqual([0, 0, 0]);
-    expect(approachTarget(a, b, 1)).toEqual([4, -2, 6]);
+    expect(approachTarget(a, b, 0, [9, 9, 9])).toEqual([0, 0, 0]);
+    expect(approachTarget(a, b, 1, [9, 9, 9])).toEqual([4, -2, 6]);
   });
 
   it('eases through the midpoint', () => {
-    const mid = approachTarget(a, b, 0.5);
+    const mid = approachTarget(a, b, 0.5, [0, 0, 0]);
     expect(mid[0]).toBeCloseTo(2, 9);
     expect(mid[1]).toBeCloseTo(-1, 9);
     expect(mid[2]).toBeCloseTo(3, 9);
+  });
+
+  it('writes into and returns the out tuple', () => {
+    const out: MutVec3 = [0, 0, 0];
+    expect(approachTarget(a, b, 1, out)).toBe(out);
+    expect(out).toEqual([4, -2, 6]);
   });
 });
 

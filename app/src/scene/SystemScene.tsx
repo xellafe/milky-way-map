@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
 import { canvasCursor } from '../lib/canvasCursor';
-import { approachTarget, followStep, followViewShift } from '../lib/follow';
+import { approachTarget, followStep, followViewShift, type MutVec3 } from '../lib/follow';
 import { centerShift } from '../lib/sheet';
 import { useLayoutMode } from '../lib/viewport';
 import { MOBILE_MAX_DPR, prefersReducedMotion } from '../lib/motion';
@@ -33,7 +33,7 @@ import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
 import { HostStar } from './HostStar';
 import { placeAnchor } from './placeAnchor';
 import { getSelectionAnchor } from './selectionAnchor';
-import { readUsableArea, useCachedUsableArea } from './usableArea';
+import { useCachedUsableArea } from './usableArea';
 
 const SUN_RADIUS_AU = 0.00465;
 // Orbits are real-scale; BODY sizes and looks are not (pscomppars has no
@@ -325,9 +325,14 @@ function PlanetFollow({
   const controls = useThree((s) => s.controls) as { target: THREE.Vector3 } | null;
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
-  const run = useRef<{ name: string; start: THREE.Vector3; elapsed: number } | null>(null);
+  const run = useRef<{ name: string; start: MutVec3; elapsed: number } | null>(null);
+  // Per-frame scratch tuples (reused so the follow loop allocates nothing, #46).
+  const posBuf = useRef<MutVec3>([0, 0, 0]);
+  const targetBuf = useRef<MutVec3>([0, 0, 0]);
+  const camBuf = useRef<MutVec3>([0, 0, 0]);
+  const nextBuf = useRef<MutVec3>([0, 0, 0]);
   const mobile = useLayoutMode() !== 'desktop';
-  const readAreaCached = useCachedUsableArea(mobile);
+  const readAreaCached = useCachedUsableArea();
   // Applied and wanted projection shift, px (#23 AC7); y stays 0 on desktop.
   const viewShift = useRef({ x: 0, y: 0 });
   const wantShift = useRef({ x: 0, y: 0 });
@@ -339,30 +344,32 @@ function PlanetFollow({
     if (mobile) {
       // The window moves opposite to the picture: +x moves the scene left.
       const c = centerShift(readAreaCached(size.width, size.height), size.width, size.height);
-      wantShift.current = { x: -c.x, y: -c.y };
+      wantShift.current.x = -c.x;
+      wantShift.current.y = -c.y;
     } else if (mesh) {
       // Recomputed only while a planet is followed: on deselect the view stays put.
-      wantShift.current = {
-        x: followViewShift(
-          readUsableArea(size.width, size.height),
-          size.width,
-          ADVANCED_CARD_WIDTH_PX,
-          CARD_GAP_PX,
-        ),
-        y: 0,
-      };
+      wantShift.current.x = followViewShift(
+        readAreaCached(size.width, size.height),
+        size.width,
+        ADVANCED_CARD_WIDTH_PX,
+        CARD_GAP_PX,
+      );
+      wantShift.current.y = 0;
     } else if (lastWidth.current !== size.width) {
       // The parked shift was computed for another viewport width; park the view at the centre.
-      wantShift.current = { x: 0, y: 0 };
+      wantShift.current.x = 0;
+      wantShift.current.y = 0;
     }
     lastWidth.current = size.width;
     const gapX = wantShift.current.x - viewShift.current.x;
     const gapY = wantShift.current.y - viewShift.current.y;
     if (prefersReducedMotion() || Math.hypot(gapX, gapY) < 0.5) {
-      viewShift.current = { ...wantShift.current };
+      viewShift.current.x = wantShift.current.x;
+      viewShift.current.y = wantShift.current.y;
     } else {
       const k = Math.min(1, delta * VIEW_SLIDE_RATE);
-      viewShift.current = { x: viewShift.current.x + gapX * k, y: viewShift.current.y + gapY * k };
+      viewShift.current.x += gapX * k;
+      viewShift.current.y += gapY * k;
     }
     if (viewShift.current.x === 0 && viewShift.current.y === 0) {
       if (camera.view?.enabled) camera.clearViewOffset();
@@ -387,22 +394,27 @@ function PlanetFollow({
       return;
     }
     if (run.current?.name !== name) {
-      run.current = { name, start: controls.target.clone(), elapsed: 0 };
+      run.current = { name, start: controls.target.toArray(), elapsed: 0 };
     }
     const r = run.current;
     r.elapsed += delta;
     const dur = prefersReducedMotion() ? 0 : FOLLOW_APPROACH_S;
     const t = dur === 0 ? 1 : Math.min(r.elapsed / dur, 1);
-    const pos = mesh.position.toArray();
-    const next = t < 1 ? approachTarget(r.start.toArray(), pos, t) : pos;
-    const moved = followStep(camera.position.toArray(), controls.target.toArray(), next);
-    camera.position.set(...moved.camera);
-    controls.target.set(...moved.target);
+    const pos = mesh.position.toArray(posBuf.current);
+    const next = t < 1 ? approachTarget(r.start, pos, t, nextBuf.current) : pos;
+    const moved = followStep(
+      camera.position.toArray(camBuf.current),
+      controls.target.toArray(targetBuf.current),
+      next,
+      camBuf.current,
+    );
+    camera.position.fromArray(moved);
+    controls.target.fromArray(next);
     if (exposeBridge) {
       const bridge = (globalThis as Record<string, unknown>).__system as {
         cameraTarget?: number[];
       };
-      if (bridge) bridge.cameraTarget = [...moved.target];
+      if (bridge) bridge.cameraTarget = [...next];
     }
   });
   return null;
@@ -424,6 +436,7 @@ function PlanetTracker({
 }) {
   const { camera, size } = useThree();
   const v = useRef(new THREE.Vector3());
+  const readArea = useCachedUsableArea();
 
   useFrame(() => {
     const el = getSelectionAnchor();
@@ -442,8 +455,8 @@ function PlanetTracker({
     // The phone card is not anchored: there is no element to place.
     if (!el || !name) return;
     if (!mesh) {
-      const area = readUsableArea(size.width, size.height);
-      placeAnchor(el, area.right + CARD_GAP_PX, area.top - CARD_TOP_OFFSET_PX, true, size);
+      const area = readArea(size.width, size.height);
+      placeAnchor(el, area.right + CARD_GAP_PX, area.top - CARD_TOP_OFFSET_PX, true, area);
       return;
     }
     camera.updateMatrixWorld();
@@ -454,7 +467,9 @@ function PlanetTracker({
       return;
     }
     const onScreen = Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1;
-    placeAnchor(el, ((p.x + 1) / 2) * size.width, ((1 - p.y) / 2) * size.height, onScreen, size);
+    const x = ((p.x + 1) / 2) * size.width;
+    const y = ((1 - p.y) / 2) * size.height;
+    placeAnchor(el, x, y, onScreen, readArea(size.width, size.height));
   });
   return null;
 }
