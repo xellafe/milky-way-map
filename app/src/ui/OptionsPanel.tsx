@@ -15,7 +15,7 @@ export function SliderSetting({
   max,
   step,
   digits,
-  suffix = '',
+  formatValue = (v) => v,
   disabled = false,
 }: {
   id: NumericKey;
@@ -24,7 +24,7 @@ export function SliderSetting({
   max: number;
   step: number;
   digits: number;
-  suffix?: string;
+  formatValue?: (value: string) => string;
   disabled?: boolean;
 }) {
   const { i18n } = useTranslation();
@@ -35,8 +35,7 @@ export function SliderSetting({
       <span className="flex justify-between font-hud text-xs text-hud-muted">
         <span>{label}</span>
         <span className="font-hud-mono text-hud-bright">
-          {formatNumber(value, i18n.language, { maximumFractionDigits: digits })}
-          {suffix}
+          {formatValue(formatNumber(value, i18n.language, { maximumFractionDigits: digits }) ?? '')}
         </span>
       </span>
       <HudSlider
@@ -67,6 +66,21 @@ export function StarColorSaturationSlider({ disabled }: { disabled: boolean }) {
   );
 }
 
+/** Shared by the Galaxy View options and the System View options. */
+export function RealismSwitch() {
+  const { t } = useTranslation();
+  const realism = useSettingsStore((s) => s.realism);
+  const setSettings = useSettingsStore((s) => s.setSettings);
+  return (
+    <HudSwitch
+      label={t('options.realism')}
+      checked={realism}
+      data-testid="option-realism"
+      onChange={(e) => setSettings({ realism: e.target.checked })}
+    />
+  );
+}
+
 /**
  * User customizations (issue #1): camera, star look. Persisted locally.
  * Content only: the dock panel (ControlDock) owns the frame and the reset
@@ -89,7 +103,7 @@ export function OptionsPanel() {
           label={t('options.moveSpeed')}
           {...SETTING_RANGES.moveSpeedLyPerS}
           digits={0}
-          suffix={` ${t('units.ly')}/s`}
+          formatValue={(value) => t('units.lyPerS', { value })}
         />
         <div className="mt-3">
           <HudSwitch
@@ -104,25 +118,20 @@ export function OptionsPanel() {
           label={t('options.autoOrbitSpeed')}
           {...SETTING_RANGES.autoOrbitSpeedDegPerS}
           digits={1}
-          suffix="°/s"
+          formatValue={(value) => t('units.degPerS', { value })}
           disabled={!settings.autoOrbit}
         />
       </DataSection>
       <DataSection title={t('options.sectionStars')} list={false}>
         <div>
-          <HudSwitch
-            label={t('options.realism')}
-            checked={settings.realism}
-            data-testid="option-realism"
-            onChange={(e) => settings.setSettings({ realism: e.target.checked })}
-          />
+          <RealismSwitch />
         </div>
         <SliderSetting
           id="twinkleSpeed"
           label={t('options.twinkleSpeed')}
           {...SETTING_RANGES.twinkleSpeed}
           digits={2}
-          suffix="×"
+          formatValue={(value) => t('units.times', { value })}
           disabled={settings.realism}
         />
         <SliderSetting

@@ -119,8 +119,10 @@ export function RangeSlider({
         {label}
         {bounds && (
           <span className="ml-1 text-hud-muted">
-            ({formatNumber(bounds[0], i18n.language, { maximumFractionDigits: decimals })} –{' '}
-            {formatNumber(bounds[1], i18n.language, { maximumFractionDigits: decimals })})
+            {t('filters.bounds', {
+              min: formatNumber(bounds[0], i18n.language, { maximumFractionDigits: decimals }),
+              max: formatNumber(bounds[1], i18n.language, { maximumFractionDigits: decimals }),
+            })}
           </span>
         )}
       </legend>
@@ -162,7 +164,7 @@ export function RangeSlider({
           testId={`filter-${id}-min`}
           onCommit={apply}
         />
-        <span className="text-hud-muted">–</span>
+        <span className="text-hud-muted">{t('filters.rangeSeparator')}</span>
         <RangeNumberField
           side="max"
           label={t('filters.max')}

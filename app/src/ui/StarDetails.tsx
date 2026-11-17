@@ -5,6 +5,7 @@ import { getStarCore } from '../data/starCoreStore';
 import { getStarDetails } from '../data/starDetailsStore';
 import { FLAG_MULTIPLE, FLAG_VARIABLE, formatNumber, hasFlag } from '../lib/format';
 import { formatLimited, metallicityRatioTag } from '../lib/limitedValue';
+import { withUnit } from '../lib/withUnit';
 import { useGalaxyMapStore } from '../state/store';
 import { DataRow } from './hud/DataRow';
 import { DataSection } from './hud/DataSection';
@@ -35,11 +36,9 @@ export function StarExtraRows({ index }: { index: number }) {
           can carry the archive value. */}
       <DataRow
         label={t('panel.age')}
-        value={formatLimited(
-          host?.st_age ?? null,
-          host?.st_agelim ?? null,
-          lang,
-          3,
+        value={withUnit(
+          t,
+          formatLimited(host?.st_age ?? null, host?.st_agelim ?? null, lang, 3),
           t('units.gyr'),
         )}
         note={t('panel.ageNote')}
@@ -93,36 +92,36 @@ export function ArchiveSection({ host, withAge = true }: { host: ExoHost; withAg
   return (
     <DataSection title={t('card.sectionArchive')}>
       <DataRow
-        label={tag ? `${t('panel.advMetallicity')} ${tag}` : t('panel.advMetallicity')}
-        value={formatLimited(host.st_met, host.st_metlim, lang, 3, t('units.dex'))}
+        label={tag ? t('panel.advMetallicityTagged', { tag }) : t('panel.advMetallicity')}
+        value={withUnit(t, formatLimited(host.st_met, host.st_metlim, lang, 3), t('units.dex'))}
         testId="adv-st_met"
       />
       {withAge && (
         <DataRow
           label={t('panel.advAge')}
-          value={formatLimited(host.st_age, host.st_agelim, lang, 3, t('units.gyr'))}
+          value={withUnit(t, formatLimited(host.st_age, host.st_agelim, lang, 3), t('units.gyr'))}
           testId="adv-st_age"
         />
       )}
       <DataRow
         label={t('panel.advMass')}
-        value={formatLimited(host.st_mass, host.st_masslim, lang, 3, t('units.msun'))}
+        value={withUnit(t, formatLimited(host.st_mass, host.st_masslim, lang, 3), t('units.msun'))}
         testId="adv-st_mass"
       />
       <DataRow
         label={t('panel.advLogg')}
-        value={formatLimited(host.st_logg, host.st_logglim, lang, 3, t('units.cgs'))}
+        value={withUnit(t, formatLimited(host.st_logg, host.st_logglim, lang, 3), t('units.cgs'))}
         testId="adv-st_logg"
       />
       <DataRow label={t('panel.advSpectype')} value={host.st_spectype} testId="adv-st_spectype" />
       <DataRow
         label={t('panel.advRotation')}
-        value={formatLimited(host.st_rotp, host.st_rotplim, lang, 3, t('units.days'))}
+        value={withUnit(t, formatLimited(host.st_rotp, host.st_rotplim, lang, 3), t('units.days'))}
         testId="adv-st_rotp"
       />
       <DataRow
         label={t('panel.advVsini')}
-        value={formatLimited(host.st_vsin, host.st_vsinlim, lang, 3, t('units.kms'))}
+        value={withUnit(t, formatLimited(host.st_vsin, host.st_vsinlim, lang, 3), t('units.kms'))}
         testId="adv-st_vsin"
       />
     </DataSection>

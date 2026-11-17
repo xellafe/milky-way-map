@@ -13,15 +13,14 @@ export function metallicityRatioTag(ratio: string | null): '[Fe/H]' | '[M/H]' | 
   return ratio === '[Fe/H]' || ratio === '[M/H]' ? ratio : null;
 }
 
-/** Number with its archive limit prefix and optional unit; null when absent. */
+/** Number with its archive limit prefix; null when absent. The unit is joined by `withUnit`. */
 export function formatLimited(
   value: number | null,
   lim: Lim,
   lang: string,
   digits: number,
-  unit?: string,
 ): string | null {
   if (value === null || !Number.isFinite(value)) return null;
   const n = formatNumber(value, lang, { maximumSignificantDigits: digits });
-  return `${limitPrefix(lim)}${n}${unit ? ` ${unit}` : ''}`;
+  return `${limitPrefix(lim)}${n}`;
 }

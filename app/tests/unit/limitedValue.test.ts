@@ -31,11 +31,11 @@ describe('formatLimited', () => {
     expect(formatLimited(7.6, 1, 'en-US', 3)).toBe('<7.6');
     expect(formatLimited(7.6, -1, 'en-US', 3)).toBe('>7.6');
   });
-  it('appends the unit', () => {
-    expect(formatLimited(7.6, 1, 'en-US', 3, 'Gyr')).toBe('<7.6 Gyr');
+  it('takes no unit: the caller joins it with withUnit', () => {
+    expect(formatLimited.length).toBe(4);
   });
   it('returns null for a missing or non-finite value', () => {
-    expect(formatLimited(null, 1, 'en-US', 3, 'Gyr')).toBeNull();
+    expect(formatLimited(null, 1, 'en-US', 3)).toBeNull();
     expect(formatLimited(NaN, 0, 'en-US', 3)).toBeNull();
   });
 });

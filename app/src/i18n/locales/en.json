@@ -1,10 +1,9 @@
 {
   "language": {
-    "label": "Language",
-    "menuLabel": "Select language"
+    "menuLabel": "Select language",
+    "menuLabelCurrent": "Select language: {{language}}"
   },
   "ui": {
-    "appName": "Galaxy Map",
     "sheetHandle": "Resize the panel",
     "loading": "Loading…",
     "loadingStars": "Loading star catalog… {{percent}}",
@@ -38,6 +37,7 @@
     "yes": "Yes",
     "no": "No",
     "advMetallicity": "Metallicity",
+    "advMetallicityTagged": "Metallicity {{tag}}",
     "advAge": "Age",
     "advMass": "Star mass",
     "advLogg": "Surface gravity (log g)",
@@ -84,7 +84,9 @@
     "onlyMultiple": "Only multiple systems",
     "onlyVariable": "Only variable stars",
     "reset": "Reset filters",
-    "loadFailed": "Could not load the data for the range filters. Check your connection and reload the page."
+    "loadFailed": "Could not load the data for the range filters. Check your connection and reload the page.",
+    "bounds": "({{min}} – {{max}})",
+    "rangeSeparator": "–"
   },
   "units": {
     "ly": "ly",
@@ -101,7 +103,14 @@
     "gcm3": "g/cm³",
     "searth": "S⊕",
     "dex": "dex",
-    "cgs": "cgs"
+    "cgs": "cgs",
+    "valueUnit": "{{value}} {{unit}}",
+    "lyPerS": "{{value}} ly/s",
+    "degPerS": "{{value}}°/s",
+    "degrees": "{{value}}°",
+    "times": "{{value}}×",
+    "approx": "≈ {{value}}",
+    "labelWithUnit": "{{label}} ({{unit}})"
   },
   "errors": {
     "webgl2Required": "Galaxy Map requires WebGL2, which is not available in this browser. Please use a recent desktop browser with hardware acceleration enabled.",
@@ -132,7 +141,7 @@
     "discYear": "Discovery year",
     "eqTemp": "Equilibrium temperature",
     "schematicOrbit": "Schematic orbit (inclination n/a)",
-    "type": "Type",
+    "typeValue": "Type: <hl>{{value}}</hl>",
     "planetTypes": "Planet types",
     "orbitStyle": "Orbit style",
     "density": "Density",
@@ -171,7 +180,7 @@
     "next": "Next track",
     "collapse": "Collapse music player",
     "expand": "Expand music player",
-    "nowPlaying": "Now playing"
+    "nowPlayingTitle": "<sr>Now playing:</sr> {{title}}"
   },
   "options": {
     "title": "Options",
@@ -209,8 +218,7 @@
       },
       "move": {
         "action": "Move",
-        "upDown": "up / down",
-        "roll": "roll"
+        "command": "<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, <kbd>R</kbd>/<kbd>F</kbd> up / down, <kbd>Q</kbd>/<kbd>E</kbd> roll"
       },
       "zoom": {
         "action": "Move closer to or away from the selected star",

@@ -8,9 +8,8 @@ import { FiltersPanel } from './FiltersPanel';
 import { Dock, type DockItem } from './hud/Dock';
 import { HudButton } from './hud/HudButton';
 import { HudCard } from './hud/HudCard';
-import { HudSwitch } from './hud/HudInputs';
 import { Tabs, type TabItem } from './hud/Tabs';
-import { OptionsPanel, StarColorSaturationSlider } from './OptionsPanel';
+import { OptionsPanel, RealismSwitch, StarColorSaturationSlider } from './OptionsPanel';
 import { SystemViewPanel } from './SystemViewPanel';
 import { TimeBar } from './TimeBar';
 import { ViewTogglesPanel } from './ViewTogglesPanel';
@@ -102,20 +101,14 @@ export function ControlDock() {
 function SystemOptions() {
   const { t } = useTranslation();
   const realism = useSettingsStore((s) => s.realism);
-  const setSettings = useSettingsStore((s) => s.setSettings);
   return (
     <section
-      id="dock-panel-options"
+      id="dock-panel-system-options"
       aria-label={t('options.title')}
       data-testid="options-panel"
       className="text-sm"
     >
-      <HudSwitch
-        label={t('options.realism')}
-        checked={realism}
-        data-testid="option-realism"
-        onChange={(e) => setSettings({ realism: e.target.checked })}
-      />
+      <RealismSwitch />
       <StarColorSaturationSlider disabled={realism} />
     </section>
   );

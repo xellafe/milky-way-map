@@ -8,6 +8,15 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #47 — unità e punteggiatura nei file locale, chiavi inutilizzate, un solo interruttore realismo (2026-11-17, branch `feature/012-i18n-units-cleanup`, in corso)
+
+Spec: `factory/features/012-i18n-units-cleanup/spec.md`.
+
+- Unità, separatore valore-unità e punteggiatura attorno al testo tradotto passano dal JSX ai 5 file locale (`units.valueUnit`, `units.lyPerS`, `system.typeValue`, …); helper `withUnit` in `app/src/lib/withUnit.ts`, `formatLimited` non prende più l'unità.
+- Francese: spazio non separabile (U+00A0) tra valore e unità e prima di `: ; ? ! »`, dentro `« »`; inglese, italiano, spagnolo e tedesco invariati.
+- Rimosse da tutti i locale: `ui.appName`, `language.label`, `system.type`, `music.nowPlaying`, `welcome.guide.move.upDown`/`roll`. `<title>` resta statico (il nome è un marchio).
+- `RealismSwitch` unico in `OptionsPanel.tsx`; `SystemOptions` e `SystemViewPanel` hanno id propri (`dock-panel-system-options`, `dock-panel-system-view`), nessun id definito due volte.
+
 ## Issue #46 — loop camera: allocazioni per frame, cache dell'area utile, stato dell'auto-orbit (2026-10-31, branch `hotfix/011-camera-loop-allocations`, in corso)
 
 Spec: `factory/features/011-camera-loop-allocations/spec.md`.

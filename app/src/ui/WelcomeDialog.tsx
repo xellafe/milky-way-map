@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { isCoarsePointer } from '../lib/viewport';
 import { isWelcomeDismissed, setWelcomeDismissed } from '../lib/welcome';
 import { useGalaxyMapStore } from '../state/store';
@@ -71,13 +71,7 @@ export function WelcomeDialog() {
               {touch && TOUCH_ROWS.has(row) ? (
                 t(`welcome.guide.touch.${row}`)
               ) : row === 'move' ? (
-                <>
-                  <kbd>W</kbd>
-                  <kbd>A</kbd>
-                  <kbd>S</kbd>
-                  <kbd>D</kbd>, <kbd>R</kbd>/<kbd>F</kbd> {t('welcome.guide.move.upDown')},{' '}
-                  <kbd>Q</kbd>/<kbd>E</kbd> {t('welcome.guide.move.roll')}
-                </>
+                <Trans i18nKey="welcome.guide.move.command" components={{ kbd: <kbd /> }} />
               ) : (
                 t(`welcome.guide.${row}.command`)
               )}
