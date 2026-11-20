@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from './Badge';
 import type { Tick } from '../../lib/gaugeScale';
 import { Gauge } from './Gauge';
+import { withUnit } from '../../lib/withUnit';
 
 /** Label + value + gauge. `value === null` shows "n/a" and an empty gauge. */
 export function StatTile({
@@ -35,7 +36,7 @@ export function StatTile({
 }) {
   const { t } = useTranslation();
   const labelId = useId();
-  const text = value === null ? t('panel.na') : unit ? `${value} ${unit}` : value;
+  const text = (unit ? withUnit(t, value, unit) : value) ?? t('panel.na');
   return (
     <div data-testid={testId} className={`bg-hud-accent/5 ${compact ? 'p-1.5' : 'p-2'}`}>
       <div className="flex flex-wrap items-center justify-between gap-x-1">

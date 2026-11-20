@@ -118,7 +118,7 @@ export function LanguageSelector() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        aria-label={`${t('language.menuLabel')}: ${LANGUAGE_NAMES[current]}`}
+        aria-label={t('language.menuLabelCurrent', { language: LANGUAGE_NAMES[current] })}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onButtonKeyDown}
         className="flex items-center gap-1.5"

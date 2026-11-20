@@ -1,10 +1,9 @@
 {
   "language": {
-    "label": "Lingua",
-    "menuLabel": "Seleziona lingua"
+    "menuLabel": "Seleziona lingua",
+    "menuLabelCurrent": "Seleziona lingua: {{language}}"
   },
   "ui": {
-    "appName": "Galaxy Map",
     "sheetHandle": "Ridimensiona il pannello",
     "loading": "Caricamento…",
     "loadingStars": "Caricamento del catalogo stellare… {{percent}}",
@@ -38,6 +37,7 @@
     "yes": "Sì",
     "no": "No",
     "advMetallicity": "Metallicità",
+    "advMetallicityTagged": "Metallicità {{tag}}",
     "advAge": "Età",
     "advMass": "Massa della stella",
     "advLogg": "Gravità superficiale (log g)",
@@ -84,7 +84,9 @@
     "onlyMultiple": "Solo sistemi multipli",
     "onlyVariable": "Solo stelle variabili",
     "reset": "Azzera filtri",
-    "loadFailed": "Impossibile caricare i dati per i filtri a intervallo. Controlla la connessione e ricarica la pagina."
+    "loadFailed": "Impossibile caricare i dati per i filtri a intervallo. Controlla la connessione e ricarica la pagina.",
+    "bounds": "({{min}} – {{max}})",
+    "rangeSeparator": "–"
   },
   "units": {
     "ly": "a.l.",
@@ -101,7 +103,14 @@
     "gcm3": "g/cm³",
     "searth": "S⊕",
     "dex": "dex",
-    "cgs": "cgs"
+    "cgs": "cgs",
+    "valueUnit": "{{value}} {{unit}}",
+    "lyPerS": "{{value}} a.l./s",
+    "degPerS": "{{value}}°/s",
+    "degrees": "{{value}}°",
+    "times": "{{value}}×",
+    "approx": "≈ {{value}}",
+    "labelWithUnit": "{{label}} ({{unit}})"
   },
   "errors": {
     "webgl2Required": "Galaxy Map richiede WebGL2, che non è disponibile in questo browser. Usa un browser desktop recente con l'accelerazione hardware attiva.",
@@ -132,7 +141,7 @@
     "discYear": "Anno di scoperta",
     "eqTemp": "Temperatura di equilibrio",
     "schematicOrbit": "Orbita schematica (inclinazione n/d)",
-    "type": "Tipo",
+    "typeValue": "Tipo: <hl>{{value}}</hl>",
     "planetTypes": "Tipi di pianeta",
     "orbitStyle": "Stile orbite",
     "density": "Densità",
@@ -171,7 +180,7 @@
     "next": "Brano successivo",
     "collapse": "Riduci il player musicale",
     "expand": "Espandi il player musicale",
-    "nowPlaying": "In riproduzione"
+    "nowPlayingTitle": "<sr>In riproduzione:</sr> {{title}}"
   },
   "options": {
     "title": "Opzioni",
@@ -209,8 +218,7 @@
       },
       "move": {
         "action": "Muoviti",
-        "upDown": "su / giù",
-        "roll": "rollio"
+        "command": "<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, <kbd>R</kbd>/<kbd>F</kbd> su / giù, <kbd>Q</kbd>/<kbd>E</kbd> rollio"
       },
       "zoom": {
         "action": "Avvicinati o allontanati dalla stella selezionata",

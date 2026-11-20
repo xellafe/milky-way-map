@@ -1,8 +1,9 @@
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import type { ExoplanetRecord } from '../data/exoplanets';
 import { formatNumber } from '../lib/format';
 import { formatLimited } from '../lib/limitedValue';
 import { orbitSense } from '../lib/orbitSense';
+import { withUnit } from '../lib/withUnit';
 import { planetComposition } from '../lib/planetComposition';
 import { classifyPlanet } from '../lib/planetType';
 import { setSelectionAnchor } from '../scene/selectionAnchor';
@@ -15,8 +16,8 @@ import { PlanetStatTiles } from './PlanetStatTiles';
 function PlanetAdvanced({ planet }: { planet: ExoplanetRecord }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
-  const num = (v: number | null, digits: number, unit = '') =>
-    v !== null ? `${formatNumber(v, lang, { maximumSignificantDigits: digits })}${unit}` : null;
+  const num = (v: number | null, digits: number) =>
+    v !== null ? formatNumber(v, lang, { maximumSignificantDigits: digits }) : null;
   const composition = planetComposition(
     planet.pl_bmasse,
     planet.pl_rade,
@@ -36,12 +37,16 @@ function PlanetAdvanced({ planet }: { planet: ExoplanetRecord }) {
       <dl>
         <DataRow
           label={t('system.semiMajorAxis')}
-          value={num(planet.pl_orbsmax, 4, ` ${t('units.au')}`)}
+          value={withUnit(t, num(planet.pl_orbsmax, 4), t('units.au'))}
         />
         <DataRow label={t('system.eccentricity')} value={num(planet.pl_orbeccen, 3)} />
         <DataRow
           label={t('system.inclination')}
-          value={planet.pl_orbincl !== null ? `${num(planet.pl_orbincl, 4)}°` : null}
+          value={
+            planet.pl_orbincl !== null
+              ? t('units.degrees', { value: num(planet.pl_orbincl, 4) })
+              : null
+          }
         />
         <DataRow label={t('system.method')} value={planet.discoverymethod} />
         <DataRow
@@ -51,12 +56,20 @@ function PlanetAdvanced({ planet }: { planet: ExoplanetRecord }) {
         <DataRow
           testId="adv-pl_dens"
           label={t('system.density')}
-          value={formatLimited(planet.pl_dens, planet.pl_denslim, lang, 3, t('units.gcm3'))}
+          value={withUnit(
+            t,
+            formatLimited(planet.pl_dens, planet.pl_denslim, lang, 3),
+            t('units.gcm3'),
+          )}
         />
         <DataRow
           testId="adv-pl_insol"
           label={t('system.insolation')}
-          value={formatLimited(planet.pl_insol, planet.pl_insollim, lang, 3, t('units.searth'))}
+          value={withUnit(
+            t,
+            formatLimited(planet.pl_insol, planet.pl_insollim, lang, 3),
+            t('units.searth'),
+          )}
         />
         <DataRow
           testId="adv-mass-prov"
@@ -118,8 +131,11 @@ export function PlanetCard({
         <>
           <PlanetStatTiles planet={planet} />
           <p className="text-xs text-hud-muted">
-            {t('system.type')}:{' '}
-            <span className="text-hud-bright">{t(`planetType.${classifyPlanet(planet)}`)}</span>
+            <Trans
+              i18nKey="system.typeValue"
+              values={{ value: t(`planetType.${classifyPlanet(planet)}`) }}
+              components={{ hl: <span className="text-hud-bright" /> }}
+            />
           </p>
           {!anchored && (
             <p className="text-xs text-hud-warn" data-testid="planet-no-position">

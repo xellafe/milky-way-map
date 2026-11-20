@@ -55,7 +55,9 @@ export function StarStatTiles({ index, compact = false }: { index: number; compa
         testId="stat-teff"
         compact={compact}
         label={t('panel.teff')}
-        value={teff === null ? null : `≈ ${formatNumber(Math.round(teff), lang)}`}
+        value={
+          teff === null ? null : t('units.approx', { value: formatNumber(Math.round(teff), lang) })
+        }
         unit={t('units.kelvin')}
         estimate
         variant="spectral"

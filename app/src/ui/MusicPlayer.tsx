@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { buildPlaylist, nextIndex, prevIndex } from '../lib/playlist';
 import { useCompactViewport, useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
@@ -180,8 +180,11 @@ export function MusicPlayer() {
   const controls = (
     <div id={CONTROLS_ID} className="flex flex-col gap-1">
       <p data-testid="music-title" className="truncate font-hud text-xs text-hud-text">
-        <span className="sr-only">{t('music.nowPlaying')}: </span>
-        {track.title}
+        <Trans
+          i18nKey="music.nowPlayingTitle"
+          values={{ title: track.title }}
+          components={{ sr: <span className="sr-only" /> }}
+        />
       </p>
       <div className="flex items-center gap-2">
         <button

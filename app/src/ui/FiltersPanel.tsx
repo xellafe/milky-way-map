@@ -73,7 +73,7 @@ export function FiltersPanel() {
       )}
       <RangeSlider
         id="distance"
-        label={`${t('filters.distance')} (${t('units.ly')})`}
+        label={t('units.labelWithUnit', { label: t('filters.distance'), unit: t('units.ly') })}
         bounds={bounds?.distanceLy ?? null}
         value={filters.distanceLy}
         decimals={0}

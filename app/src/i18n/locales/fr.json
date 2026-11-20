@@ -1,10 +1,9 @@
 {
   "language": {
-    "label": "Langue",
-    "menuLabel": "Choisir la langue"
+    "menuLabel": "Choisir la langue",
+    "menuLabelCurrent": "Choisir la langue : {{language}}"
   },
   "ui": {
-    "appName": "Galaxy Map",
     "sheetHandle": "Redimensionner le panneau",
     "loading": "Chargement…",
     "loadingStars": "Chargement du catalogue stellaire… {{percent}}",
@@ -38,6 +37,7 @@
     "yes": "Oui",
     "no": "Non",
     "advMetallicity": "Métallicité",
+    "advMetallicityTagged": "Métallicité {{tag}}",
     "advAge": "Âge",
     "advMass": "Masse de l'étoile",
     "advLogg": "Gravité de surface (log g)",
@@ -84,7 +84,9 @@
     "onlyMultiple": "Seulement les systèmes multiples",
     "onlyVariable": "Seulement les étoiles variables",
     "reset": "Réinitialiser les filtres",
-    "loadFailed": "Impossible de charger les données des filtres par plage. Vérifiez votre connexion et rechargez la page."
+    "loadFailed": "Impossible de charger les données des filtres par plage. Vérifiez votre connexion et rechargez la page.",
+    "bounds": "({{min}} – {{max}})",
+    "rangeSeparator": "–"
   },
   "units": {
     "ly": "a.l.",
@@ -101,7 +103,14 @@
     "gcm3": "g/cm³",
     "searth": "S⊕",
     "dex": "dex",
-    "cgs": "cgs"
+    "cgs": "cgs",
+    "valueUnit": "{{value}} {{unit}}",
+    "lyPerS": "{{value}} a.l./s",
+    "degPerS": "{{value}}°/s",
+    "degrees": "{{value}}°",
+    "times": "{{value}}×",
+    "approx": "≈ {{value}}",
+    "labelWithUnit": "{{label}} ({{unit}})"
   },
   "errors": {
     "webgl2Required": "Galaxy Map nécessite WebGL2, qui n'est pas disponible dans ce navigateur. Veuillez utiliser un navigateur de bureau récent avec l'accélération matérielle activée.",
@@ -115,13 +124,13 @@
     "sheetTabs": "Étoile et planètes",
     "tabPlanets": "Planètes ({{count}})",
     "timeScale": "Échelle de temps",
-    "daysPerSecond": "{{value}} jours/s",
+    "daysPerSecond": "{{value}} jours/s",
     "logScale": "Échelle log",
     "pause": "Pause",
     "resume": "Reprendre",
     "habitableZone": "Zone habitable",
     "hzApprox": "(modèle approximatif √L)",
-    "scaleNote": "Orbites à l'échelle réelle (UA) ; les tailles de l'étoile et des planètes ne sont pas à l'échelle.",
+    "scaleNote": "Orbites à l'échelle réelle (UA) ; les tailles de l'étoile et des planètes ne sont pas à l'échelle.",
     "period": "Période orbitale",
     "semiMajorAxis": "Demi-grand axe",
     "radius": "Rayon",
@@ -132,7 +141,7 @@
     "discYear": "Année de découverte",
     "eqTemp": "Température d'équilibre",
     "schematicOrbit": "Orbite schématique (inclinaison n/d)",
-    "type": "Type",
+    "typeValue": "Type : <hl>{{value}}</hl>",
     "planetTypes": "Types de planète",
     "orbitStyle": "Style des orbites",
     "density": "Densité",
@@ -171,7 +180,7 @@
     "next": "Piste suivante",
     "collapse": "Réduire le lecteur de musique",
     "expand": "Développer le lecteur de musique",
-    "nowPlaying": "En cours de lecture"
+    "nowPlayingTitle": "<sr>En cours de lecture :</sr> {{title}}"
   },
   "options": {
     "title": "Options",
@@ -209,8 +218,7 @@
       },
       "move": {
         "action": "Se déplacer",
-        "upDown": "haut / bas",
-        "roll": "roulis"
+        "command": "<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, <kbd>R</kbd>/<kbd>F</kbd> haut / bas, <kbd>Q</kbd>/<kbd>E</kbd> roulis"
       },
       "zoom": {
         "action": "Se rapprocher ou s'éloigner de l'étoile sélectionnée",
@@ -226,7 +234,7 @@
       },
       "system": {
         "action": "Voir le système planétaire",
-        "command": "Bouton « Voir le système » sur la carte de l'étoile"
+        "command": "Bouton « Voir le système » sur la carte de l'étoile"
       },
       "dock": {
         "action": "Filtres, options d'affichage et réglages",
@@ -234,7 +242,7 @@
       },
       "touch": {
         "look": "Glissez avec un doigt",
-        "move": "Pincement : écartez ou rapprochez les doigts",
+        "move": "Pincement : écartez ou rapprochez les doigts",
         "zoom": "Pincement",
         "select": "Touchez",
         "search": "Icône de recherche"

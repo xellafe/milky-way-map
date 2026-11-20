@@ -22,7 +22,11 @@ export function SystemViewPanel() {
   const host = hostname ? getHost(hostname) : null;
 
   return (
-    <section id="dock-panel-view" aria-label={t('view.title')} data-testid="system-view-panel">
+    <section
+      id="dock-panel-system-view"
+      aria-label={t('view.title')}
+      data-testid="system-view-panel"
+    >
       <fieldset className="mb-2" data-testid="planet-type-filter">
         <legend className="font-hud text-xs text-hud-muted">{t('system.planetTypes')}</legend>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
