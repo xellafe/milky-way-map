@@ -12,10 +12,9 @@
 - Logic in `app/src/lib/`, `app/src/state/` or `app/src/data/` with Vitest unit tests in `app/tests/unit/` (no DOM); components are covered by Playwright in `app/tests/e2e/`.
 - E2E data comes from the golden fixtures via `serveFixtureData` in `app/tests/e2e/fixtures.ts` (Range-aware); never invent test data (SPEC §5.4).
 - Lazily fetched data exposes a `LoadStatus` (`app/src/data/loadStatus.ts`) and surfaces errors per SPEC §10 (see `app/tests/e2e/loaderErrors.spec.ts`).
-- Persisted settings: zustand `persist` in `app/src/state/settings.ts` (`version` field); a shape change bumps the version.
-- Persisted state is untrusted input: every `persist` store has a `merge` that validates each key (type + range, default fallback) and a `migrate` that reuses it (#39).
+- Persisted settings: zustand `persist` in `app/src/state/settings.ts`; a shape change bumps `version`; persisted state is untrusted input, so every `persist` store has a `merge` that validates each key (type + range, default fallback) and a `migrate` that reuses it (#39).
 - Bounds of a numeric setting live in one exported constant (`SETTING_RANGES` in `app/src/state/settings.ts`), read by both the UI and the validator.
-- Layout changes are checked with bounding boxes in e2e tests, not only DOM presence; `data-testid`s are a contract.
+- `data-testid`s are a contract: rename one only together with the tests that use it.
 - Loaders take an optional `AbortSignal`; an `AbortError` is never surfaced as a load error or logged as a failure (see `app/src/data/starData.ts`, `app/src/App.tsx`).
 - Data-integrity failures (e.g. a bad manifest) use a typed error and a message distinct from network errors, with no reload hint (see `StarManifestError`, `errors.dataCorrupt`).
 - Module-level caches tied to a URL base either include the base in the key or state the single-base assumption in a comment.
@@ -29,8 +28,6 @@
 - A local Escape action inside the dock calls `e.preventDefault()`, otherwise the document listener in `Dock.tsx` closes the panel (#40).
 - When a spec claims a bug fix is covered by an e2e regression test, the implementer runs the new spec against a build of `main` and records the result (it must fail there) (#42).
 - To assert in e2e that a text is "gone or different", poll `textContent` with a catch fallback to `null`: `expect(locator).not.toHaveText()` fails when the element is absent (`app/tests/e2e/hoverRepick.spec.ts`, #45).
-- Per-frame three.js math uses module-level scratch objects or caller-provided `out` buffers, never `new`/`clone()`/`toArray()` without a target — avoids GC pauses during camera motion (`app/src/scene/cameraTween.ts`, `PlanetFollow`, #46).
-- Per-frame consumers of the usable area read it through `useCachedUsableArea`, never `readUsableArea` directly — avoids a forced layout every frame (`app/src/scene/placeAnchor.ts`, #46).
 - A module holder written on unmount (e.g. `cameraPoseStore`) also seeds the component's refs at first render from the saved state — refs reset on Canvas remount made a stale "fresh lock" re-arm the auto-orbit (`app/src/scene/CameraControls.tsx`, #46).
 - A test assertion must be able to fail: never check a value against a quantity derived from that same value — such checks look like coverage but are not (#46).
 
@@ -44,7 +41,6 @@
 ## Don'ts
 - No large typed arrays in React state/props (guarded by `app/tests/unit/storeHygiene.test.ts`).
 - No per-star meshes: the cloud is a single `Points` with shader (SPEC §4.2).
-- Never fabricate astronomical values: missing = `n/d` / `null`.
 - Do not change the core stack, pinned versions, `docs/SPEC.md` or `AGENTS.md` without human approval.
 - No committed `.only`/`.skip`, no retries added to hide flaky tests (log them in `docs/STATE.md`).
 - Tailwind: custom CSS in `index.css` stays in `@layer components`; separate a class from `${…}` with a space (lint rule in `app/eslint.config.js`); size that must vary is a prop, not a `className` override.
