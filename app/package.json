@@ -13,7 +13,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:visual": "playwright test -c playwright.visual.config.ts"
   },
   "dependencies": {
     "@react-three/drei": "10.7.7",

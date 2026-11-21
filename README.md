@@ -75,15 +75,15 @@ systems to watch their orbits animate to scale (NASA Exoplanet Archive).
 
 ## Structure
 
-| Path             | Contents                                                          |
-| ---------------- | ----------------------------------------------------------------- |
-| `app/`           | Frontend — Vite + React + TypeScript + react-three-fiber/Three.js |
-| `data-pipeline/` | Offline Python ETL (catalogs → binary star data + exoplanets)     |
-| `data/`          | Generated data artifacts (gitignored; CC BY-SA 4.0)               |
-| `docs/`          | SPEC.md (requirements), STATE.md (development state)              |
+| Path             | Contents                                                              |
+| ---------------- | --------------------------------------------------------------------- |
+| `app/`           | Frontend — Vite + React + TypeScript + react-three-fiber/Three.js     |
+| `data-pipeline/` | Offline Python ETL (catalogs → binary star data + exoplanets)         |
+| `data/`          | Generated data artifacts (gitignored; CC BY-SA 4.0)                   |
+| `docs/`          | SPEC.md (requirements), STATE.md (development state)                  |
 | `.github/`       | CI (lint/typecheck/test/build/e2e + pytest) and the data-refresh cron |
-| `NOTICE.md`      | Attributions (HYG/AT-HYG CC BY-SA, NASA archive, Stellarium)      |
-| `LICENSE`        | MIT (code)                                                        |
+| `NOTICE.md`      | Attributions (HYG/AT-HYG CC BY-SA, NASA archive, Stellarium)          |
+| `LICENSE`        | MIT (code)                                                            |
 
 ## Development
 
@@ -99,6 +99,7 @@ npm run typecheck  # tsc -b
 npm test           # Vitest unit tests
 npm run test:e2e   # Playwright (requires: npx playwright install chromium; runs against `npm run preview`, so build first)
 npx playwright test --project=mobile --workers=1   # phone e2e; run separately from the desktop project (shared preview server)
+npm run test:visual # local visual regression (win32 baselines, not in CI; build first)
 ```
 
 Data pipeline (Python 3.12+): see `data-pipeline/README.md`.
@@ -112,12 +113,12 @@ Drop `.mp3`, `.m4a` or `.ogg` files into `app/src/assets/musics/`; no code chang
 Budgets and the latest measured results (1920×1080, headless Chromium, ANGLE
 D3D11, NVIDIA RTX 3080):
 
-| Budget | Target | Measured (M9) |
-| ------ | ------ | ------------- |
-| FPS, full AT-HYG cloud (2.49M stars, single draw call) | 60 FPS | 60.1 / 60.0 (vsync-capped; run 1 = 46.9 warmup) |
-| JS bundle, gzip (star data streamed separately) | ≤ 600 KB | ~354 KB (app 94 + three vendor 260) |
-| CSS, gzip | ≤ 50 KB | 4.1 KB |
-| FPS on a phone (mid-range Android) | 30 FPS (confirmed 2026-10-13) | ≥ 30 (human check on device, 2026-10-13) |
+| Budget                                                 | Target                        | Measured (M9)                                   |
+| ------------------------------------------------------ | ----------------------------- | ----------------------------------------------- |
+| FPS, full AT-HYG cloud (2.49M stars, single draw call) | 60 FPS                        | 60.1 / 60.0 (vsync-capped; run 1 = 46.9 warmup) |
+| JS bundle, gzip (star data streamed separately)        | ≤ 600 KB                      | ~354 KB (app 94 + three vendor 260)             |
+| CSS, gzip                                              | ≤ 50 KB                       | 4.1 KB                                          |
+| FPS on a phone (mid-range Android)                     | 30 FPS (confirmed 2026-10-13) | ≥ 30 (human check on device, 2026-10-13)        |
 
 WebGL2 baseline with a friendly fallback message. Re-measure with
 `node scripts/measure-fps.mjs` (preview server running) and
