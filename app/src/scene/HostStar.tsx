@@ -9,13 +9,15 @@ import coronaVert from '../shaders/host-corona.vert?raw';
 import starFrag from '../shaders/host-star.frag?raw';
 import starVert from '../shaders/host-star.vert?raw';
 import noiseGlsl from '../shaders/noise.glsl?raw';
+import { exposeBridge } from '../lib/testBridge';
 import { useSettingsStore } from '../state/settings';
 
 // Corona quad side as a multiple of the star diameter, unitless (aesthetic
 // choice, not data). Keep in sync with host-corona.frag.
 const CORONA_SCALE = 2.5;
 
-const exposeBridge = new URLSearchParams(globalThis.location?.search ?? '').get('pdb') === '1';
+// Tessellation of the star sphere, [width, height] segments (aesthetic choice, not data).
+const STAR_SPHERE_SEGMENTS: [number, number] = [64, 32];
 
 /**
  * Animated host star (issue #16): procedural surface sphere + camera-facing
@@ -104,7 +106,7 @@ export function HostStar({
   return (
     <>
       <mesh material={star}>
-        <sphereGeometry args={[radius, 64, 32]} />
+        <sphereGeometry args={[radius, ...STAR_SPHERE_SEGMENTS]} />
       </mesh>
       <mesh ref={quad} material={corona} raycast={() => null}>
         <planeGeometry args={[radius * 2 * CORONA_SCALE, radius * 2 * CORONA_SCALE]} />

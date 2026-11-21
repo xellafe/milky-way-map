@@ -15,7 +15,9 @@ import { useSettingsStore } from '../state/settings';
 import { useGalaxyMapStore } from '../state/store';
 import { STAR_DIST_EXP, STAR_MAX_PX, STAR_PIXEL_SCALE } from './StarCloud';
 
-const CLICK_MAX_DRAG_PX = 5; // pointerdown→up movement below this = click, not a look-drag
+// Max pointerdown→up movement that still counts as a click, not a look-drag, CSS px
+// (aesthetic choice, not data).
+const CLICK_MAX_DRAG_PX = 5;
 const NO_STAR = 0xffffff; // clear color: ids >= count mean "nothing"
 
 /**

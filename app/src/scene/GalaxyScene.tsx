@@ -9,6 +9,7 @@ import type { Filters } from '../lib/filterMask';
 import { createFrameCoalescer } from '../lib/frameCoalescer';
 import { MOBILE_MAX_DPR } from '../lib/motion';
 import { centerShift } from '../lib/sheet';
+import { exposeBridge } from '../lib/testBridge';
 import { useLayoutMode } from '../lib/viewport';
 import { useGalaxyMapStore } from '../state/store';
 import { CameraControls } from './CameraControls';
@@ -20,11 +21,21 @@ import { applyFilterMask, buildStarGeometry } from './starGeometry';
 import { StarPicking } from './StarPicking';
 import { useCachedUsableArea } from './usableArea';
 
-const urlParams = new URLSearchParams(globalThis.location?.search ?? '');
-// ?pdb=1 → preserveDrawingBuffer, used by e2e tests to read real pixels back.
-const preserveDrawingBuffer = urlParams.get('pdb') === '1';
 // ?stats=1 → FPS meter overlay for performance measurements (SPEC §7 budget).
-const showStats = urlParams.get('stats') === '1';
+const showStats = new URLSearchParams(globalThis.location?.search ?? '').get('stats') === '1';
+
+// Initial camera: position [x, y, z] in ly (the Sun is at the origin), vertical field of
+// view in degrees, clip planes in ly (aesthetic choice, not data). far = 2e6 ly covers the
+// farthest catalog stars.
+const CAMERA_START_POSITION: [number, number, number] = [0, 0, 40];
+const CAMERA_FOV_DEG = 60;
+const CAMERA_NEAR_LY = 0.1;
+const CAMERA_FAR_LY = 2_000_000;
+// Bloom (aesthetic choice, not data): intensity is a unitless gain; luminanceThreshold and
+// luminanceSmoothing are 0-1 luminance values (linear).
+const BLOOM_INTENSITY = 1.1;
+const BLOOM_LUMINANCE_THRESHOLD = 0.05;
+const BLOOM_LUMINANCE_SMOOTHING = 0.2;
 
 /** Test-mode bridge (?pdb=1): exposes camera pose + mode for e2e assertions. */
 function CameraDebugBridge() {
@@ -122,8 +133,17 @@ export function GalaxyScene() {
       dpr={mobile ? [1, MOBILE_MAX_DPR] : undefined}
       // Without this the browser claims touch gestures (scroll/zoom) and cancels our pointers.
       style={{ touchAction: 'none' }}
-      camera={{ position: [0, 0, 40], fov: 60, near: 0.1, far: 2_000_000 }}
-      gl={{ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer }}
+      camera={{
+        position: CAMERA_START_POSITION,
+        fov: CAMERA_FOV_DEG,
+        near: CAMERA_NEAR_LY,
+        far: CAMERA_FAR_LY,
+      }}
+      gl={{
+        antialias: false,
+        powerPreference: 'high-performance',
+        preserveDrawingBuffer: exposeBridge,
+      }}
     >
       <color attach="background" args={[0x000000]} />
       {geometry && <StarCloud />}
@@ -135,11 +155,16 @@ export function GalaxyScene() {
           this frame's camera pose. */}
       {geometry && <SelectionTracker />}
       <EffectComposer>
-        <Bloom intensity={1.1} luminanceThreshold={0.05} luminanceSmoothing={0.2} mipmapBlur />
+        <Bloom
+          intensity={BLOOM_INTENSITY}
+          luminanceThreshold={BLOOM_LUMINANCE_THRESHOLD}
+          luminanceSmoothing={BLOOM_LUMINANCE_SMOOTHING}
+          mipmapBlur
+        />
       </EffectComposer>
       {showStats && <Stats />}
       {mobile && <SheetViewOffset />}
-      {preserveDrawingBuffer && <CameraDebugBridge />}
+      {exposeBridge && <CameraDebugBridge />}
     </Canvas>
   );
 }

@@ -15,12 +15,14 @@ import {
   tweenPose,
 } from './cameraTween';
 
-// Tuning: radians per pixel of mouse drag. Movement speed and auto-orbit on/off
-// are user settings (state/settings.ts).
+// Tuning (aesthetic choice, not data): rad per px of mouse drag. Movement speed and
+// auto-orbit on/off are user settings (state/settings.ts).
 const LOOK_SENSITIVITY = 0.0025;
 const ORBIT_SENSITIVITY = 0.005;
+// Q/E roll rate, rad/s (aesthetic choice, not data).
 const ROLL_SPEED_RAD_PER_S = 1.0;
-// Wheel zoom in orbit: distance factor e^(deltaY·k) — ~×1.1 per 100 px notch.
+// Wheel zoom in orbit: distance factor e^(deltaY·k), k in 1/px of wheel delta — ~×1.1
+// per 100 px notch (aesthetic choice, not data).
 const ZOOM_PER_WHEEL_DELTA = 0.001;
 // Translation keys release the orbit lock (they break the fixed-radius orbit);
 // Q/E roll stays available in orbit (it keeps the target centered).
