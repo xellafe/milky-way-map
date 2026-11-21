@@ -20,8 +20,9 @@ import starVert from '../shaders/star.vert?raw';
 // beyond a few tens of ly collapsed to the 1 px floor and looked identical:
 // the gamma widens the 32:1 catalog size range, the softer distance exponent
 // keeps far giants visibly larger than dwarfs at the same distance.
-// Unitless factor (aesthetic choice, not data); STAR_MIN_PX/STAR_MAX_PX are CSS px and
-// STAR_DIST_EXP is unitless (aesthetic choice, not data).
+// STAR_PIXEL_SCALE: px·ly^STAR_DIST_EXP, the projected px of a star with aSize = 1 at 1 ly
+// (aesthetic choice, not data); STAR_MIN_PX/STAR_MAX_PX: CSS px; STAR_DIST_EXP: unitless
+// (all aesthetic choices, not data).
 export const STAR_PIXEL_SCALE = 25.0;
 export const STAR_DIST_EXP = 0.75;
 export const STAR_MIN_PX = 1.0;

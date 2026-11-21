@@ -54,9 +54,9 @@ const HZ_RING_SEGMENTS = 96;
 // (aesthetic choice, not data).
 const CAMERA_POSITION_FACTOR: [number, number, number] = [1.7, 1.1, 1.7];
 const CAMERA_FOV_DEG = 50;
-// Camera clip planes and orbit zoom limits as fractions of maxA, unitless
+// Camera near plane = maxA / divisor; far plane and orbit zoom limits = maxA · factor, all unitless
 // (aesthetic choice, not data).
-const CAMERA_NEAR_FACTOR = 1 / 500;
+const CAMERA_NEAR_DIVISOR = 500;
 const CAMERA_FAR_FACTOR = 200;
 const ORBIT_MIN_DISTANCE_FACTOR = 0.15;
 const ORBIT_MAX_DISTANCE_FACTOR = 25;
@@ -491,7 +491,7 @@ export function SystemScene() {
       camera={{
         position: CAMERA_POSITION_FACTOR.map((f) => maxA * f) as [number, number, number],
         fov: CAMERA_FOV_DEG,
-        near: maxA * CAMERA_NEAR_FACTOR,
+        near: maxA / CAMERA_NEAR_DIVISOR,
         far: maxA * CAMERA_FAR_FACTOR,
       }}
       gl={{ antialias: true, preserveDrawingBuffer: exposeBridge }}
