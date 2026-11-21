@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { getStarGeometry } from '../data/starCoreStore';
 import { effectiveTwinkle, prefersReducedMotion } from '../lib/motion';
 import { STAR_COLOR_GAMMA } from '../lib/starColor';
+import { exposeBridge } from '../lib/testBridge';
 import { useLayoutMode } from '../lib/viewport';
 import { DEFAULT_SETTINGS, useSettingsStore } from '../state/settings';
 import starFrag from '../shaders/star.frag?raw';
@@ -19,6 +20,9 @@ import starVert from '../shaders/star.vert?raw';
 // beyond a few tens of ly collapsed to the 1 px floor and looked identical:
 // the gamma widens the 32:1 catalog size range, the softer distance exponent
 // keeps far giants visibly larger than dwarfs at the same distance.
+// STAR_PIXEL_SCALE: px·ly^STAR_DIST_EXP, the projected px of a star with aSize = 1 at 1 ly
+// (aesthetic choice, not data); STAR_MIN_PX/STAR_MAX_PX: CSS px; STAR_DIST_EXP: unitless
+// (all aesthetic choices, not data).
 export const STAR_PIXEL_SCALE = 25.0;
 export const STAR_DIST_EXP = 0.75;
 export const STAR_MIN_PX = 1.0;
@@ -28,11 +32,13 @@ export const STAR_MAX_PX = 24.0;
 // Disabled under prefers-reduced-motion (SPEC §6.9) and in realism mode.
 // Size gamma, color saturation, twinkle amplitude/speed and realism are user settings
 // (state/settings.ts), pushed to the uniforms every frame.
+// Both in ly (aesthetic choice, not data).
 export const STAR_TWINKLE_NEAR_LY = 20;
 export const STAR_TWINKLE_FAR_LY = 200;
 
-// Test bridge (same gate as HostStar): exposes the uniform values to e2e.
-const exposeBridge = new URLSearchParams(globalThis.location?.search ?? '').get('pdb') === '1';
+// Cap on the device pixel ratio folded into the point size, ratio (aesthetic choice,
+// not data): the Canvas itself renders at [1, 2] on desktop.
+const MAX_POINT_DPR = 2;
 
 /**
  * The whole star catalog as ONE THREE.Points / one draw call (SPEC §4.2).
@@ -51,7 +57,7 @@ export function StarCloud() {
         fragmentShader: starFrag,
         uniforms: {
           uPixelScale: {
-            value: STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, 2),
+            value: STAR_PIXEL_SCALE * Math.min(globalThis.devicePixelRatio ?? 1, MAX_POINT_DPR),
           },
           uMinPx: { value: STAR_MIN_PX },
           uMaxPx: { value: STAR_MAX_PX },

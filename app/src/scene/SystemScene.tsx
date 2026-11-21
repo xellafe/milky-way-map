@@ -1,27 +1,18 @@
-import { Line, OrbitControls } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { getHost, type ExoHost, type ExoplanetRecord } from '../data/exoplanets';
+import { getHost, type ExoHost } from '../data/exoplanets';
 import { canvasCursor } from '../lib/canvasCursor';
 import { approachTarget, followStep, followViewShift, type MutVec3 } from '../lib/follow';
 import { centerShift } from '../lib/sheet';
+import { exposeBridge } from '../lib/testBridge';
 import { useLayoutMode } from '../lib/viewport';
 import { MOBILE_MAX_DPR, prefersReducedMotion } from '../lib/motion';
 import { hzBoundsAU, hzInclinationDeg, type HzBounds } from '../lib/habitableZone';
-import {
-  nameSeed,
-  ORBIT_TINT,
-  PLANET_PALETTE,
-  PLANET_TYPE_INDEX,
-  planeAngle,
-  TRAIL_BASE_OPACITY,
-  TRAIL_LENGTH_RAD,
-} from '../lib/planetStyle';
-import { classifyPlanet, type PlanetType } from '../lib/planetType';
-import { orbitAngleDeg, orbitPathPoints, orbitPlanePosition, toSceneCoords } from '../lib/orbit';
-import orbitTrailFrag from '../shaders/orbit-trail.frag?raw';
-import orbitTrailVert from '../shaders/orbit-trail.vert?raw';
+import { nameSeed, PLANET_PALETTE, PLANET_TYPE_INDEX, planeAngle } from '../lib/planetStyle';
+import { classifyPlanet } from '../lib/planetType';
+import { orbitAngleDeg, orbitPlanePosition, toSceneCoords } from '../lib/orbit';
 import hzFrag from '../shaders/hz.frag?raw';
 import hzVert from '../shaders/hz.vert?raw';
 import noiseGlsl from '../shaders/noise.glsl?raw';
@@ -33,35 +24,45 @@ import { CARD_GAP_PX, CARD_TOP_OFFSET_PX } from '../lib/selectionGeometry';
 import { HostStar } from './HostStar';
 import { placeAnchor } from './placeAnchor';
 import { getSelectionAnchor } from './selectionAnchor';
+import { SimpleOrbit, ThickOrbit, TrailOrbit, type RenderablePlanet } from './SystemOrbits';
 import { useCachedUsableArea } from './usableArea';
 
+// IAU 2015 nominal solar radius (695 700 km) over 1 AU, AU: data.
 const SUN_RADIUS_AU = 0.00465;
-// Orbits are real-scale; BODY sizes and looks are not (pscomppars has no
-// planet colors): procedural per size class, see lib/planetStyle.ts.
-const ORBIT_OPACITY = 0.7;
-const THICK_ORBIT_PX = 2.5;
-const ORBIT_SEGMENTS = 128;
-// Hue jitter (fraction of the color wheel, ±) from the per-planet seed.
+// Hue jitter (fraction of the color wheel, ±) from the per-planet seed
+// (aesthetic choice, not data).
 const HUE_JITTER = 0.04;
+// Habitable-zone gradient middle, raw sRGB (aesthetic choice, not data).
 const HZ_COLOR = 0x2faf64;
 // Gradient ends, raw sRGB: orange = too hot (inner edge), blue = too cold
 // (outer edge). Aesthetic choice, not data.
 const HZ_HOT_COLOR = 0xe8742a;
 const HZ_COLD_COLOR = 0x4aa8e8;
-
-const urlParams = new URLSearchParams(globalThis.location?.search ?? '');
-const exposeBridge = urlParams.get('pdb') === '1';
-
-interface RenderablePlanet {
-  record: ExoplanetRecord;
-  semiMajorAxisAU: number;
-  eccentricity: number;
-  inclinationDeg: number | null;
-  schematic: boolean;
-  radiusAU: number;
-  type: PlanetType;
-  seed: number;
-}
+// Planet body radius = maxA · PLANET_RADIUS_FRACTION · clamp(cbrt(Rearth), MIN, MAX);
+// all unitless, radii are presentational, not real scale (aesthetic choice, not data).
+const PLANET_RADIUS_FRACTION = 0.02;
+const PLANET_RADIUS_SCALE_MIN = 0.6;
+const PLANET_RADIUS_SCALE_MAX = 2.5;
+// Minimum host star radius as a fraction of maxA, unitless: keeps small stars visible
+// (aesthetic choice, not data).
+const STAR_MIN_RADIUS_FRACTION = 0.045;
+// Tessellation of the planet spheres, [width, height] segments (aesthetic choice, not data).
+const PLANET_SPHERE_SEGMENTS: [number, number] = [48, 24];
+// Tessellation of the habitable-zone ring, segments (aesthetic choice, not data).
+const HZ_RING_SEGMENTS = 96;
+// Initial camera offset (multiples of maxA, unitless) and field of view (degrees)
+// (aesthetic choice, not data).
+const CAMERA_POSITION_FACTOR: [number, number, number] = [1.7, 1.1, 1.7];
+const CAMERA_FOV_DEG = 50;
+// Camera near plane = maxA / divisor; far plane and orbit zoom limits = maxA · factor, all unitless
+// (aesthetic choice, not data).
+const CAMERA_NEAR_DIVISOR = 500;
+const CAMERA_FAR_FACTOR = 200;
+const ORBIT_MIN_DISTANCE_FACTOR = 0.15;
+const ORBIT_MAX_DISTANCE_FACTOR = 25;
+// Projection-shift gap under which the view snaps to its target, px (aesthetic choice,
+// not data): stops the ease from creeping through sub-pixel steps.
+const VIEW_SNAP_PX = 0.5;
 
 /** Planets with a semi-major axis (the only hard requirement to draw an orbit). */
 function renderablePlanets(host: ExoHost, maxA: number): RenderablePlanet[] {
@@ -75,140 +76,16 @@ function renderablePlanets(host: ExoHost, maxA: number): RenderablePlanet[] {
       eccentricity: p.pl_orbeccen ?? 0,
       inclinationDeg: p.pl_orbincl,
       schematic: p.pl_orbincl === null,
-      radiusAU: maxA * 0.02 * Math.min(Math.max(Math.cbrt(p.pl_rade ?? 1), 0.6), 2.5),
+      radiusAU:
+        maxA *
+        PLANET_RADIUS_FRACTION *
+        Math.min(
+          Math.max(Math.cbrt(p.pl_rade ?? 1), PLANET_RADIUS_SCALE_MIN),
+          PLANET_RADIUS_SCALE_MAX,
+        ),
       type: classifyPlanet(p),
       seed: nameSeed(p.pl_name),
     }));
-}
-
-function orbitShape(planet: RenderablePlanet) {
-  return {
-    semiMajorAxisAU: planet.semiMajorAxisAU,
-    eccentricity: planet.eccentricity,
-    inclinationDeg: planet.inclinationDeg,
-  };
-}
-
-function dashFor(planet: RenderablePlanet, maxA: number): [number, number] {
-  // SPEC §6.7: schematic orbits (no inclination) stay dashed in every style.
-  return planet.schematic ? [maxA * 0.03, maxA * 0.018] : [0, 0];
-}
-
-/** Plain 1 px line (the original look), tinted by planet class. */
-function SimpleOrbit({ planet, maxA }: { planet: RenderablePlanet; maxA: number }) {
-  const line = useMemo(() => {
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(orbitPathPoints(orbitShape(planet), ORBIT_SEGMENTS), 3),
-    );
-    const color = ORBIT_TINT[planet.type];
-    const [dashSize, gapSize] = dashFor(planet, maxA);
-    const material = planet.schematic
-      ? new THREE.LineDashedMaterial({
-          color,
-          dashSize,
-          gapSize,
-          transparent: true,
-          opacity: ORBIT_OPACITY,
-        })
-      : new THREE.LineBasicMaterial({ color, transparent: true, opacity: ORBIT_OPACITY });
-    const obj = new THREE.Line(geometry, material);
-    if (planet.schematic) obj.computeLineDistances();
-    return obj;
-  }, [planet, maxA]);
-  // R3F never disposes <primitive> objects, so release the GPU resources here.
-  useEffect(
-    () => () => {
-      line.geometry.dispose();
-      (line.material as THREE.Material).dispose();
-    },
-    [line],
-  );
-  return <primitive object={line} />;
-}
-
-/** Screen-space thick line (drei Line2). */
-function ThickOrbit({ planet, maxA }: { planet: RenderablePlanet; maxA: number }) {
-  const points = useMemo(() => {
-    const flat = orbitPathPoints(orbitShape(planet), ORBIT_SEGMENTS);
-    const out: [number, number, number][] = [];
-    for (let i = 0; i < flat.length; i += 3) out.push([flat[i]!, flat[i + 1]!, flat[i + 2]!]);
-    return out;
-  }, [planet]);
-  const [dashSize, gapSize] = dashFor(planet, maxA);
-  return (
-    <Line
-      points={points}
-      color={ORBIT_TINT[planet.type]}
-      lineWidth={THICK_ORBIT_PX}
-      transparent
-      opacity={ORBIT_OPACITY}
-      dashed={planet.schematic}
-      dashSize={dashSize}
-      gapSize={gapSize}
-    />
-  );
-}
-
-/** Faint full orbit + bright trail fading behind the planet. */
-function TrailOrbit({
-  planet,
-  maxA,
-  angle,
-}: {
-  planet: RenderablePlanet;
-  maxA: number;
-  angle: () => number;
-}) {
-  const line = useMemo(() => {
-    const flat = orbitPathPoints(orbitShape(planet), ORBIT_SEGMENTS);
-    // Angle per vertex in the orbit plane, monotonic 0 → 2π along the path
-    // (the path is sampled by eccentric anomaly from periapsis).
-    const e = Math.min(Math.max(planet.eccentricity, 0), 0.99);
-    const angles = new Float32Array(ORBIT_SEGMENTS + 1);
-    for (let s = 0; s <= ORBIT_SEGMENTS; s++) {
-      const E = (s / ORBIT_SEGMENTS) * 2 * Math.PI;
-      angles[s] =
-        s === ORBIT_SEGMENTS
-          ? 2 * Math.PI
-          : planeAngle(Math.cos(E) - e, Math.sqrt(1 - e * e) * Math.sin(E));
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(flat, 3));
-    geometry.setAttribute('aAngle', new THREE.BufferAttribute(angles, 1));
-    const material = new THREE.ShaderMaterial({
-      vertexShader: orbitTrailVert,
-      fragmentShader: orbitTrailFrag,
-      uniforms: {
-        uColor: { value: new THREE.Color(ORBIT_TINT[planet.type]) },
-        uPlanetAngle: { value: 0 },
-        uTrailLength: { value: TRAIL_LENGTH_RAD },
-        uBaseOpacity: { value: TRAIL_BASE_OPACITY },
-        uDash: { value: new THREE.Vector2(...dashFor(planet, maxA)) },
-      },
-      transparent: true,
-      depthWrite: false,
-    });
-    const obj = new THREE.Line(geometry, material);
-    obj.computeLineDistances(); // lineDistance attribute, used for dashes
-    return obj;
-  }, [planet, maxA]);
-  // R3F never disposes <primitive> objects, so release the GPU resources here.
-  useEffect(
-    () => () => {
-      line.geometry.dispose();
-      (line.material as THREE.Material).dispose();
-    },
-    [line],
-  );
-
-  const ref = useRef<THREE.Line<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
-  useFrame(() => {
-    const uniforms = ref.current?.material.uniforms;
-    if (uniforms) uniforms.uPlanetAngle!.value = angle();
-  });
-  return <primitive ref={ref} object={line} />;
 }
 
 /** Procedural lit sphere per planet class (planet.vert/.frag). */
@@ -297,6 +174,16 @@ function PlanetAnimator({
   return null;
 }
 
+/** Mesh of the selected planet, or null (nothing selected, or no mesh: no semi-major axis). */
+function selectedPlanetMesh(
+  planets: RenderablePlanet[],
+  meshes: React.RefObject<(THREE.Mesh | null)[]>,
+): THREE.Mesh | null {
+  const name = useGalaxyMapStore.getState().selectedPlanet;
+  if (!name) return null;
+  return meshes.current[planets.findIndex((p) => p.record.pl_name === name)] ?? null;
+}
+
 /** Seconds the controls target takes to reach a newly selected planet (aesthetic choice, not data). */
 const FOLLOW_APPROACH_S = 1;
 // Width of the widest planet card, px: mirrors `.object-card[data-mode='advanced']`
@@ -340,7 +227,7 @@ function PlanetFollow({
 
   useFrame((_, delta) => {
     const name = useGalaxyMapStore.getState().selectedPlanet;
-    const mesh = name ? meshes.current[planets.findIndex((p) => p.record.pl_name === name)] : null;
+    const mesh = selectedPlanetMesh(planets, meshes);
     if (mobile) {
       // The window moves opposite to the picture: +x moves the scene left.
       const c = centerShift(readAreaCached(size.width, size.height), size.width, size.height);
@@ -363,7 +250,7 @@ function PlanetFollow({
     lastWidth.current = size.width;
     const gapX = wantShift.current.x - viewShift.current.x;
     const gapY = wantShift.current.y - viewShift.current.y;
-    if (prefersReducedMotion() || Math.hypot(gapX, gapY) < 0.5) {
+    if (prefersReducedMotion() || Math.hypot(gapX, gapY) < VIEW_SNAP_PX) {
       viewShift.current.x = wantShift.current.x;
       viewShift.current.y = wantShift.current.y;
     } else {
@@ -441,7 +328,7 @@ function PlanetTracker({
   useFrame(() => {
     const el = getSelectionAnchor();
     const name = useGalaxyMapStore.getState().selectedPlanet;
-    const mesh = name ? meshes.current[planets.findIndex((p) => p.record.pl_name === name)] : null;
+    const mesh = selectedPlanetMesh(planets, meshes);
     if (exposeBridge) {
       const bridge = (globalThis as Record<string, unknown>).__system as
         | { followedScreen?: [number, number] | null }
@@ -548,7 +435,7 @@ function HabitableZoneRing({
   const tilt = Math.PI / 2 - THREE.MathUtils.degToRad(inclinationDeg ?? 0);
   return (
     <mesh rotation={[tilt, 0, 0]} material={material} raycast={() => null}>
-      <ringGeometry args={[hz.innerAU, hz.outerAU, 96]} />
+      <ringGeometry args={[hz.innerAU, hz.outerAU, HZ_RING_SEGMENTS]} />
     </mesh>
   );
 }
@@ -571,10 +458,10 @@ export function SystemScene() {
   // Host data is a module holder read (already loaded by the entry panel).
   const host = hostname ? getHost(hostname) : null;
   const mobile = useLayoutMode() !== 'desktop';
-  const allPlanets = useMemo(() => {
-    if (!host) return [];
-    const maxA = Math.max(...host.planets.map((p) => p.pl_orbsmax ?? 0), 0.01);
-    return renderablePlanets(host, maxA);
+  const { allPlanets, maxA } = useMemo(() => {
+    if (!host) return { allPlanets: [], maxA: 0 };
+    const scale = Math.max(...host.planets.map((p) => p.pl_orbsmax ?? 0), 0.01);
+    return { allPlanets: renderablePlanets(host, scale), maxA: scale };
   }, [host]);
   // Type filter hides planet + orbit; the scene scale (maxA) stays that of the
   // whole system so toggling doesn't rescale the view.
@@ -589,8 +476,7 @@ export function SystemScene() {
   useEffect(() => () => materials.forEach((m) => m.dispose()), [materials]);
 
   if (!host || !hostname) return null;
-  const maxA = Math.max(...allPlanets.map((p) => p.semiMajorAxisAU), 0.01);
-  const starRadius = Math.max((host.st_rad ?? 0) * SUN_RADIUS_AU, maxA * 0.045);
+  const starRadius = Math.max((host.st_rad ?? 0) * SUN_RADIUS_AU, maxA * STAR_MIN_RADIUS_FRACTION);
   const hz = hzBoundsAU(host.st_lum);
   const hzIncl = hzInclinationDeg(allPlanets.map((p) => p.inclinationDeg));
 
@@ -603,10 +489,10 @@ export function SystemScene() {
       // Desktop sets none: the Canvas default ([1, 2]) applies.
       dpr={mobile ? [1, MOBILE_MAX_DPR] : undefined}
       camera={{
-        position: [maxA * 1.7, maxA * 1.1, maxA * 1.7],
-        fov: 50,
-        near: maxA / 500,
-        far: maxA * 200,
+        position: CAMERA_POSITION_FACTOR.map((f) => maxA * f) as [number, number, number],
+        fov: CAMERA_FOV_DEG,
+        near: maxA / CAMERA_NEAR_DIVISOR,
+        far: maxA * CAMERA_FAR_FACTOR,
       }}
       gl={{ antialias: true, preserveDrawingBuffer: exposeBridge }}
       onPointerMissed={() => selectPlanet(null)}
@@ -636,7 +522,7 @@ export function SystemScene() {
             onPointerOver={() => (overPlanet.current = true)}
             onPointerOut={() => (overPlanet.current = false)}
           >
-            <sphereGeometry args={[p.radiusAU, 48, 24]} />
+            <sphereGeometry args={[p.radiusAU, ...PLANET_SPHERE_SEGMENTS]} />
             <primitive object={materials.get(p.record.pl_name)!} attach="material" />
           </mesh>
         </group>
@@ -648,8 +534,8 @@ export function SystemScene() {
       <OrbitControls
         makeDefault
         enablePan={false}
-        minDistance={maxA * 0.15}
-        maxDistance={maxA * 25}
+        minDistance={maxA * ORBIT_MIN_DISTANCE_FACTOR}
+        maxDistance={maxA * ORBIT_MAX_DISTANCE_FACTOR}
       />
     </Canvas>
   );

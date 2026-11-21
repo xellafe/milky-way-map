@@ -116,6 +116,16 @@ let hostByIndex: Map<number, string> | null = null;
 let loadPromise: Promise<ExoplanetsData> | null = null;
 let status: LoadStatus = 'idle';
 
+function buildHostIndex(hosts: Record<string, ExoHost>): Map<number, string> {
+  const index = new Map<number, string>();
+  for (const [name, host] of Object.entries(hosts)) {
+    if (host.starRef.matched && host.starRef.matchedIndex !== null) {
+      index.set(host.starRef.matchedIndex, name);
+    }
+  }
+  return index;
+}
+
 export function loadExoplanets(baseUrl = DATA_BASE_URL): Promise<ExoplanetsData> {
   if (loadPromise) return loadPromise;
   status = 'loading';
@@ -123,12 +133,7 @@ export function loadExoplanets(baseUrl = DATA_BASE_URL): Promise<ExoplanetsData>
     const resp = await fetch(`${baseUrl}exoplanets.json`);
     if (!resp.ok) throw new Error(`exoplanets fetch failed: ${resp.status}`);
     data = normalizeExoplanets(await resp.json());
-    hostByIndex = new Map();
-    for (const [name, host] of Object.entries(data.hosts)) {
-      if (host.starRef.matched && host.starRef.matchedIndex !== null) {
-        hostByIndex.set(host.starRef.matchedIndex, name);
-      }
-    }
+    hostByIndex = buildHostIndex(data.hosts);
     status = 'ready';
     return data;
   })();
@@ -144,10 +149,6 @@ export function loadExoplanets(baseUrl = DATA_BASE_URL): Promise<ExoplanetsData>
 
 export function getExoplanetsStatus(): LoadStatus {
   return status;
-}
-
-export function isExoplanetsReady(): boolean {
-  return data !== null;
 }
 
 export function getHost(hostname: string): ExoHost | null {
@@ -203,12 +204,5 @@ export function _setExoplanetsForTests(value: ExoplanetsData | null): void {
   hostByIndex = null;
   loadPromise = value ? Promise.resolve(value) : null;
   status = value ? 'ready' : 'idle';
-  if (value) {
-    hostByIndex = new Map();
-    for (const [name, host] of Object.entries(value.hosts)) {
-      if (host.starRef.matched && host.starRef.matchedIndex !== null) {
-        hostByIndex.set(host.starRef.matchedIndex, name);
-      }
-    }
-  }
+  if (value) hostByIndex = buildHostIndex(value.hosts);
 }

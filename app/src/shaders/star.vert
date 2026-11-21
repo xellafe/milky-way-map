@@ -42,9 +42,19 @@ void main() {
   vAlpha = sub * sub;
 
   // Twinkle (aesthetic, not physical — there is no atmosphere in space):
-  // per-star phase/frequency from a position hash, two incommensurate sines,
-  // amplitude ramping in with distance so nearby stars stay steady.
-  float h = fract(sin(dot(position.xy + position.z, vec2(12.9898, 78.233))) * 43758.5453);
+  // per-star phase/frequency from an integer hash of the star index, two
+  // incommensurate sines, amplitude ramping in with distance so nearby stars
+  // stay steady. The hash is integer-based because sin() of arguments ~1e8 loses
+  // precision in float32 and produced bands of stars flickering in step (#48).
+  // gl_VertexID IS the star index (non-indexed geometry, as in star-pick.vert).
+  uint x = uint(gl_VertexID);
+  // lowbias32 integer hash.
+  x ^= x >> 16;
+  x *= 0x7feb352du;
+  x ^= x >> 15;
+  x *= 0x846ca68bu;
+  x ^= x >> 16;
+  float h = float(x >> 8u) / 16777216.0; // [0, 1)
   float wave = 0.5 * sin(uTime * (2.0 + 3.0 * h) + h * 6.2832)
              + 0.5 * sin(uTime * (5.0 + 4.0 * fract(h * 7.13)) + h * 14.0);
   vAlpha *= 1.0 + uTwinkle * smoothstep(uTwinkleRange.x, uTwinkleRange.y, dist) * wave;

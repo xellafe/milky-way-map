@@ -8,6 +8,15 @@
 - **Milestone completate:** **M0**–**M8** ✅, **M9 — rifinitura, performance, refresh CI, docs** ✅ (auto-verifica passata)
 - **Milestone corrente:** — **tutte le milestone M0–M9 implementate**. ✅ **`[FINAL HUMAN CHECK]` approvato dall'umano (2026-09-28)**: rilascio su GitHub Pages (vedi "Modifiche post-M9").
 
+## Issue #48 — pulizia del render: split di SystemScene, costanti annotate, hash del twinkle (2026-11-21, branch `feature/013-render-cleanup`, in corso)
+
+Spec: `factory/features/013-render-cleanup/spec.md`.
+
+- Refactor senza cambio di comportamento: orbite in `scene/SystemOrbits.tsx`, `maxA` calcolato una volta, `selectedPlanetMesh`, `exposeBridge` (`?pdb=1`) solo in `lib/testBridge.ts`, `isExoplanetsReady` rimosso, `buildHostIndex` unico.
+- Costanti di tuning con unità e natura (regola commenti 3): `SUN_RADIUS_AU` è dato (IAU 2015); le altre sono scelte estetiche (nessuna decisione umana esplicita in `git log`).
+- Twinkle: hash intero (lowbias32) su `gl_VertexID` al posto di `fract(sin(…))`: le fasi cambiano, nessuna banda. Assunzione: geometria non indicizzata, vertex id = indice stella.
+- Verifica visiva: `npm run test:visual` (solo locale, baseline win32, desktop) verde sulle baseline invariate dopo il refactor; non è in CI.
+
 ## Issue #47 — unità e punteggiatura nei file locale, chiavi inutilizzate, un solo interruttore realismo (2026-11-17, branch `feature/012-i18n-units-cleanup`, in corso)
 
 Spec: `factory/features/012-i18n-units-cleanup/spec.md`.
