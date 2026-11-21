@@ -7,6 +7,9 @@
 - Comments explain the why and cite `SPEC §x` or `#<issue>`; tuning constants state unit and nature (data / aesthetic choice / human choice); `TODO(#n)` only.
 - PR title is `type(scope): subject` and drives the release bump (`release: auto`): `feat` only for user-visible features; `!` / `BREAKING CHANGE` only with human approval.
 - User-visible strings only in `app/src/i18n/locales/{en,it,es,fr,de}.json` (key parity enforced by `app/tests/unit/i18n.test.ts`).
+- A value and its unit, and punctuation around translated text, are rendered through an interpolated locale key (`units.valueUnit` via `withUnit` in `app/src/lib/withUnit.ts`, `Trans` with named `components` when markup is wrapped), never concatenated in JSX — French needs U+00A0 there (#47, `StatTile.tsx`, `PlanetCard.tsx`).
+- Every locale value has the same `{{placeholders}}` and `<tags>` as its `en` value (enforced in `app/tests/unit/i18n.test.ts`) — a translation that drops a placeholder renders raw or empty text silently (#47).
+- When you annotate a constant that feeds a shader uniform, the unit matches the uniform's comment in the `.vert`/`.frag` — `STAR_PIXEL_SCALE` was marked "unitless" in `app/src/scene/StarCloud.tsx` while `star.vert` documents `uPixelScale` as px·ly; a contradictory unit is worse than none (#48).
 
 ## Patterns
 - Logic in `app/src/lib/`, `app/src/state/` or `app/src/data/` with Vitest unit tests in `app/tests/unit/` (no DOM); components are covered by Playwright in `app/tests/e2e/`.
@@ -30,6 +33,8 @@
 - To assert in e2e that a text is "gone or different", poll `textContent` with a catch fallback to `null`: `expect(locator).not.toHaveText()` fails when the element is absent (`app/tests/e2e/hoverRepick.spec.ts`, #45).
 - A module holder written on unmount (e.g. `cameraPoseStore`) also seeds the component's refs at first render from the saved state — refs reset on Canvas remount made a stale "fresh lock" re-arm the auto-orbit (`app/src/scene/CameraControls.tsx`, #46).
 - A test assertion must be able to fail: never check a value against a quantity derived from that same value — such checks look like coverage but are not (#46).
+- The `?pdb=1` test gate is read only through `exposeBridge` from `app/src/lib/testBridge.ts` — the parsing was copied in four scene files (`SystemScene`, `HostStar`, `StarCloud`, `GalaxyScene`) and could drift (#48).
+- Before and after a render change run `npm run build && npm run test:visual` (win32 baselines, desktop) — e2e checks bridges and pixels at points, not the whole picture, so a refactor could change the look unnoticed (#48).
 
 ## Reusable code
 - Data base path: `DATA_BASE_URL` from `app/src/data/starData.ts`.
@@ -46,6 +51,7 @@
 - Tailwind: custom CSS in `index.css` stays in `@layer components`; separate a class from `${…}` with a space (lint rule in `app/eslint.config.js`); size that must vary is a prop, not a `className` override.
 - Never issue a synchronous `readRenderTargetPixels` while a three `readRenderTargetPixelsAsync` is pending (or unbind `PIXEL_PACK_BUFFER` right after the async call): three 0.184 leaves the PBO bound during the fence wait and the sync read silently returns zeros, i.e. star 0 (`app/src/scene/StarPicking.tsx`, #45).
 - In the Bash tool, no heredocs whose body has non-ASCII characters (e.g. `×`, `≠`): the tool fails with "unexpected EOF"; use Write/Edit instead.
+- A Python script run from Bash that rewrites a file builds the full content before `open(p, 'w')` and passes `encoding='utf8'` — a cp1252 `UnicodeEncodeError` on a non-ASCII character truncated `app/tests/unit/i18n.test.ts` to an empty file (#47).
 
 ## Definition of Done
 - [gate] Build, lint and tests are green.
